@@ -31,18 +31,55 @@ def model_shape(model, shape, device=None):
 
 
 def model_save(model, path):
-    torch.save(model.state_dict(), path)
+  torch.save(model.state_dict(), path)
 
 
 def model_load(model, path):
-    if os.path.exists(path):
-       model.load_state_dict(torch.load(path))
+  if os.path.exists(path):
+    model.load_state_dict(torch.load(path))
 
-    return model
+  return model
 
 
 def checkpoint_model(model, path, gs_path=None):
   model_save(model, path)
+
+  if gs_path is not None:
+    subprocess.check_call(('gsutil',
+                           '-m',
+                           '-q',
+                           'cp',
+                           path,
+                           gs_path))
+
+
+def save_data(path, **kwargs):
+  data = dict()
+  for name, ndata in kwargs.items():
+    sdfn = getattr(ndata, 'state_dict', None)
+    if sdfn is not None and callable(sdfn):
+      data[name] = sdfn()
+    else:
+      data[name] = ndata
+
+  torch.save(data, path)
+
+
+def load_data(path, **kwargs):
+  td = torch.load(path)
+  data = dict()
+  for name, ndata in td.items():
+    sdobj = kwargs.get(name, None)
+    if sdobj is not None:
+      sdobj.load_state_dict(ndata)
+    else:
+      data[name] = ndata
+
+  return data
+
+
+def checkpoint_data(path, gs_path=None, **kwargs):
+  save_data(path, **kwargs)
 
   if gs_path is not None:
     subprocess.check_call(('gsutil',
