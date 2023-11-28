@@ -3,6 +3,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class NetBase(nn.Module):
+
+  def __init__(self, device=None):
+    super().__init__()
+    self.device = device or torch.device('cpu')
+
+  def to(self, *args, **kwargs):
+    if args and isinstance(args[0], (str, torch.device)):
+      self.device = torch.device(args[0])
+
+    return super().to(*args, **kwargs)
+
+
 class Dense(nn.Module):
   def __init__(self, nin, nout, act=None, bn=None, **lin_args):
     super().__init__()
