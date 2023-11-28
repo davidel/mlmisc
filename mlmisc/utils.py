@@ -100,6 +100,11 @@ def get_lr(optimizer):
   return sum(lrs) / len(lrs) if lrs else 0.0
 
 
+def reset_lr(optimizer, lr):
+  for g in optimizer.param_groups:
+    g['lr'] = lr
+
+
 def minmax_bbox(bbox):
   # Boxes are (N, 4) shapes with (min_x, min_y, xsize, ysize)
   mmbox = torch.clone(bbox)
