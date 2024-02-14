@@ -34,11 +34,11 @@ def model_save(model, path):
   torch.save(model.state_dict(), path)
 
 
-def model_load(model, path):
+def model_load(model, path, device=None):
   if os.path.exists(path):
     model.load_state_dict(torch.load(path))
 
-  return model
+  return model.to(device) if device is not None else model
 
 
 def checkpoint_model(model, path, gs_path=None):
@@ -88,6 +88,10 @@ def checkpoint_data(path, gs_path=None, **kwargs):
                            'cp',
                            path,
                            gs_path))
+
+
+def create_tb_writer(path):
+  return torch.utils.tensorboard.SummaryWriter(path)
 
 
 def get_lr(optimizer):
