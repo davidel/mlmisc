@@ -15,12 +15,6 @@ def get_device(kind=None):
   return torch.device(kind)
 
 
-def rng_seed(seed):
-  torch.manual_seed(seed)
-  random.seed(seed)
-  np.random.seed(seed)
-
-
 def model_shape(model, shape, device=None):
   model.eval()
   with torch.no_grad():
