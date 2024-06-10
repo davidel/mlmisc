@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 import numpy as np
+import py_misc_utils.alog as alog
 import torch
 
 
@@ -25,11 +26,13 @@ def model_shape(model, shape, device=None):
 
 
 def model_save(model, path):
+  alog.debug(f'Saving model to {path}')
   torch.save(model.state_dict(), path)
 
 
 def model_load(model, path, device=None):
   if os.path.exists(path):
+    alog.debug(f'Loading model state from {path}')
     model.load_state_dict(torch.load(path))
 
   return model.to(device) if device is not None else model
@@ -39,6 +42,7 @@ def checkpoint_model(model, path, gs_path=None):
   model_save(model, path)
 
   if gs_path is not None:
+    alog.debug(f'Copying model state to {gs_path}')
     subprocess.check_call(('gsutil',
                            '-m',
                            '-q',
@@ -56,11 +60,14 @@ def save_data(path, **kwargs):
     else:
       data[name] = ndata
 
+  alog.debug(f'Saving data to {path}')
   torch.save(data, path)
 
 
 def load_data(path, **kwargs):
+  alog.debug(f'Loading data from {path}')
   td = torch.load(path)
+
   data = dict()
   for name, ndata in td.items():
     sdobj = kwargs.get(name, None)
@@ -76,6 +83,7 @@ def checkpoint_data(path, gs_path=None, **kwargs):
   save_data(path, **kwargs)
 
   if gs_path is not None:
+    alog.debug(f'Copying data to {gs_path}')
     subprocess.check_call(('gsutil',
                            '-m',
                            '-q',
@@ -85,6 +93,8 @@ def checkpoint_data(path, gs_path=None, **kwargs):
 
 
 def create_tb_writer(path):
+  alog.debug(f'Creating TB summary writer in {path}')
+
   return torch.utils.tensorboard.SummaryWriter(path)
 
 

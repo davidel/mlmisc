@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='mlmisc',
-      version='0.1',
+      version='0.2',
       description='Miscellaneous ML Utilities',
       author='Davide Libenzi',
       packages=find_packages(),
