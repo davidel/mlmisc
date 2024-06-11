@@ -18,7 +18,7 @@ class SelfAttention(nn.Module):
     self.attn_stack = nn.Linear(embed_size, 3 * embed_size, bias=bias)
     self.output_proj = nn.Linear(embed_size, embed_size, bias=bias)
     self.attn_dropout = nn.Dropout(dropout)
-    self.resid_dropout = nn.Dropout(dropout)
+    self.output_dropout = nn.Dropout(dropout)
     self.num_heads = num_heads
     self.dropout = dropout
     self.flash = hasattr(torch.nn.functional, 'scaled_dot_product_attention')
@@ -50,9 +50,9 @@ class SelfAttention(nn.Module):
       # (batch_size, num_heads, seqlen, seqlen) x (batch_size, num_heads, seqlen, head_size)
       #   -> (batch_size, num_heads, seqlen, head_size)
       y = att @ v
-      y = y.transpose(1, 2).contiguous().view(batch_size, seqlen, embed_size)
 
-    y =  self.resid_dropout(self.output_proj(y))
+    y = y.transpose(1, 2).contiguous().view(batch_size, seqlen, embed_size)
+    y =  self.output_dropout(self.output_proj(y))
 
     return y
 
