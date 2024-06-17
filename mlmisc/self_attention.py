@@ -27,7 +27,7 @@ class SelfAttention(nn.Module):
     batch_size, seqlen, embed_size = x.shape
     head_size = embed_size // self.num_heads
 
-    q, k, v  = self.attn_stack(x).split(self.embed_size, dim=2)
+    q, k, v  = self.attn_stack(x).split(embed_size, dim=2)
 
     # Output below is (batch_size, num_heads, seqlen, head_size)
     k = k.view(batch_size, seqlen, self.num_heads, head_size).transpose(1, 2)
