@@ -38,9 +38,9 @@ class SelfAttention(nn.Module):
     #   -> (batch_size, num_heads, seqlen, seqlen)
     if self.flash:
       y = torch.nn.functional.scaled_dot_product_attention(q, k, v,
-                                                           attn_mask=None,
+                                                           attn_mask=mask,
                                                            dropout_p=self.dropout if self.training else 0,
-                                                           is_causal=True)
+                                                           is_causal=mask is None)
     else:
       att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
       if mask is not None:
