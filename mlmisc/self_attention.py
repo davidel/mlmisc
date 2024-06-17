@@ -21,7 +21,7 @@ class SelfAttention(nn.Module):
     self.output_dropout = nn.Dropout(dropout)
     self.num_heads = num_heads
     self.dropout = dropout
-    self.flash = hasattr(torch.nn.functional, 'scaled_dot_product_attention')
+    self.flash = hasattr(F, 'scaled_dot_product_attention')
 
   def forward(self, x, mask=None):
     batch_size, seqlen, embed_size = x.shape
@@ -37,10 +37,10 @@ class SelfAttention(nn.Module):
     # (batch_size, num_heads, seqlen, head_size) x (batch_size, num_heads, head_size, seqlen)
     #   -> (batch_size, num_heads, seqlen, seqlen)
     if self.flash:
-      y = torch.nn.functional.scaled_dot_product_attention(q, k, v,
-                                                           attn_mask=mask,
-                                                           dropout_p=self.dropout if self.training else 0,
-                                                           is_causal=mask is None)
+      y = F.scaled_dot_product_attention(q, k, v,
+                                         attn_mask=mask,
+                                         dropout_p=self.dropout if self.training else 0,
+                                         is_causal=mask is None)
     else:
       att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
       if mask is not None:
