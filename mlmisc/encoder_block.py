@@ -65,7 +65,7 @@ class EncoderBlock(nn.Module):
     # self.attn = nn.MultiheadAttention(input_dim, num_heads,
     #                                   dropout=attn_dropout,
     #                                   batch_first=True)
-    self.attn = MultiheadAttention(input_dim, num_heads,
+    self.attn = MultiHeadAttention(input_dim, num_heads,
                                    dropout=attn_dropout)
 
     self.linear_net = nn.Sequential(
