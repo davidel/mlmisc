@@ -14,7 +14,7 @@ class EncoderBlock(nn.Module):
     dropout = dropout or 0
 
     self.attn = nn.MultiheadAttention(input_dim, num_heads,
-                                      dropout=attn_dropout,
+                                      dropout=attn_dropout or 0,
                                       batch_first=True)
 
     self.linear_net = nn.Sequential(
