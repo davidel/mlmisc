@@ -4,14 +4,17 @@ import torch.nn as nn
 
 class EncoderBlock(nn.Module):
 
-  def __init__(self, input_dim, num_heads, dim_feedforward=None, dropout=None):
+  def __init__(self, input_dim, num_heads,
+               dim_feedforward=None,
+               attn_dropout=None,
+               dropout=None):
     super().__init__()
 
     dim_feedforward = dim_feedforward or (4 * input_dim)
     dropout = dropout or 0
 
     self.attn = nn.MultiheadAttention(input_dim, num_heads,
-                                      dropout=dropout,
+                                      dropout=attn_dropout,
                                       batch_first=True)
 
     self.linear_net = nn.Sequential(
