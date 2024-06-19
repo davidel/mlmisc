@@ -81,7 +81,7 @@ class EncoderBlock(nn.Module):
 
   def forward(self, x, mask=None):
     # attn_out = self.attn(x, x, x, attn_mask=mask, need_weights=False)[0]
-    attn_out = self.attn(x, x, x, mask=mask)
+    attn_out = self.attn(x, mask=mask)
     x = x + self.dropout(attn_out)
     x = self.norm1(x)
 
