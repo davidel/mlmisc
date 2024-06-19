@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 
@@ -13,18 +15,18 @@ class Head(nn.Module):
     self.value = nn.Linear(embed_size, head_size, bias=bias)
     self.dropout = nn.Dropout(dropout) if dropout is not None else nn.Identity()
 
-  def forward(self, x, mask=None):
-    B, T, C = x.shape
+  def forward(self, k, q, v, mask=None):
+    B, T, C = k.shape
 
-    k = self.key(x)   # (B, T, C)
-    q = self.query(x) # (B, T, C)
-    wei = q @ k.transpose(-2, -1) / math.sqrt(C) # (B, T, C) @ (B, C, T) -> (B, T, T)
+    xk = self.key(k)   # (B, T, C)
+    xq = self.query(q) # (B, T, C)
+    wei = xq @ xk.transpose(-2, -1) / math.sqrt(C) # (B, T, C) @ (B, C, T) -> (B, T, T)
     if mask is not None:
       wei = wei.masked_fill(mask, float('-inf')) # (B, T, T)
     wei = nn.functional.softmax(wei, dim=-1) # (B, T, T)
     wei = self.dropout(wei)
-    v = self.value(x) # (B, T, C)
-    out = wei @ v # (B, T, T) @ (B, T, C) -> (B, T, C)
+    xv = self.value(v) # (B, T, C)
+    out = wei @ xv # (B, T, T) @ (B, T, C) -> (B, T, C)
 
     return out
 
@@ -43,8 +45,8 @@ class MultiHeadAttention(nn.Module):
     self.proj = nn.Linear(embed_size, embed_size)
     self.dropout = nn.Dropout(dropout) if dropout is not None else nn.Identity()
 
-  def forward(self, x, mask=None):
-    out = torch.cat([h(x, mask=mask) for h in self.heads], dim=-1)
+  def forward(self, k, q, v, mask=None):
+    out = torch.cat([h(k, q, v, mask=mask) for h in self.heads], dim=-1)
     out = self.dropout(self.proj(out))
 
     return out
@@ -81,7 +83,7 @@ class EncoderBlock(nn.Module):
 
   def forward(self, x, mask=None):
     # attn_out = self.attn(x, x, x, attn_mask=mask, need_weights=False)[0]
-    attn_out = self.attn(x, mask=mask)
+    attn_out = self.attn(x, x, x, mask=mask)
     x = x + self.dropout(attn_out)
     x = self.norm1(x)
 
