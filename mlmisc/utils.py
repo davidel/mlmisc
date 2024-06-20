@@ -28,6 +28,7 @@ def model_shape(model, shape, device=None):
 def model_save(model, path):
   alog.debug(f'Saving model to {path}')
   torch.save(model.state_dict(), path)
+  alog.debug(f'Model saved to {path}')
 
 
 def model_load(model, path, device=None):
