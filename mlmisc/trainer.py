@@ -41,7 +41,7 @@ class Trainer:
     self._load_state(dict())
 
   def _load_state(self, state):
-    self._num_samples = TimeTracker(total=state.get('num_samples', 0))
+    self._num_samples = state.get('num_samples', 0)
     self._train_time = TimeTracker(total=state.get('train_time', 0))
     self._val_time = TimeTracker(total=state.get('val_time', 0))
     self._save_time = TimeTracker(total=state.get('save_time', 0))
