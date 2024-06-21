@@ -74,6 +74,8 @@ class Trainer:
 
     val_batches = int(val_pct * len(loader)) if val_pct is not None else len(loader)
 
+    alog.info(f'Running validation on {val_batches} batches')
+
     self._val_time.start()
 
     model.eval()
