@@ -21,7 +21,7 @@ class TimeTracker:
 
   def track(self):
     now = time.time()
-    self.total += now - self.stamp
+    self.total += datetime.timedelta(seconds=now - self.stamp)
     self.stamp = now
 
     return now
