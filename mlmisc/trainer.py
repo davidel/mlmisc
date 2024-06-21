@@ -1,4 +1,5 @@
 import array
+import datetime
 import time
 
 from mlmisc import utils as mlu
@@ -11,7 +12,7 @@ class TimeTracker:
 
   def __init__(self, total=0):
     self.stamp = None
-    self.total = total
+    self.total = total if isinstance(total, datetime.timedelta) else datetime.timedelta(seconds=total)
 
   def start(self):
     self.stamp = time.time()
@@ -24,15 +25,6 @@ class TimeTracker:
     self.stamp = now
 
     return now
-
-
-def _etime(t):
-  h = t // 3600
-  t = t - h * 3600
-  m = t // 60
-  t = t - m * 60
-
-  return f'{int(h):02d}h{int(m):02d}m{int(t):02d}s'
 
 
 class Trainer:
@@ -67,11 +59,9 @@ class Trainer:
     return model.to(device) if device is not None else model
 
   def _times(self):
-    train_time = _etime(self._train_time.total)
-    val_time = _etime(self._val_time.total)
-    save_time = _etime(self._save_time.total)
-
-    return f'train={train_time}\tval={val_time}\tsave={save_time}'
+    return f'train={self._train_time.total}\t' \
+      f'val={self._val_time.total}\t' \
+      f'save={self._save_time.total}'
 
   def _val_loss(self, model, val_data, val_pct=None, device=None, batch_size=None):
     loader = torch.utils.data.DataLoader(val_data,
