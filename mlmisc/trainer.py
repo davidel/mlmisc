@@ -26,6 +26,10 @@ class TimeTracker:
 
     return now
 
+  @property
+  def seconds(self):
+    return self.total.total_seconds()
+
 
 class Trainer:
 
@@ -128,7 +132,7 @@ class Trainer:
         train_losses.append(loss.item())
         if tb_writer is not None:
           tb_writer.add_scalar('Train Loss', train_losses[-1],
-                               walltime=self._train_time.total)
+                               walltime=self._train_time.seconds)
 
         epoch = 100 * self._num_samples / (num_batches * batch_size)
         alog.info(f'Batch {i + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
@@ -149,7 +153,7 @@ class Trainer:
                                device=device)
         val_losses.append(vloss)
         if tb_writer is not None:
-          tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.total)
+          tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.seconds)
         alog.info(f'Validation Loss {vloss:.4f}')
         tval = self._train_time.start()
 
