@@ -72,7 +72,7 @@ class Trainer:
 
     self._val_time.start()
 
-    model.val()
+    model.eval()
     with torch.no_grad():
       losses = []
       for i, (x, y) in enumerate(loader):
