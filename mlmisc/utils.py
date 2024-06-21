@@ -19,14 +19,14 @@ def get_device(kind=None):
 def model_shape(model, shape, device=None):
   model.eval()
   with torch.no_grad():
-    zin = torch.zeros([1] + list(shape), device=device)
+    zin = torch.zeros((1,) + tuple(shape), device=device)
     out = model(zin)
 
-    return out[-1].shape[1:]
+    return out.shape[1:]
 
 
 def model_save(model, path):
-  alog.debug(f'Saving model to {path}')
+  alog.debug(f'Saving model to {path} ...')
   torch.save(model.state_dict(), path)
   alog.debug(f'Model saved to {path}')
 
@@ -61,8 +61,9 @@ def save_data(path, **kwargs):
     else:
       data[name] = ndata
 
-  alog.debug(f'Saving data to {path}')
+  alog.debug(f'Saving data to {path} ...')
   torch.save(data, path)
+  alog.debug(f'Data saved to {path}')
 
 
 def load_data(path, **kwargs):
