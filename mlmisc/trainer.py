@@ -57,7 +57,7 @@ class Trainer:
   def save_model(self, model, path):
     self._save_time.start()
     state = self._get_state()
-    mlu.save_data(model=model, **state)
+    mlu.save_data(path, model=model, **state)
     self._save_time.track()
 
   def load_model(self, model, path, device=None):
