@@ -60,11 +60,11 @@ class Trainer:
     mlu.save_data(model=model, **state)
     self._save_time.track()
 
-  def load_model(self, model, path):
+  def load_model(self, model, path, device=None):
     state = mlu.load_data(path, model=model)
     self._load_state(state)
 
-    return model
+    return model.to(device) if device is not None else model
 
   def _times(self):
     train_time = _etime(self._train_time.total)
