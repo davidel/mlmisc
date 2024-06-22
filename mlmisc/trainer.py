@@ -50,14 +50,14 @@ class Trainer:
       save_time=self._save_time.total,
     )
 
-  def save_model(self, model, path):
+  def save_model(self, model, path, **kwargs):
     self._save_time.start()
     state = self._get_state()
-    mlu.save_data(path, model=model, **state)
+    mlu.save_data(path, model=model, **kwargs, **state)
     self._save_time.track()
 
-  def load_model(self, model, path, device=None):
-    state = mlu.load_data(path, model=model)
+  def load_model(self, model, path, device=None, **kwargs):
+    state = mlu.load_data(path, model=model, **kwargs)
     self._load_state(state)
 
     return model.to(device) if device is not None else model
