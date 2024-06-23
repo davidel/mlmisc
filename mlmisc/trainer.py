@@ -5,7 +5,6 @@ import time
 from mlmisc import utils as mlu
 import numpy as np
 from py_misc_utils import alog
-from py_misc_utils import break_control as pybc
 import torch
 
 
@@ -122,7 +121,6 @@ class Trainer:
 
     model.train()
 
-    bc = pybc.create()
     train_losses, val_losses = array.array('f'), array.array('f')
     for i, (x, y) in enumerate(loader):
       if device is not None:
@@ -166,10 +164,6 @@ class Trainer:
           tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.seconds)
         alog.info(f'Validation Loss {vloss:.4f}')
         tval = self._train_time.start()
-
-      if bc.hit():
-        alog.info(f'User request training interruption at batch {i + 1} of {num_batches}')
-        break
 
     if scheduler is not None:
       scheduler.step(np.mean(val_losses))
