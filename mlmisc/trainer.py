@@ -67,20 +67,16 @@ class Trainer:
       f'val={self._val_time.total}\t' \
       f'save={self._save_time.total}'
 
-  def _val_loss(self, model, val_data, val_pct=None, device=None, batch_size=None):
+  def _val_loss(self, model, val_data, val_time=None, device=None, batch_size=None):
     loader = torch.utils.data.DataLoader(val_data,
                                          batch_size=batch_size or 1,
                                          shuffle=True)
 
-    val_batches = int(val_pct * len(loader)) if val_pct is not None else len(loader)
-
-    alog.info(f'Running validation on {val_batches} batches')
-
-    self._val_time.start()
+    alog.info(f'Running validation on {len(loader)} batches')
 
     model.eval()
     with torch.no_grad():
-      losses = []
+      losses, val_start = [], self._val_time.start()
       for i, (x, y) in enumerate(loader):
         if device is not None:
           x, y = x.to(device), y.to(device)
@@ -88,7 +84,9 @@ class Trainer:
         _, loss = model(x, targets=y)
         losses.append(loss.item())
 
-        if i > val_batches:
+        if val_time is not None and time.time() > val_start + val_time:
+          alog.info(f'Validation run on {i} of {len(loader)} batches due to ' \
+                    f'{datetime.timedelta(seconds=val_time)} required time stop')
           break
 
     model.train()
@@ -100,7 +98,7 @@ class Trainer:
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
                   scheduler=None,
-                  val_pct=None,
+                  val_time=None,
                   loss_logstep=60,
                   val_logstep=900,
                   model_chkptstep=600,
@@ -152,7 +150,7 @@ class Trainer:
       if now > tval + val_logstep:
         self._train_time.track()
         vloss = self._val_loss(model, val_data,
-                               val_pct=val_pct,
+                               val_time=val_time,
                                batch_size=batch_size,
                                device=device)
         val_losses.append(vloss)
