@@ -144,7 +144,9 @@ class Trainer:
 
       if model_path is not None and now > tsave + model_chkptstep:
         self._train_time.track()
-        self.save_model(model, model_path)
+        self.save_model(model, model_path,
+                        optimizer=optimizer,
+                        scheduler=scheduler)
         tsave = self._train_time.start()
 
       if now > tval + val_logstep:
