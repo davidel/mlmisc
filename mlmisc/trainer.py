@@ -56,11 +56,17 @@ class Trainer:
     mlu.save_data(path, model=model, **kwargs, **state)
     self._save_time.track()
 
-  def load_model(self, model, path, device=None, **kwargs):
-    state = mlu.load_data(path, model=model, **kwargs)
+  def load_model(self, model, path, device=None):
+    state = mlu.load_data(path, model=model)
     self._load_state(state)
 
-    return model.to(device) if device is not None else model
+    return model.to(device) if device is not None else model, state
+
+  def load_aux_state(self, state, **kwargs):
+    for name, obj in kwargs.items():
+      ostate = state.get(name)
+      if ostate is not None:
+        obj.load_state_dict(ostate)
 
   def _times(self):
     return f'train={self._train_time.total}\t' \
