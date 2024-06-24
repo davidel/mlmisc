@@ -106,6 +106,31 @@ class Trainer:
 
     return np.mean(losses) if losses else None
 
+  def _log_train_loss(self, loss, batch_num, num_batches, batch_size, tb_writer):
+    epoch = 100 * self._num_samples / (num_batches * batch_size)
+    if tb_writer is not None:
+      tb_writer.add_scalar('Train Loss', loss, global_step=int(epoch * 10))
+
+    alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
+              f'Train Loss {loss:.4f}')
+    alog.info(f'Times: {self._times()}')
+
+  def _run_validation(self, model, val_data, val_time, batch_size, batch_num, num_batches,
+                      device, should_stop):
+    vloss = self._val_loss(model, val_data,
+                           val_time=val_time,
+                           batch_size=batch_size,
+                           device=device,
+                           should_stop=should_stop)
+    if vloss is not None:
+      epoch = 100 * self._num_samples / (num_batches * batch_size)
+      if tb_writer is not None:
+        tb_writer.add_scalar('Validation Loss', vloss, global_step=int(epoch * 10))
+      alog.info(f'Batch {i + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
+                f'Validation Loss {vloss:.4f}')
+
+    return vloss
+
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
                   scheduler=None,
@@ -142,14 +167,7 @@ class Trainer:
       now = self._train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(loss.item())
-        if tb_writer is not None:
-          tb_writer.add_scalar('Train Loss', train_losses[-1],
-                               walltime=self._train_time.seconds)
-
-        epoch = 100 * self._num_samples / (num_batches * batch_size)
-        alog.info(f'Batch {i + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
-                  f'Train Loss {train_losses[-1]:.4f}')
-        alog.info(f'Times: {self._times()}')
+        self._log_train_loss(train_losses[-1], i, num_batches, batch_size, tb_writer)
         tstep = now
 
       if model_path is not None and now > tsave + model_chkptstep:
@@ -161,16 +179,10 @@ class Trainer:
 
       if now > tval + val_logstep:
         self._train_time.track()
-        vloss = self._val_loss(model, val_data,
-                               val_time=val_time,
-                               batch_size=batch_size,
-                               device=device,
-                               should_stop=should_stop)
+        vloss = self._run_validation(model, val_data, val_time, batch_size, i,
+                                     num_batches, device, should_stop)
         if vloss is not None:
           val_losses.append(vloss)
-          if tb_writer is not None:
-            tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.seconds)
-          alog.info(f'Validation Loss {vloss:.4f}')
         tval = self._train_time.start()
 
       if callable(should_stop) and should_stop():
