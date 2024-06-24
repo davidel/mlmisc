@@ -118,7 +118,7 @@ class Trainer:
       epoch = 100 * self._num_samples / (num_batches * batch_size)
       if tb_writer is not None:
         tb_writer.add_scalar('Validation Loss', vloss, global_step=int(epoch * 10))
-      alog.info(f'Batch {i + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
+      alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
                 f'Validation Loss {vloss:.4f}')
 
     return vloss
