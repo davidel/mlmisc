@@ -73,7 +73,11 @@ class Trainer:
       f'val={self._val_time.total}\t' \
       f'save={self._save_time.total}'
 
-  def _val_loss(self, model, val_data, val_time=None, device=None, batch_size=None):
+  def _val_loss(self, model, val_data,
+                val_time=None,
+                device=None,
+                batch_size=None,
+                should_stop=None):
     loader = torch.utils.data.DataLoader(val_data,
                                          batch_size=batch_size or 1,
                                          shuffle=True)
@@ -90,7 +94,8 @@ class Trainer:
         _, loss = model(x, targets=y)
         losses.append(loss.item())
 
-        if val_time is not None and time.time() > val_start + val_time:
+        if ((val_time is not None and time.time() > val_start + val_time) or
+            (callable(should_stop) and should_stop())):
           alog.info(f'Validation run on {i} of {len(loader)} batches due to ' \
                     f'{datetime.timedelta(seconds=val_time)} required time stop')
           break
@@ -99,7 +104,7 @@ class Trainer:
 
     self._val_time.track()
 
-    return np.mean(losses)
+    return np.mean(losses) if losses else None
 
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
@@ -159,11 +164,13 @@ class Trainer:
         vloss = self._val_loss(model, val_data,
                                val_time=val_time,
                                batch_size=batch_size,
-                               device=device)
-        val_losses.append(vloss)
-        if tb_writer is not None:
-          tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.seconds)
-        alog.info(f'Validation Loss {vloss:.4f}')
+                               device=device,
+                               should_stop=should_stop)
+        if vloss is not None:
+          val_losses.append(vloss)
+          if tb_writer is not None:
+            tb_writer.add_scalar('Validation Loss', vloss, walltime=self._train_time.seconds)
+          alog.info(f'Validation Loss {vloss:.4f}')
         tval = self._train_time.start()
 
       if callable(should_stop) and should_stop():
