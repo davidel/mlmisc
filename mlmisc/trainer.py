@@ -113,7 +113,7 @@ class Trainer:
 
   def _run_validation(self, model, val_data, val_time, batch_size, batch_num, num_batches,
                       device, should_stop, tb_writer):
-    vloss = self._val_loss(model, val_data, val_time, batch_size, device, should_stop)
+    vloss = self._val_loss(model, val_data, val_time, device, batch_size, should_stop)
     if vloss is not None:
       epoch = 100 * self._num_samples / (num_batches * batch_size)
       if tb_writer is not None:
