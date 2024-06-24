@@ -116,7 +116,7 @@ class Trainer:
     alog.info(f'Times: {self._times()}')
 
   def _run_validation(self, model, val_data, val_time, batch_size, batch_num, num_batches,
-                      device, should_stop):
+                      device, should_stop, tb_writer):
     vloss = self._val_loss(model, val_data,
                            val_time=val_time,
                            batch_size=batch_size,
@@ -180,7 +180,7 @@ class Trainer:
       if now > tval + val_logstep:
         self._train_time.track()
         vloss = self._run_validation(model, val_data, val_time, batch_size, i,
-                                     num_batches, device, should_stop)
+                                     num_batches, device, should_stop, tb_writer)
         if vloss is not None:
           val_losses.append(vloss)
         tval = self._train_time.start()
