@@ -73,11 +73,7 @@ class Trainer:
       f'val={self._val_time.total}\t' \
       f'save={self._save_time.total}'
 
-  def _val_loss(self, model, val_data,
-                val_time=None,
-                device=None,
-                batch_size=None,
-                should_stop=None):
+  def _val_loss(self, model, val_data, val_time, device, batch_size, should_stop):
     loader = torch.utils.data.DataLoader(val_data,
                                          batch_size=batch_size or 1,
                                          shuffle=True)
@@ -117,11 +113,7 @@ class Trainer:
 
   def _run_validation(self, model, val_data, val_time, batch_size, batch_num, num_batches,
                       device, should_stop, tb_writer):
-    vloss = self._val_loss(model, val_data,
-                           val_time=val_time,
-                           batch_size=batch_size,
-                           device=device,
-                           should_stop=should_stop)
+    vloss = self._val_loss(model, val_data, val_time, batch_size, device, should_stop)
     if vloss is not None:
       epoch = 100 * self._num_samples / (num_batches * batch_size)
       if tb_writer is not None:
