@@ -109,7 +109,8 @@ class Trainer:
                   val_logstep=900,
                   model_chkptstep=600,
                   model_path=None,
-                  tb_writer=None):
+                  tb_writer=None,
+                  should_stop=None):
     loader = torch.utils.data.DataLoader(train_data,
                                          batch_size=batch_size,
                                          shuffle=True)
@@ -165,10 +166,19 @@ class Trainer:
         alog.info(f'Validation Loss {vloss:.4f}')
         tval = self._train_time.start()
 
-    if scheduler is not None:
+      if callable(should_stop) and should_stop():
+        alog.info(f'Interrupted at batch {i + 1}/{num_batches}!')
+        break
+
+    if scheduler is not None and val_losses:
       scheduler.step(np.mean(val_losses))
 
     self._train_time.track()
+
+    if model_path is not None:
+      self.save_model(model, model_path,
+                      optimizer=optimizer,
+                      scheduler=scheduler)
 
     return train_losses, val_losses
 
