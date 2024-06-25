@@ -8,6 +8,8 @@ import numpy as np
 import py_misc_utils.alog as alog
 import torch
 
+from . import auto_module as am
+
 
 def get_device(kind=None):
   if kind is None:
