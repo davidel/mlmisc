@@ -66,6 +66,12 @@ class Trainer:
 
     return model, state
 
+  def load_model_old(self, model, path, device=None):
+    state = mlu.load_data(path, model=model)
+    self._load_state(state)
+
+    return model.to(device) if device is not None else model, state
+
   def load_aux_state(self, state, **kwargs):
     for name, obj in kwargs.items():
       ostate = state.get(name)
