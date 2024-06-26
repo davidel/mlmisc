@@ -79,7 +79,7 @@ def load_data(path, **kwargs):
       sdobj.load_state_dict(ndata)
     elif isinstance(ndata, dict) and am.is_module(ndata):
       data[name] = am.load_module(ndata)
-    else
+    else:
       data[name] = ndata
 
   return data
