@@ -77,7 +77,9 @@ def load_data(path, **kwargs):
     sdobj = kwargs.get(name, None)
     if sdobj is not None:
       sdobj.load_state_dict(ndata)
-    else:
+    elif isinstance(ndata, dict) and am.is_module(ndata):
+      data[name] = am.load_module(ndata)
+    else
       data[name] = ndata
 
   return data

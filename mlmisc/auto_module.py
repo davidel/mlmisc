@@ -4,15 +4,15 @@ import torch
 import torch.nn as nn
 
 
-_CLASS_KEY = 'mclass'
-_ARGS_KEY = 'args'
-_KWARGS_KEY = 'kwargs'
-_STATE_KEY = 'AUTO_MODULE_ARGS'
+_CLASS = 'mclass'
+_ARGS = 'args'
+_KWARGS = 'kwargs'
+_STATE = '__AM_ARGS__'
 
 
 def _wrapped_state_dict(mod, *args, **kwargs):
   state = mod._saved_state_dict(*args, **kwargs)
-  state[_STATE_KEY] = mod._create_args
+  state[_STATE] = mod._create_args
 
   return state
 
@@ -29,17 +29,23 @@ def _wrap_module(mod, create_args):
 def create_module(mclass, *args, **kwargs):
   mod = mclass(*args, **kwargs)
 
-  return _wrap_module(mod, dict(mclass=mclass, args=args, kwargs=kwargs))
+  create_args = {
+    _CLASS: mclass,
+    _ARGS: args,
+    _KWARGS: kwargs,
+  }
+
+  return _wrap_module(mod, create_args)
 
 
 def is_module(state):
-  return _STATE_KEY in state
+  return _STATE in state
 
 
 def load_module(state):
-  create_args = state.pop(_STATE_KEY)
+  create_args = state.pop(_STATE)
 
-  lmod = create_args[_CLASS_KEY](*create_args[_ARGS_KEY], **create_args[_KWARGS_KEY])
+  lmod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
   lmod.load_state_dict(state)
   lmod = _wrap_module(lmod, create_args)
 
