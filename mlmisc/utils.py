@@ -33,8 +33,11 @@ def model_save(model, path):
   alog.debug(f'Model saved to {path}')
 
 
-def model_load(model, path, device=None):
-  if os.path.exists(path):
+def model_load(path, model=None, device=None):
+  if model is None:
+    alog.debug(f'Loading model state from {path}')
+    model = am.load_module(path)
+  elif os.path.exists(path):
     alog.debug(f'Loading model state from {path}')
     model.load_state_dict(torch.load(path))
 
