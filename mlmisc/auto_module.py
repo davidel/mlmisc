@@ -43,6 +43,9 @@ def is_module(state):
 
 
 def load_module(state):
+  if not isinstance(state, dict):
+    state = torch.load(state)
+
   create_args = state.pop(_STATE)
 
   lmod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
