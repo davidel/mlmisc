@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import py_misc_utils.alog as alog
 import torch
+import torch.utils.tensorboard
 
 from . import auto_module as am
 
