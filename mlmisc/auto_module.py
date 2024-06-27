@@ -42,9 +42,8 @@ def is_module(state):
   return _STATE in state
 
 
-def load_module(state):
-  if not isinstance(state, dict):
-    state = torch.load(state)
+def load_module(source):
+  state = source if isinstance(source, dict) else torch.load(source)
 
   create_args = state.pop(_STATE)
 
