@@ -55,10 +55,10 @@ def get_tensors_stats(prefix, tensor_list,
   for dev, names in tensor_devices.items():
     device_stats.append(f'  {dev}\t{names}')
 
-  stats.sort(key=lambda s: getattr(s, sort_by))
+  stats.sort(key=lambda s: getattr(s, sort_by), reverse=True)
   if top_n is not None:
     n = top_n if isinstance(top_n, int) else int(top_n * len(stats))
-    stats = stats[-n:]
+    stats = stats[: n]
 
   value_stats = [f'{prefix} Values:']
   for tstat in stats:
