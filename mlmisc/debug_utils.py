@@ -38,7 +38,9 @@ def tensor_stats(tensor,
 def get_tensors_stats(prefix, tensor_list,
                       device=None,
                       abs_stats=True,
-                      percentiles=()):
+                      sort_by='mean',
+                      percentiles=(),
+                      top_n=None):
   tensor_devices = collections.defaultdict(list)
   stats = []
   for name, tensor in tensor_list:
@@ -53,33 +55,42 @@ def get_tensors_stats(prefix, tensor_list,
   for dev, names in tensor_devices.items():
     device_stats.append(f'  {dev}\t{names}')
 
-  stats.sort(key=lambda s: s.mean)
+  stats.sort(key=lambda s: getattr(s, sort_by))
+  if top_n is not None:
+    n = top_n if isinstance(top_n, int) else int(top_n * len(stats))
+    stats = stats[-n:]
 
-  value_stats = [f'{prefix}: percentiles={percentiles}']
+  value_stats = [f'{prefix} Values:']
   for tstat in stats:
     pcts = pyu.format(tstat.percentile_values, '.5e')
     value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmin={tstat.min:.5e}\t' \
                        f'max={tstat.max:.5e}\tmean={tstat.mean:.5e}' \
                        f'\tstd={tstat.std:.5e}\tpercentiles={pcts}')
 
-  pct_stats = [f'{prefix} Percentiles:']
-  for gp in sorted(percentiles):
-    x = min(int(gp * len(stats)), len(stats) - 1)
-    tstat = stats[x]
-    pct_stats.append(f'  {gp * 100:.1f}%\t= {tstat.mean:.5e} ({tstat.name})')
-
   return pyu.make_object(device_stats='\n'.join(device_stats),
-                         value_stats='\n'.join(value_stats),
-                         pct_stats='\n'.join(pct_stats))
+                         value_stats='\n'.join(value_stats))
 
 
-def get_parameters_stats(model, device=None, percentiles=()):
+def get_parameters_stats(model,
+                         device=None,
+                         abs_stats=True,
+                         sort_by='mean',
+                         percentiles=(),
+                         top_n=None):
   return get_tensors_stats('Parameters', model.named_parameters(),
                            device=device,
-                           percentiles=percentiles)
+                           abs_stats=abs_stats,
+                           sort_by=sort_by,
+                           percentiles=percentiles,
+                           top_n=top_n)
 
 
-def get_grads_stats(model, device=None, percentiles=()):
+def get_grads_stats(model,
+                    device=None,
+                    abs_stats=True,
+                    sort_by='mean',
+                    percentiles=(),
+                    top_n=None):
   grads = []
   for name, param in model.named_parameters():
     if param.grad is not None:
@@ -89,7 +100,10 @@ def get_grads_stats(model, device=None, percentiles=()):
 
   return get_tensors_stats('Gradients', grads,
                            device=device,
-                           percentiles=percentiles)
+                           abs_stats=abs_stats,
+                           sort_by=sort_by,
+                           percentiles=percentiles,
+                           top_n=top_n)
 
 
 def show_tensors_stats(tstats, slevs):

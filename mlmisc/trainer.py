@@ -177,14 +177,12 @@ class Trainer:
 
       if now > tval + val_logstep:
         self._train_time.track()
+        du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
+                              dict(value_stats=alog.DEBUG))
         vloss = self._run_validation(model, val_data, val_time, batch_size, i,
                                      num_batches, device, should_stop, tb_writer)
         if vloss is not None:
           val_losses.append(vloss)
-
-        du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
-                              dict(value_stats=alog.DEBUG0,
-                                   pct_stats=alog.DEBUG))
         tval = self._train_time.start()
 
       if callable(should_stop) and should_stop():
