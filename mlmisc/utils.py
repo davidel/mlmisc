@@ -72,7 +72,7 @@ def save_data(path, **kwargs):
   alog.debug(f'Data saved to {path}')
 
 
-def load_data(path, **kwargs):
+def load_data(path, strict=True, **kwargs):
   alog.debug(f'Loading data from {path}')
   td = torch.load(path)
 
@@ -82,7 +82,7 @@ def load_data(path, **kwargs):
     if sdobj is not None:
       sdobj.load_state_dict(ndata)
     elif isinstance(ndata, dict) and am.is_module(ndata):
-      data[name] = am.load_module(ndata)
+      data[name] = am.load_module(ndata, strict=strict)
     else:
       data[name] = ndata
 
