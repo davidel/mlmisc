@@ -42,13 +42,13 @@ def is_module(state):
   return _STATE in state
 
 
-def load_module(source):
+def load_module(source, strict=True):
   state = source if isinstance(source, dict) else torch.load(source)
 
   create_args = state.pop(_STATE)
 
   lmod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
-  lmod.load_state_dict(state)
+  lmod.load_state_dict(state, strict=strict)
   lmod = _wrap_module(lmod, create_args)
 
   return lmod
