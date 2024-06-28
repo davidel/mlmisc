@@ -2,10 +2,12 @@ import array
 import datetime
 import time
 
-from mlmisc import utils as mlu
 import numpy as np
 from py_misc_utils import alog
 import torch
+
+from . import utils as ut
+from . import debug_utils as du
 
 
 class TimeTracker:
@@ -53,11 +55,11 @@ class Trainer:
   def save_model(self, model, path, **kwargs):
     self._save_time.start()
     state = self._get_state()
-    mlu.save_data(path, model=model, **kwargs, **state)
+    ut.save_data(path, model=model, **kwargs, **state)
     self._save_time.track()
 
   def load_model(self, path, device=None, strict=True):
-    state = mlu.load_data(path, strict=strict)
+    state = ut.load_data(path, strict=strict)
     self._load_state(state)
 
     model = state['model']
@@ -179,6 +181,10 @@ class Trainer:
                                      num_batches, device, should_stop, tb_writer)
         if vloss is not None:
           val_losses.append(vloss)
+
+        du.show_tensors_stats(du.get_grads_stats(model),
+                              dict(value_stats=alog.DEBUG0,
+                                   pct_stats=alog.DEBUG))
         tval = self._train_time.start()
 
       if callable(should_stop) and should_stop():
