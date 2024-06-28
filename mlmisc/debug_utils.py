@@ -5,34 +5,38 @@ from py_misc_utils import utils as pyu
 import torch
 
 
-_STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
+STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
 
 
 def tensor_stats(tensor,
                  name=None,
                  device=None,
                  abs_stats=True,
-                 percentiles=_STD_PCTILES):
+                 percentiles=None):
   if device is not None:
     tensor = tensor.to(device)
   if abs_stats:
     tensor = torch.abs(tensor)
-  pct_tensor = torch.tensor(percentiles).to(tensor.device)
   std, mean = torch.std_mean(tensor)
-  quantile = torch.quantile(tensor, pct_tensor)
+
+  if percentiles is not None:
+    pct_tensor = torch.tensor(percentiles).to(tensor.device)
+    quantile = torch.quantile(tensor, pct_tensor).tolist()
+  else:
+    quantile = []
 
   return pyu.make_object(name=name,
                          shape=tuple(tensor.shape),
                          std=std.item(),
                          mean=mean.item(),
-                         percentile_values=quantile.tolist(),
+                         percentile_values=quantile,
                          percentiles=percentiles)
 
 
 def get_tensors_stats(prefix, tensor_list,
                       device=None,
                       abs_stats=True,
-                      percentiles=_STD_PCTILES):
+                      percentiles=None):
   tensor_devices = collections.defaultdict(list)
   stats = []
   for name, tensor in tensor_list:
@@ -66,13 +70,13 @@ def get_tensors_stats(prefix, tensor_list,
                          pct_stats='\n'.join(pct_stats))
 
 
-def get_parameters_stats(model, device=None, percentiles=_STD_PCTILES):
+def get_parameters_stats(model, device=None, percentiles=None):
   return get_tensors_stats('Parameters', model.named_parameters(),
                            device=device,
                            percentiles=percentiles)
 
 
-def get_grads_stats(model, device=None, percentiles=_STD_PCTILES):
+def get_grads_stats(model, device=None, percentiles=None):
   grads = []
   for name, param in model.named_parameters():
     if param.grad is not None:
