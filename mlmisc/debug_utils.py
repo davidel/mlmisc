@@ -10,8 +10,11 @@ _STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
 
 def tensor_stats(tensor,
                  name=None,
+                 device=None,
                  abs_stats=True,
                  percentiles=_STD_PCTILES):
+  if device is not None:
+    tensor = tensor.to(device)
   if abs_stats:
     tensor = torch.abs(tensor)
   pct_tensor = torch.tensor(percentiles).to(tensor.device)
@@ -27,6 +30,7 @@ def tensor_stats(tensor,
 
 
 def get_tensors_stats(prefix, tensor_list,
+                      device=None,
                       abs_stats=True,
                       percentiles=_STD_PCTILES):
   tensor_devices = collections.defaultdict(list)
@@ -34,6 +38,7 @@ def get_tensors_stats(prefix, tensor_list,
   for name, tensor in tensor_list:
     stats.append(tensor_stats(tensor,
                               name=name,
+                              device=device,
                               abs_stats=abs_stats,
                               percentiles=percentiles))
     tensor_devices[tensor.device].append(name)
@@ -61,12 +66,13 @@ def get_tensors_stats(prefix, tensor_list,
                          pct_stats='\n'.join(pct_stats))
 
 
-def get_parameters_stats(model, percentiles=_STD_PCTILES):
+def get_parameters_stats(model, device=None, percentiles=_STD_PCTILES):
   return get_tensors_stats('Parameters', model.named_parameters(),
+                           device=device,
                            percentiles=percentiles)
 
 
-def get_grads_stats(model, percentiles=_STD_PCTILES):
+def get_grads_stats(model, device=None, percentiles=_STD_PCTILES):
   grads = []
   for name, param in model.named_parameters():
     if param.grad is not None:
@@ -74,7 +80,9 @@ def get_grads_stats(model, percentiles=_STD_PCTILES):
     else:
       alog.debug0(f'Parameter has no gradient: {name}')
 
-  return get_tensors_stats('Gradients', grads, percentiles=percentiles)
+  return get_tensors_stats('Gradients', grads,
+                           device=device,
+                           percentiles=percentiles)
 
 
 def show_tensors_stats(tstats, slevs):
