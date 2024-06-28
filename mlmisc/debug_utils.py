@@ -12,14 +12,14 @@ def tensor_stats(tensor,
                  name=None,
                  device=None,
                  abs_stats=True,
-                 percentiles=None):
+                 percentiles=()):
   if device is not None:
     tensor = tensor.to(device)
   if abs_stats:
     tensor = torch.abs(tensor)
   std, mean = torch.std_mean(tensor)
 
-  if percentiles is not None:
+  if percentiles:
     pct_tensor = torch.tensor(percentiles).to(tensor.device)
     quantile = torch.quantile(tensor, pct_tensor).tolist()
   else:
@@ -27,6 +27,8 @@ def tensor_stats(tensor,
 
   return pyu.make_object(name=name,
                          shape=tuple(tensor.shape),
+                         min=torch.min(tensor).item(),
+                         max=torch.max(tensor).item(),
                          std=std.item(),
                          mean=mean.item(),
                          percentile_values=quantile,
@@ -36,7 +38,7 @@ def tensor_stats(tensor,
 def get_tensors_stats(prefix, tensor_list,
                       device=None,
                       abs_stats=True,
-                      percentiles=None):
+                      percentiles=()):
   tensor_devices = collections.defaultdict(list)
   stats = []
   for name, tensor in tensor_list:
@@ -56,7 +58,8 @@ def get_tensors_stats(prefix, tensor_list,
   value_stats = [f'{prefix}: percentiles={percentiles}']
   for tstat in stats:
     pcts = pyu.format(tstat.percentile_values, '.5e')
-    value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmean={tstat.mean:.5e}' \
+    value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmin={tstat.min:.5e}\t' \
+                       f'max={tstat.max:.5e}\tmean={tstat.mean:.5e}' \
                        f'\tstd={tstat.std:.5e}\tpercentiles={pcts}')
 
   pct_stats = [f'{prefix} Percentiles:']
@@ -70,13 +73,13 @@ def get_tensors_stats(prefix, tensor_list,
                          pct_stats='\n'.join(pct_stats))
 
 
-def get_parameters_stats(model, device=None, percentiles=None):
+def get_parameters_stats(model, device=None, percentiles=()):
   return get_tensors_stats('Parameters', model.named_parameters(),
                            device=device,
                            percentiles=percentiles)
 
 
-def get_grads_stats(model, device=None, percentiles=None):
+def get_grads_stats(model, device=None, percentiles=()):
   grads = []
   for name, param in model.named_parameters():
     if param.grad is not None:
