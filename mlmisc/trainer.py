@@ -182,7 +182,7 @@ class Trainer:
         if vloss is not None:
           val_losses.append(vloss)
 
-        du.show_tensors_stats(du.get_grads_stats(model),
+        du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                               dict(value_stats=alog.DEBUG0,
                                    pct_stats=alog.DEBUG))
         tval = self._train_time.start()
