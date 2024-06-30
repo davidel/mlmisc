@@ -18,6 +18,7 @@ def tensor_stats(tensor,
   if abs_stats:
     tensor = torch.abs(tensor)
   std, mean = torch.std_mean(tensor)
+  mm = torch.aminmax(tensor)
 
   if percentiles:
     pct_tensor = torch.tensor(percentiles).to(tensor.device)
@@ -27,8 +28,8 @@ def tensor_stats(tensor,
 
   return pyu.make_object(name=name,
                          shape=tuple(tensor.shape),
-                         min=torch.min(tensor).item(),
-                         max=torch.max(tensor).item(),
+                         min=mm.min.item(),
+                         max=mm.max.item(),
                          std=std.item(),
                          mean=mean.item(),
                          percentile_values=quantile,
