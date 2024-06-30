@@ -43,7 +43,7 @@ def is_module(state):
 
 
 def load_module(source, strict=True):
-  state = source if isinstance(source, dict) else torch.load(source)
+  state = source.copy() if isinstance(source, dict) else torch.load(source)
 
   create_args = state.pop(_STATE)
 
