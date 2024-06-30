@@ -129,6 +129,12 @@ class Trainer:
 
     return vloss
 
+  def _show_stats(self, model):
+    du.show_tensors_stats(du.get_parameters_stats(model, device='cpu'),
+                          dict(value_stats=alog.DEBUG))
+    du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
+                          dict(value_stats=alog.DEBUG))
+
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
                   scheduler=None,
@@ -177,8 +183,7 @@ class Trainer:
 
       if now > tval + val_logstep:
         self._train_time.track()
-        du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
-                              dict(value_stats=alog.DEBUG))
+        self._show_stats(model)
         vloss = self._run_validation(model, val_data, val_time, batch_size, i,
                                      num_batches, device, should_stop, tb_writer)
         if vloss is not None:
