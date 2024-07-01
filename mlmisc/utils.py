@@ -37,7 +37,7 @@ def model_save(model, path):
 def model_load(path, model=None, device=None, strict=True):
   if model is None:
     alog.debug(f'Loading model state from {path}')
-    model = am.load_module(path)
+    model = am.load(path)
   elif os.path.exists(path):
     alog.debug(f'Loading model state from {path}')
     model.load_state_dict(torch.load(path), strict=strict)
@@ -81,8 +81,8 @@ def load_data(path, strict=True, **kwargs):
     sdobj = kwargs.get(name, None)
     if sdobj is not None:
       sdobj.load_state_dict(ndata)
-    elif isinstance(ndata, dict) and am.is_module(ndata):
-      data[name] = am.load_module(ndata, strict=strict)
+    elif isinstance(ndata, dict) and am.is_auto_state(ndata):
+      data[name] = am.load(ndata, strict=strict)
     else:
       data[name] = ndata
 

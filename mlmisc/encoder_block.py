@@ -1,18 +1,22 @@
 import torch
 import torch.nn as nn
 
+from . import layer_utils as lu
+
 
 class EncoderBlock(nn.Module):
 
   def __init__(self, input_dim, num_heads,
                dim_feedforward=None,
                attn_dropout=None,
-               dropout=None):
+               dropout=None,
+               act=None):
     super().__init__()
 
     dim_feedforward = dim_feedforward or (4 * input_dim)
     attn_dropout = attn_dropout or 0.0
     dropout = dropout or 0.0
+    act = act or 'relu'
 
     self.attn = nn.MultiheadAttention(input_dim, num_heads,
                                       dropout=attn_dropout,
@@ -21,7 +25,7 @@ class EncoderBlock(nn.Module):
     self.linear_net = nn.Sequential(
       nn.Linear(input_dim, dim_feedforward),
       nn.Dropout(dropout),
-      nn.ReLU(inplace=True),
+      lu.create(act),
       nn.Linear(dim_feedforward, input_dim)
     )
 
