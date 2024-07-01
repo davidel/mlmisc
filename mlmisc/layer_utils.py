@@ -7,8 +7,12 @@ from . import auto_module as am
 
 _LAYERS = {
   'gelu': nn.GELU,
+  'hswish': nn.Hardswish,
   'leay_relu': nn.LeakyReLU,
+  'mish': nn.Mish,
   'relu': nn.ReLU,
+  'silu': nn.SiLU,
+  'selu': nn.SELU,
   'sigm': nn.Sigmoid,
   'tanh': nn.Tanh,
 }
