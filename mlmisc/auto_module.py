@@ -27,16 +27,20 @@ def _wrap_module(mod, create_args):
   return mod
 
 
-def create(mclass, *args, **kwargs):
-  mod = mclass(*args, **kwargs)
+def _generate_wrapped(create_args):
+  mod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
 
+  return _wrap_module(mod, create_args)
+
+
+def create(mclass, *args, **kwargs):
   create_args = {
     _CLASS: mclass,
     _ARGS: args,
     _KWARGS: kwargs,
   }
 
-  return _wrap_module(mod, create_args)
+  return _generate_wrapped(create_args)
 
 
 def is_auto_state(state):
@@ -52,11 +56,10 @@ def load(source, strict=True):
 
   create_args = state.pop(_STATE)
 
-  lmod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
-  lmod.load_state_dict(state, strict=strict)
-  lmod = _wrap_module(lmod, create_args)
+  mod = _generate_wrapped(create_args)
+  mod.load_state_dict(state, strict=strict)
 
-  return lmod
+  return mod
 
 
 def module_args(mod):
@@ -72,8 +75,5 @@ def clone(mod):
 def new_as(mod):
   create_args = module_args(mod)
 
-  lmod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
-  lmod = _wrap_module(lmod, create_args)
-
-  return lmod
+  return _generate_wrapped(create_args)
 
