@@ -18,7 +18,7 @@ class NextTokenDataset(torch.utils.data.Dataset):
     x, y = self.data[i: offset], self.data[offset: offset + self.seqlen]
 
     if self.pad is not None:
-      x = F.pad(x, self.pad['pad'], self.pad['value'])
+      x = F.pad(x, self.pad['pad'], value=self.pad['value'])
 
     return x, y
 
