@@ -135,23 +135,9 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                           dict(value_stats=alog.DEBUG))
 
-  def _step(self, optimizer, batch_num, accum_step, loss=None):
-    if loss is not None:
-      sloss = loss / accum_step
-      sloss.backward()
-
-    if (batch_num + 1) % accum_step == 0 or loss is None:
-      optimizer.step()
-      optimizer.zero_grad()
-
-      return True
-
-    return False
-
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
                   scheduler=None,
-                  accum_step=1,
                   val_time=None,
                   loss_logstep=60,
                   val_logstep=900,
@@ -169,7 +155,6 @@ class Trainer:
     tstep, tval, tsave = [self._train_time.start()] * 3
 
     model.train()
-    optimizer.zero_grad()
 
     train_losses, val_losses = array.array('f'), array.array('f')
     for i, (x, y) in enumerate(loader):
@@ -177,38 +162,37 @@ class Trainer:
         x, y = x.to(device), y.to(device)
 
       _, loss = model(x, targets=y)
+      optimizer.zero_grad()
+      loss.backward()
+      optimizer.step()
 
-      ran_step = self._step(optimizer, i, accum_step, loss=loss)
       self._num_samples += batch_size
 
       now = self._train_time.track()
-      if ran_step:
-        if now > tstep + loss_logstep:
-          train_losses.append(loss.item())
-          self._log_train_loss(train_losses[-1], i, num_batches, batch_size, tb_writer)
-          tstep = now
+      if now > tstep + loss_logstep:
+        train_losses.append(loss.item())
+        self._log_train_loss(train_losses[-1], i, num_batches, batch_size, tb_writer)
+        tstep = now
 
-        if model_path is not None and now > tsave + model_chkptstep:
-          self._train_time.track()
-          self.save_model(model, model_path,
-                          optimizer=optimizer,
-                          scheduler=scheduler)
-          tsave = self._train_time.start()
+      if model_path is not None and now > tsave + model_chkptstep:
+        self._train_time.track()
+        self.save_model(model, model_path,
+                        optimizer=optimizer,
+                        scheduler=scheduler)
+        tsave = self._train_time.start()
 
-        if now > tval + val_logstep:
-          self._train_time.track()
-          self._show_stats(model)
-          vloss = self._run_validation(model, val_data, val_time, batch_size, i,
-                                       num_batches, device, should_stop, tb_writer)
-          if vloss is not None:
-            val_losses.append(vloss)
-          tval = self._train_time.start()
+      if now > tval + val_logstep:
+        self._train_time.track()
+        self._show_stats(model)
+        vloss = self._run_validation(model, val_data, val_time, batch_size, i,
+                                     num_batches, device, should_stop, tb_writer)
+        if vloss is not None:
+          val_losses.append(vloss)
+        tval = self._train_time.start()
 
-        if callable(should_stop) and should_stop():
-          alog.info(f'Interrupted at batch {i + 1}/{num_batches}!')
-          break
-
-    self._step(optimizer, i, accum_step)
+      if callable(should_stop) and should_stop():
+        alog.info(f'Interrupted at batch {i + 1}/{num_batches}!')
+        break
 
     if scheduler is not None and val_losses:
       scheduler.step(np.mean(val_losses))
