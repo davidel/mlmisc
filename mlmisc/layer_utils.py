@@ -6,10 +6,12 @@ from . import auto_module as am
 
 
 _LAYERS = {
+  'elu': nn.ELU,
   'gelu': nn.GELU,
   'hswish': nn.Hardswish,
   'leay_relu': nn.LeakyReLU,
   'mish': nn.Mish,
+  'prelu': nn.PReLU,
   'relu': nn.ReLU,
   'silu': nn.SiLU,
   'selu': nn.SELU,
