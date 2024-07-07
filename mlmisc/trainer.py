@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 from py_misc_utils import alog
+from py_misc_utils import utils as pyu
 import torch
 
 from . import utils as ut
@@ -135,16 +136,7 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                           dict(value_stats=alog.DEBUG))
 
-  def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
-                  device=None,
-                  scheduler=None,
-                  val_time=None,
-                  loss_logstep=60,
-                  val_logstep=900,
-                  model_chkptstep=600,
-                  model_path=None,
-                  tb_writer=None,
-                  should_stop=None):
+  def _step(self, model, optimizer, train_data, batch_size, device, accum_steps):
     loader = torch.utils.data.DataLoader(train_data,
                                          batch_size=batch_size,
                                          shuffle=True)
@@ -152,26 +144,49 @@ class Trainer:
     num_batches = len(loader)
     alog.info(f'Running EPOCH train on {num_batches} batches')
 
-    tstep, tval, tsave = [self._train_time.start()] * 3
-
     model.train()
+    optimizer.zero_grad()
 
-    train_losses, val_losses = array.array('f'), array.array('f')
     for i, (x, y) in enumerate(loader):
       if device is not None:
         x, y = x.to(device), y.to(device)
 
       _, loss = model(x, targets=y)
-      optimizer.zero_grad()
+
+      if accum_steps != 1:
+        loss /= accum_steps
+
       loss.backward()
-      optimizer.step()
 
       self._num_samples += batch_size
+      if (i + 1) % accum_steps == 0:
+        optimizer.step()
 
+        yield pyu.make_object(stepno=i, loss=loss, num_batches=num_batches)
+
+        optimizer.zero_grad()
+
+  def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
+                  device=None,
+                  scheduler=None,
+                  accum_steps=1,
+                  val_time=None,
+                  loss_logstep=60,
+                  val_logstep=900,
+                  model_chkptstep=600,
+                  model_path=None,
+                  tb_writer=None,
+                  should_stop=None):
+    tstep, tval, tsave = [self._train_time.start()] * 3
+
+    train_losses, val_losses = array.array('f'), array.array('f')
+    for sd in self._step(model, optimizer, train_data, batch_size, device,
+                        accum_steps):
       now = self._train_time.track()
       if now > tstep + loss_logstep:
-        train_losses.append(loss.item())
-        self._log_train_loss(train_losses[-1], i, num_batches, batch_size, tb_writer)
+        train_losses.append(sd.loss.item())
+        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches, batch_size,
+                             tb_writer)
         tstep = now
 
       if model_path is not None and now > tsave + model_chkptstep:
@@ -184,15 +199,17 @@ class Trainer:
       if now > tval + val_logstep:
         self._train_time.track()
         self._show_stats(model)
-        vloss = self._run_validation(model, val_data, val_time, batch_size, i,
-                                     num_batches, device, should_stop, tb_writer)
+        vloss = self._run_validation(model, val_data, val_time, batch_size, sd.stepno,
+                                     sd.num_batches, device, should_stop, tb_writer)
         if vloss is not None:
           val_losses.append(vloss)
         tval = self._train_time.start()
 
       if callable(should_stop) and should_stop():
-        alog.info(f'Interrupted at batch {i + 1}/{num_batches}!')
+        alog.info(f'Interrupted at batch {sd.stepno + 1}/{sd.num_batches}!')
         break
+
+    optimizer.step()
 
     if scheduler is not None and val_losses:
       scheduler.step(np.mean(val_losses))
