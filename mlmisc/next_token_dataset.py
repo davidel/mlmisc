@@ -5,8 +5,11 @@ import torch.nn.functional as F
 class NextTokenDataset(torch.utils.data.Dataset):
 
   def __init__(self, data, block_size, seqlen=1, pad=None):
+    pad_size = sum(pad['pad']) if pad is not None else 0
+
+    super().__init__()
     self.data = data
-    self.block_size = block_size
+    self.block_size = block_size - pad_size
     self.seqlen = seqlen
     self.pad = pad
 
