@@ -153,10 +153,9 @@ class Trainer:
 
       _, loss = model(x, targets=y)
 
-      if accum_steps != 1:
-        loss /= accum_steps
+      bloss = loss if accum_steps == 1 else loss / accum_steps
 
-      loss.backward()
+      bloss.backward()
 
       self._num_samples += batch_size
       if (i + 1) % accum_steps == 0:
