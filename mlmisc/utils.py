@@ -31,7 +31,7 @@ def model_shape(model, shape, device=None):
 
 def model_save(model, path):
   alog.debug(f'Saving model to {path} ...')
-  with pyfow.FileOverwrite(path) as ptfd:
+  with pyfow.FileOverwrite(path, mode='wb') as ptfd:
     torch.save(model.state_dict(), ptfd)
   alog.debug(f'Model saved to {path}')
 
@@ -70,7 +70,7 @@ def save_data(path, **kwargs):
       data[name] = ndata
 
   alog.debug(f'Saving data to {path} ...')
-  with pyfow.FileOverwrite(path) as ptfd:
+  with pyfow.FileOverwrite(path, mode='wb') as ptfd:
     torch.save(data, ptfd)
   alog.debug(f'Data saved to {path}')
 
