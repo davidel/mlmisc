@@ -6,6 +6,7 @@ import sys
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.file_overwrite as pyfow
 import torch
 import torch.utils.tensorboard
 
@@ -30,7 +31,8 @@ def model_shape(model, shape, device=None):
 
 def model_save(model, path):
   alog.debug(f'Saving model to {path} ...')
-  torch.save(model.state_dict(), path)
+  with pyfow.FileOverwrite(path) as ptfd:
+    torch.save(model.state_dict(), ptfd)
   alog.debug(f'Model saved to {path}')
 
 
@@ -68,7 +70,8 @@ def save_data(path, **kwargs):
       data[name] = ndata
 
   alog.debug(f'Saving data to {path} ...')
-  torch.save(data, path)
+  with pyfow.FileOverwrite(path) as ptfd:
+    torch.save(data, ptfd)
   alog.debug(f'Data saved to {path}')
 
 
