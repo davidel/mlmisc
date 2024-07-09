@@ -109,11 +109,15 @@ class Trainer:
 
     return np.mean(losses) if losses else None
 
-  def _log_train_loss(self, loss, batch_num, num_batches, batch_size, tb_writer):
-    epoch = 100 * self._num_samples / (num_batches * batch_size)
+  def _tblog(self, tb_writer, total_samples, name, value):
+    epoch = 100 * self._num_samples / total_samples
     if tb_writer is not None:
-      tb_writer.add_scalar('Train Loss', loss, global_step=int(epoch * 10))
+      tb_writer.add_scalar(name, value, global_step=int(epoch * 10))
 
+    return epoch
+
+  def _log_train_loss(self, loss, batch_num, num_batches, batch_size, tb_writer):
+    epoch = self._tblog(tb_writer, num_batches * batch_size, 'Train Loss', loss)
     alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
               f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
@@ -122,9 +126,7 @@ class Trainer:
                       device, should_stop, tb_writer):
     vloss = self._val_loss(model, val_data, val_time, device, batch_size, should_stop)
     if vloss is not None:
-      epoch = 100 * self._num_samples / (num_batches * batch_size)
-      if tb_writer is not None:
-        tb_writer.add_scalar('Validation Loss', vloss, global_step=int(epoch * 10))
+      epoch = self._tblog(tb_writer, num_batches * batch_size, 'Validation Loss', vloss)
       alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
                 f'Validation Loss {vloss:.4f}')
 
