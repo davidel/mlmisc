@@ -111,6 +111,21 @@ def create_tb_writer(path):
   return torch.utils.tensorboard.SummaryWriter(path)
 
 
+def count_params(net):
+  params = 0
+  for p in net.parameters():
+    params += torch.numel(p)
+
+  return params
+
+
+def tail_permute(t):
+  perm = list(range(t.ndim))
+  perm[-1], perm[-2] = perm[-2], perm[-1]
+
+  return torch.permute(t, tuple(perm))
+
+
 def create_graph(x, path=None, params=None, model=None, format='svg'):
   import torchviz
 

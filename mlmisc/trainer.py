@@ -7,8 +7,8 @@ from py_misc_utils import alog
 from py_misc_utils import utils as pyu
 import torch
 
-from . import utils as ut
 from . import debug_utils as du
+from . import utils as ut
 
 
 class TimeTracker:
