@@ -111,6 +111,21 @@ def create_tb_writer(path):
   return torch.utils.tensorboard.SummaryWriter(path)
 
 
+def create_graph(x, path=None, params=None, model=None, format='svg'):
+  import torchviz
+
+  if params is None and model is not None:
+    params = dict(model.named_parameters())
+
+  dot = torchviz.make_dot(x, params=params)
+
+  if path is not None:
+    dot.format = format
+    dot.render(path)
+
+  return dot
+
+
 def get_lr(optimizer):
   lrs = []
   for group in optimizer.param_groups:
