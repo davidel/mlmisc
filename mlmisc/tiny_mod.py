@@ -89,12 +89,12 @@ class TinyMod(nn.Module):
 
     x = ut.tail_permute(x) # (*DIMS, MCOUNT, MSIZE)
 
-    parts = []
+    parts, sdim = [], x.ndim - 2
     for i, mod in enumerate(self.mods):
-      yv = mod(torch.squeeze(x[:, i, :], 1))
-      parts.append(torch.unsqueeze(yv, 1))
+      yv = mod(torch.squeeze(torch.select(x, sdim, i), sdim))
+      parts.append(torch.unsqueeze(yv, sdim))
 
-    x = torch.cat(parts, dim=1) # (*DIMS, MCOUNT, MSIZE)
+    x = torch.cat(parts, dim=sdim) # (*DIMS, MCOUNT, MSIZE)
     x = ut.tail_permute(x) # (*DIMS, MSIZE, MCOUNT)
 
     x = self.fcout(x) # (*DIMS, MSIZE, OCOUNT)
