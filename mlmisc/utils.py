@@ -126,6 +126,10 @@ def tail_permute(t):
   return torch.permute(t, tuple(perm))
 
 
+def split_dims(shape, npop):
+  return shape[: -npop], *shape[-npop: ]
+
+
 def create_graph(x, path=None, params=None, model=None, format='svg'):
   import torchviz
 

@@ -58,7 +58,7 @@ class TinyModManager:
 
 class TinyMod(nn.Module):
 
-  def __init__(self, idim, odim, msize, tmgr, act=None):
+  def __init__(self, idim, odim, msize, tmgr, act=None, pad_value=0):
     mdim = max(idim, odim)
     icount = (idim + msize - 1) // msize
     mcount = (mdim + msize - 1) // msize
@@ -67,18 +67,18 @@ class TinyMod(nn.Module):
     super().__init__()
     self.odim = odim
     self.msize = msize
+    self.pad_value = pad_value
     self.fcin = nn.Linear(icount, mcount)
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(mcount)])
     self.fcout = nn.Linear(mcount, ocount)
     self.act = act or nn.Identity()
 
   def forward(self, x):
-    dims = list(x.shape)
-    idim = dims.pop()
+    dims, idim = ut.split_dims(x.shape, 1)
 
     rem = idim % self.msize
     if rem != 0:
-      x = F.pad(x, (0, self.msize - rem), value=0)
+      x = F.pad(x, (0, self.msize - rem), value=self.pad_value)
       idim += self.msize - rem
 
     icount = idim // self.msize
