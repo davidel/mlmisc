@@ -26,6 +26,7 @@ class TinyModManager:
     self.used = 0
 
   def reset(self):
+    self.used = 0
     for mod in self.mods.values():
       mod.idx = 0
 
