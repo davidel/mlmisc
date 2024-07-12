@@ -7,6 +7,7 @@ import sys
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.utils as pyu
 import torch
 import torch.utils.tensorboard
 
@@ -18,6 +19,13 @@ def get_device(kind=None):
     kind = 'cuda' if torch.cuda.is_available() else 'cpu'
 
   return torch.device(kind)
+
+
+def randseed(seed):
+  rseed = pyu.randseed(seed)
+  torch.manual_seed(rseed)
+
+  return rseed
 
 
 def model_shape(model, shape, device=None):
