@@ -99,7 +99,7 @@ class TinyMod(nn.Module):
 
     x = self.fcout(x) # (*DIMS, MSIZE, OCOUNT)
 
-    x = torch.reshape(x, (*dims, -1))
+    x = torch.reshape(x, (*dims, -1)) # (*DIMS, MSIZE * OCOUNT)
     x = x[:, : self.odim] # (*DIMS, ODIM)
 
     x = self.post(x)
