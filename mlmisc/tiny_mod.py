@@ -94,8 +94,8 @@ class TinyMod(nn.Module):
       yv = mod(torch.squeeze(x[:, i, :], 1))
       parts.append(torch.unsqueeze(yv, 1))
 
-    xt = torch.cat(parts, dim=1) # (*DIMS, MCOUNT, MSIZE)
-    x = ut.tail_permute(xt) # (*DIMS, MSIZE, MCOUNT)
+    x = torch.cat(parts, dim=1) # (*DIMS, MCOUNT, MSIZE)
+    x = ut.tail_permute(x) # (*DIMS, MSIZE, MCOUNT)
 
     x = self.fcout(x) # (*DIMS, MSIZE, OCOUNT)
 
