@@ -58,7 +58,7 @@ class TinyModManager:
 
 class TinyMod(nn.Module):
 
-  def __init__(self, idim, odim, msize, tmgr, act=None, pad_value=0):
+  def __init__(self, idim, odim, msize, tmgr, post=None, pad_value=0):
     mdim = max(idim, odim)
     icount = (idim + msize - 1) // msize
     mcount = (mdim + msize - 1) // msize
@@ -71,7 +71,7 @@ class TinyMod(nn.Module):
     self.fcin = nn.Linear(icount, mcount)
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(mcount)])
     self.fcout = nn.Linear(mcount, ocount)
-    self.act = act or nn.Identity()
+    self.post = post or nn.Identity()
 
   def forward(self, x):
     dims, idim = ut.split_dims(x.shape, 1)
@@ -102,7 +102,7 @@ class TinyMod(nn.Module):
     x = torch.reshape(x, (*dims, -1))
     x = x[:, : self.odim] # (*DIMS, ODIM)
 
-    x = self.act(x)
+    x = self.post(x)
 
     return x
 
