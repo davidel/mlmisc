@@ -39,10 +39,10 @@ class TinyModManager:
                             f'available={list(self.max_params.keys())}')
 
       mod = self.mods[n]
-      create = max_params < mod.params
+      create = max_params > mod.params
     else:
       mod = self.mods[n]
-      create = self.max_params < self.params
+      create = self.max_params > self.params
 
     if not create:
       tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available budget')
