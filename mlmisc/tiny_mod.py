@@ -23,6 +23,7 @@ class TinyModManager:
     self.max_params = max_params
     self.bias = bias
     self.mods = collections.defaultdict(_Mods)
+    self.params = 0
     self.used = 0
 
   def reset(self):
@@ -32,21 +33,28 @@ class TinyModManager:
 
   def get(self, n):
     if isinstance(self.max_params, dict):
-      max_params = self.max_params.get(n, 0)
+      max_params = self.max_params.get(n, None)
+      tas.check_is_not_none(max_params,
+                            msg=f'Unlisted module size {n}: ' \
+                            f'available={list(self.max_params.keys())}')
+
+      mod = self.mods[n]
+      create = max_params < mod.params
     else:
-      max_params = self.max_params
+      mod = self.mods[n]
+      create = self.max_params < self.params
 
-    mod = self.mods[n]
-
-    if mod.params > max_params:
-      tas.check(mod.mods, msg=f'Cannot create module of size {n}: max_params={max_params}')
+    if not create:
+      tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available budget')
 
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
       m = nn.Linear(n, n, bias=self.bias)
       mod.mods.append(m)
-      mod.params += ut.count_params(m)
+      params = ut.count_params(m)
+      mod.params += params
+      self.params += params
 
     self.used += 1
 
