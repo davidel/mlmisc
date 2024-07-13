@@ -23,7 +23,6 @@ class TinyModManager:
     self.max_params = max_params
     self.bias = bias
     self.mods = collections.defaultdict(_Mods)
-    self.params = 0
     self.used = 0
 
   def _total_params(self):
