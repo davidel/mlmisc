@@ -26,6 +26,9 @@ class TinyModManager:
     self.params = 0
     self.used = 0
 
+  def _total_params(self):
+    return sum(mod.params for mod in self.mods.values())
+
   def reset(self):
     self.used = 0
     for mod in self.mods.values():
@@ -42,7 +45,7 @@ class TinyModManager:
       create = max_params > mod.params
     else:
       mod = self.mods[n]
-      create = self.max_params > self.params
+      create = self.max_params > self._total_params()
 
     if not create:
       tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available budget')
@@ -52,9 +55,7 @@ class TinyModManager:
     else:
       m = nn.Linear(n, n, bias=self.bias)
       mod.mods.append(m)
-      params = ut.count_params(m)
-      mod.params += params
-      self.params += params
+      mod.params += ut.count_params(m)
 
     self.used += 1
 
