@@ -67,8 +67,11 @@ class TinyModManager:
 
 class TinyMod(nn.Module):
 
-  def __init__(self, idim, odim, msize, tmgr, post=None, pad_value=0):
-    mdim = max(idim, odim)
+  def __init__(self, idim, odim, msize, tmgr,
+               mdim=None,
+               post=None,
+               pad_value=0):
+    mdim = mdim or max(idim, odim)
     icount = (idim + msize - 1) // msize
     mcount = (mdim + msize - 1) // msize
     ocount = (odim + msize - 1) // msize
