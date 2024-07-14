@@ -108,7 +108,7 @@ class TinyMod(nn.Module):
     mat = self._build_fc_mat()
     x = x @ mat
 
-    x = x[:, : self.odim] # (*DIMS, ODIM)
+    x = x[..., : self.odim] # (*DIMS, ODIM)
 
     x = self.post(x)
 
