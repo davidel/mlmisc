@@ -91,8 +91,7 @@ class TinyMod(nn.Module):
     for i in range(self.icount):
       oparts = []
       for o in range(self.ocount):
-        idx = i * self.ocount + o
-        mod = self.mods[idx]
+        mod = self.mods[i * self.ocount + o]
         oparts.append(mod.weight)
 
       iparts.append(torch.hstack(oparts))
