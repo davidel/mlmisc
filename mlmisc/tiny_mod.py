@@ -87,16 +87,17 @@ class TinyMod(nn.Module):
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
 
   def _build_fc_mat(self):
-    isize, osize = self.icount * self.msize, self.ocount * self.msize
-    mat = torch.empty(isize, osize, requires_grad=True)
+    iparts = []
     for i in range(self.icount):
+      oparts = []
       for o in range(self.ocount):
         idx = i * self.ocount + o
         mod = self.mods[idx]
-        ioffset, ooffset = i * self.msize, o * self.msize
-        mat[ioffset: ioffset + self.msize, ooffset: ooffset + self.msize] = mod.weight
+        oparts.append(mod.weight)
 
-    return mat
+      iparts.append(torch.hstack(oparts))
+
+    return torch.vstack(iparts)
 
   def forward(self, x):
     dims, idim = ut.split_dims(x.shape, 1)
