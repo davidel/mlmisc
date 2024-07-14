@@ -88,7 +88,7 @@ class TinyMod(nn.Module):
 
   def _build_fc_mat(self):
     isize, osize = self.icount * self.msize, self.ocount * self.msize
-    mat = torch.empty(isize, osize)
+    mat = torch.empty(isize, osize, requires_grad=True)
     for i in range(self.icount):
       for o in range(self.ocount):
         idx = i * self.ocount + o
