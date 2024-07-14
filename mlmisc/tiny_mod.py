@@ -17,11 +17,17 @@ class _Mods:
     self.mods = []
 
 
+class ModMat(nn.Module):
+
+  def __init__(self, n, dtype=None):
+    super().__init__()
+    self.weight = nn.Parameter(torch.randn(n, n, dtype=dtype))
+
+
 class TinyModManager:
 
-  def __init__(self, max_params, bias=True):
+  def __init__(self, max_params):
     self.max_params = max_params
-    self.bias = bias
     self.mods = collections.defaultdict(_Mods)
     self.used = 0
 
@@ -52,7 +58,7 @@ class TinyModManager:
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
-      m = nn.Linear(n, n, bias=self.bias)
+      m = ModMat(n)
       mod.mods.append(m)
       mod.params += ut.count_params(m)
 
@@ -68,22 +74,29 @@ class TinyModManager:
 class TinyMod(nn.Module):
 
   def __init__(self, idim, odim, msize, tmgr,
-               mdim=None,
                post=None,
-               pad_value=0):
-    mdim = mdim or max(idim, odim)
-    icount = (idim + msize - 1) // msize
-    mcount = (mdim + msize - 1) // msize
-    ocount = (odim + msize - 1) // msize
-
+               pad_value=None):
     super().__init__()
+    self.idim = idim
     self.odim = odim
     self.msize = msize
-    self.pad_value = pad_value
-    self.fcin = nn.Linear(icount, mcount)
-    self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(mcount)])
-    self.fcout = nn.Linear(mcount, ocount)
     self.post = post or nn.Identity()
+    self.pad_value = pad_value or 0
+    self.icount = (idim + msize - 1) // msize
+    self.ocount = (odim + msize - 1) // msize
+    self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
+
+  def _build_fc_mat(self):
+    isize, osize = self.icount * self.msize, self.ocount * self.msize
+    mat = torch.empty(isize, osize)
+    for i in range(self.icount):
+      for o in range(self.ocount):
+        idx = i * self.ocount + o
+        mod = self.mods[idx]
+        ioffset, ooffset = i * self.msize, o * self.msize
+        mat[ioffset: ioffset + self.msize, ooffset: ooffset + self.msize] = mod.weight
+
+    return mat
 
   def forward(self, x):
     dims, idim = ut.split_dims(x.shape, 1)
@@ -91,27 +104,10 @@ class TinyMod(nn.Module):
     rem = idim % self.msize
     if rem != 0:
       x = F.pad(x, (0, self.msize - rem), value=self.pad_value)
-      idim += self.msize - rem
 
-    icount = idim // self.msize
-    x = torch.reshape(x, (*dims, icount, self.msize)) # (*DIMS, ICOUNT, MSIZE)
-    x = ut.tail_permute(x) # (*DIMS, MSIZE, ICOUNT)
+    mat = self._build_fc_mat()
+    x = x @ mat
 
-    x = self.fcin(x) # (*DIMS, MSIZE, MCOUNT)
-
-    x = ut.tail_permute(x) # (*DIMS, MCOUNT, MSIZE)
-
-    parts, sdim = [], x.ndim - 2
-    for i, mod in enumerate(self.mods):
-      yv = mod(torch.squeeze(torch.select(x, sdim, i), sdim))
-      parts.append(torch.unsqueeze(yv, sdim))
-
-    x = torch.cat(parts, dim=sdim) # (*DIMS, MCOUNT, MSIZE)
-    x = ut.tail_permute(x) # (*DIMS, MSIZE, MCOUNT)
-
-    x = self.fcout(x) # (*DIMS, MSIZE, OCOUNT)
-
-    x = torch.reshape(x, (*dims, -1)) # (*DIMS, MSIZE * OCOUNT)
     x = x[:, : self.odim] # (*DIMS, ODIM)
 
     x = self.post(x)
