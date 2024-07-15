@@ -57,7 +57,8 @@ class TinyModManager:
       create = self.max_params > self._total_params()
 
     if not create:
-      tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available budget')
+      tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available ' \
+                f'budget (max_params={self.max_params})')
 
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
