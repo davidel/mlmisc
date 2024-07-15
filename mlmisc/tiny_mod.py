@@ -75,6 +75,7 @@ class TinyMod(nn.Module):
 
   def __init__(self, idim, odim, msize, tmgr,
                post=None,
+               bias=True,
                pad_value=None):
     super().__init__()
     self.idim = idim
@@ -85,6 +86,7 @@ class TinyMod(nn.Module):
     self.icount = (idim + msize - 1) // msize
     self.ocount = (odim + msize - 1) // msize
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
+    self.bias = nn.Parameter(torch.randn(odim)) if bias else 0
 
   def _build_fc_mat(self):
     iparts = []
@@ -107,7 +109,7 @@ class TinyMod(nn.Module):
     mat = self._build_fc_mat()
     x = x @ mat
     x = x[..., : self.odim]
-    x = self.post(x)
+    x = self.post(x + self.bias)
 
     return x
 
