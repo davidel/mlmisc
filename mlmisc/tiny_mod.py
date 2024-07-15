@@ -101,11 +101,8 @@ class TinyMod(nn.Module):
   def _build_fc_mat(self):
     iparts = []
     for i in range(self.icount):
-      oparts = []
-      for o in range(self.ocount):
-        mod = self.mods[i * self.ocount + o]
-        oparts.append(mod.weight)
-
+      offset = i * self.ocount
+      oparts = [m.weight for m in self.mods[offset: offset + self.ocount]]
       iparts.append(torch.hstack(oparts))
 
     return torch.vstack(iparts)
