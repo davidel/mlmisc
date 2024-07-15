@@ -96,6 +96,7 @@ class TinyMod(nn.Module):
       self.bias = nn.Parameter(weight)
     else:
       self.bias = 0
+    self.mat = self._build_fc_mat()
 
   def _build_fc_mat(self):
     iparts = []
@@ -115,8 +116,7 @@ class TinyMod(nn.Module):
     rem = idim % self.msize
     if rem != 0:
       x = F.pad(x, (0, self.msize - rem), value=self.pad_value)
-    mat = self._build_fc_mat()
-    x = x @ mat
+    x = x @ self.mat
     x = x[..., : self.odim]
     x = self.post(x + self.bias)
 
