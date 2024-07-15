@@ -1,4 +1,5 @@
 import collections
+import math
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -28,8 +29,9 @@ class ModMat(nn.Module):
 
 class TinyModManager:
 
-  def __init__(self, max_params):
+  def __init__(self, max_params, dtype=None):
     self.max_params = max_params
+    self.dtype = dtype
     self.mods = collections.defaultdict(_Mods)
     self.used = 0
 
@@ -60,7 +62,7 @@ class TinyModManager:
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
-      m = ModMat(n)
+      m = ModMat(n, dtype=self.dtype)
       mod.mods.append(m)
       mod.params += ut.count_params(m)
 
@@ -88,7 +90,12 @@ class TinyMod(nn.Module):
     self.icount = (idim + msize - 1) // msize
     self.ocount = (odim + msize - 1) // msize
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
-    self.bias = nn.Parameter(torch.randn(odim)) if bias else 0
+    if bias:
+      bound = 1.0 / math.sqrt(n)
+      weight = torch.empty(odim, tmgr.dtype).uniform_(-bound, bound)
+      self.bias = nn.Parameter(weight)
+    else:
+      self.bias = 0
 
   def _build_fc_mat(self):
     iparts = []
