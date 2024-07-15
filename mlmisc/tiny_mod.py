@@ -91,7 +91,7 @@ class TinyMod(nn.Module):
     self.ocount = (odim + msize - 1) // msize
     self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
     if bias:
-      bound = 1.0 / math.sqrt(n)
+      bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, tmgr.dtype).uniform_(-bound, bound)
       self.bias = nn.Parameter(weight)
     else:
