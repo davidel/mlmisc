@@ -9,6 +9,7 @@ _LAYERS = {
   'elu': nn.ELU,
   'gelu': nn.GELU,
   'hswish': nn.Hardswish,
+  'id': nn.Identity,
   'leay_relu': nn.LeakyReLU,
   'mish': nn.Mish,
   'prelu': nn.PReLU,
