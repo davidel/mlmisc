@@ -21,7 +21,9 @@ class ModMat(nn.Module):
 
   def __init__(self, n, dtype=None):
     super().__init__()
-    self.weight = nn.Parameter(torch.randn(n, n, dtype=dtype))
+    weight = torch.empty(n, n, dtype=dtype)
+    nn.init.kaiming_uniform_(weight)
+    self.weight = nn.Parameter(weight)
 
 
 class TinyModManager:
