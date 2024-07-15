@@ -206,13 +206,14 @@ class Trainer:
           val_losses.append(vloss)
         tval = self._train_time.start()
 
-      if callable(should_stop) and should_stop():
+      stopped = callable(should_stop) and should_stop()
+      if stopped:
         alog.info(f'Interrupted at batch {sd.stepno + 1}/{sd.num_batches}!')
         break
 
     optimizer.step()
 
-    if scheduler is not None and val_losses:
+    if scheduler is not None and val_losses and not stopped:
       scheduler.step(np.mean(val_losses))
 
     self._train_time.track()
