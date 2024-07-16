@@ -16,6 +16,7 @@ class _Mods:
     self.idx = 0
     self.params = 0
     self.mods = []
+    self.used = 0
 
 
 class ModMat(nn.Module):
@@ -33,15 +34,14 @@ class TinyModManager:
     self.max_params = max_params
     self.dtype = dtype
     self.mods = collections.defaultdict(_Mods)
-    self.used = 0
 
   def _total_params(self):
     return sum(mod.params for mod in self.mods.values())
 
   def reset(self):
-    self.used = 0
     for mod in self.mods.values():
       mod.idx = 0
+      mod.used = 0
 
   def get(self, n):
     if isinstance(self.max_params, dict):
@@ -67,13 +67,16 @@ class TinyModManager:
       mod.mods.append(m)
       mod.params += ut.count_params(m)
 
-    self.used += 1
+    mod.used += 1
 
     return m
 
   def stats(self):
-    return {n: mod.params for n, mod in self.mods.items()}
+    stats = dict()
+    for n, mod in self.mods.items():
+      stats[n] = dict(params=mod.params, used=mod.used)
 
+    return stats
 
 
 class TinyMod(nn.Module):
