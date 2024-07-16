@@ -45,7 +45,7 @@ class TinyModManager:
 
   def get(self, n):
     if isinstance(self.max_params, dict):
-      max_params = self.max_params.get(n, None)
+      max_params = self.max_params.get(n)
       tas.check_is_not_none(max_params,
                             msg=f'Unlisted module size {n}: ' \
                             f'available={list(self.max_params.keys())}')
