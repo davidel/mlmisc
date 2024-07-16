@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from . import utils as ut
 
 
-class _Mods:
+class ModsPod:
 
   def __init__(self):
     self.idx = 0
@@ -37,7 +37,7 @@ class TinyModManager:
   def __init__(self, max_params, dtype=None):
     self.max_params = max_params
     self.dtype = dtype
-    self.mods = collections.defaultdict(_Mods)
+    self.mods = collections.defaultdict(ModsPod)
 
   def _total_params(self):
     return sum(mod.params for mod in self.mods.values())
