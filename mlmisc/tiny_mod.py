@@ -79,6 +79,17 @@ class TinyModManager:
     return stats
 
 
+def _build_modules(tmgr, msize, icount, ocount):
+  mods = [tmgr.get(msize) for _ in range(icount * ocount)]
+
+  parts = []
+  for i in range(icount):
+    offset = i * ocount
+    parts.append([m.weight for m in mods[offset: offset + ocount]])
+
+  return nn.ModuleList(mods), parts
+
+
 class TinyMod(nn.Module):
 
   def __init__(self, idim, odim, msize, tmgr,
@@ -93,7 +104,7 @@ class TinyMod(nn.Module):
     self.pad_value = pad_value or 0
     self.icount = (idim + msize - 1) // msize
     self.ocount = (odim + msize - 1) // msize
-    self.mods = nn.ModuleList([tmgr.get(msize) for _ in range(self.icount * self.ocount)])
+    self.mods, self.parts = _build_modules(tmgr, msize, self.icount, self.ocount)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=tmgr.dtype).uniform_(-bound, bound)
@@ -101,22 +112,15 @@ class TinyMod(nn.Module):
     else:
       self.bias = 0
 
-  def _build_fc_mat(self):
-    iparts = []
-    for i in range(self.icount):
-      offset = i * self.ocount
-      oparts = [m.weight for m in self.mods[offset: offset + self.ocount]]
-      iparts.append(torch.hstack(oparts))
-
-    return torch.vstack(iparts)
-
   def forward(self, x):
     dims, idim = ut.split_dims(x.shape, 1)
 
     rem = idim % self.msize
     if rem != 0:
       x = F.pad(x, (0, self.msize - rem), value=self.pad_value)
-    mat = self._build_fc_mat()
+
+    mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+
     x = x @ mat
     x = x[..., : self.odim]
     x = self.post(x + self.bias)
