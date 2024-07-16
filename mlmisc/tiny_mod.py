@@ -74,7 +74,7 @@ class TinyModManager:
   def stats(self):
     stats = dict()
     for n, mod in self.mods.items():
-      stats[n] = dict(params=mod.params, used=mod.used)
+      stats[n] = dict(count=len(mod.mods), used=mod.used, params=mod.params)
 
     return stats
 
