@@ -99,15 +99,18 @@ class TinyMod(nn.Module):
                post=None,
                bias=True,
                pad_value=None):
+    icount = (idim + msize - 1) // msize
+    ocount = (odim + msize - 1) // msize
+    rem = idim % msize
+
     super().__init__()
-    self.idim = idim
     self.odim = odim
-    self.msize = msize
     self.post = post or nn.Identity()
-    self.pad_value = pad_value or 0
-    self.icount = (idim + msize - 1) // msize
-    self.ocount = (odim + msize - 1) // msize
-    self.mods, self.parts = _build_modules(tmgr, msize, self.icount, self.ocount)
+    if rem != 0:
+      self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
+    else:
+      self.pad = lambda x: x
+    self.mods, self.parts = _build_modules(tmgr, msize, icount, ocount)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=tmgr.dtype).uniform_(-bound, bound)
@@ -116,11 +119,7 @@ class TinyMod(nn.Module):
       self.bias = 0
 
   def forward(self, x):
-    dims, idim = ut.split_dims(x.shape, 1)
-
-    rem = idim % self.msize
-    if rem != 0:
-      x = F.pad(x, (0, self.msize - rem), value=self.pad_value)
+    x = self.pad(x)
 
     mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
 
