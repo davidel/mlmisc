@@ -18,6 +18,10 @@ class _Mods:
     self.mods = []
     self.used = 0
 
+  def reset(self):
+    self.idx = 0
+    self.used = 0
+
 
 class ModMat(nn.Module):
 
@@ -40,8 +44,7 @@ class TinyModManager:
 
   def reset(self):
     for mod in self.mods.values():
-      mod.idx = 0
-      mod.used = 0
+      mod.reset()
 
   def get(self, n):
     if isinstance(self.max_params, dict):
