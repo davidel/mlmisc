@@ -1,4 +1,5 @@
 import collections
+import bisect
 import math
 
 import py_misc_utils.alog as alog
@@ -7,16 +8,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from . import utils as ut
-
 
 class ModsPod:
 
   def __init__(self):
-    self.idx = 0
-    self.params = 0
     self.mods = []
-    self.used = 0
+    self.reset()
 
   def reset(self):
     self.idx = 0
@@ -34,9 +31,10 @@ class ModMat(nn.Module):
 
 class TinyModManager:
 
-  def __init__(self, max_params, dtype=None):
-    self.max_params = max_params
+  def __init__(self, mods_budget, dtype=None, div_factor=None):
+    self.mods_budget = mods_budget
     self.dtype = dtype
+    self.div_factor = div_factor or 16
     self.mods = collections.defaultdict(ModsPod)
 
   def _total_params(self):
@@ -46,29 +44,33 @@ class TinyModManager:
     for mod in self.mods.values():
       mod.reset()
 
+  def module_size(self, idim, odim):
+    msize = round(max(idim, odim) / self.div_factor)
+    sizes = sorted(self.mods_budget.keys())
+    x = bisect.bisect_left(sizes, msize)
+    msize = sizes[x]
+
+    alog.debug0(f'Selected block size {msize} for layer of size {idim}x{odim}')
+
+    return msize
+
   def get(self, n):
-    if isinstance(self.max_params, dict):
-      max_params = self.max_params.get(n)
-      tas.check_is_not_none(max_params,
-                            msg=f'Unlisted module size {n}: ' \
-                            f'available={list(self.max_params.keys())}')
+    budget = self.mods_budget.get(n)
+    tas.check_is_not_none(budget,
+                          msg=f'Unlisted module size {n}: ' \
+                          f'available={list(self.mods_budget.keys())}')
 
-      mod = self.mods[n]
-      create = max_params > mod.params
-    else:
-      mod = self.mods[n]
-      create = self.max_params > self._total_params()
+    mod = self.mods[n]
 
-    if not create:
+    if len(mod.mods) >= budget:
       tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available ' \
-                f'budget (max_params={self.max_params})')
+                f'budget (mods_budget={self.mods_budget})')
 
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
       m = ModMat(n, dtype=self.dtype)
       mod.mods.append(m)
-      mod.params += ut.count_params(m)
 
     mod.used += 1
 
@@ -77,7 +79,9 @@ class TinyModManager:
   def stats(self):
     stats = dict()
     for n, mod in self.mods.items():
-      stats[n] = dict(count=len(mod.mods), used=mod.used, params=mod.params)
+      stats[n] = dict(count=len(mod.mods),
+                      used=mod.used,
+                      params=len(mod.mods) * n**2)
 
     return stats
 
@@ -95,10 +99,12 @@ def _build_modules(tmgr, msize, icount, ocount):
 
 class TinyMod(nn.Module):
 
-  def __init__(self, idim, odim, msize, tmgr,
+  def __init__(self, idim, odim, tmgr,
+               msize=None,
                post=None,
                bias=True,
                pad_value=None):
+    msize = msize or tmgr.module_size(idim, odim)
     icount = (idim + msize - 1) // msize
     ocount = (odim + msize - 1) // msize
     rem = idim % msize
