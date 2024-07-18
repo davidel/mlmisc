@@ -44,11 +44,12 @@ class TinyModManager:
     for mod in self.mods.values():
       mod.reset()
 
-  def module_size(self, idim, odim):
-    msize = round(max(idim, odim) / self.div_factor)
-    sizes = sorted(self.mods_budget.keys())
-    x = bisect.bisect_left(sizes, msize)
-    msize = sizes[x]
+  def module_size(self, idim, odim, msize=None):
+    if msize is None:
+      msize = round(max(idim, odim) / self.div_factor)
+      sizes = sorted(self.mods_budget.keys())
+      x = bisect.bisect_left(sizes, msize)
+      msize = sizes[x]
 
     alog.debug0(f'Selected block size {msize} for layer of size {idim}x{odim}')
 
@@ -85,16 +86,15 @@ class TinyModManager:
 
     return stats
 
+  def build_modules(self, msize, icount, ocount):
+    mods = [self.get(msize) for _ in range(icount * ocount)]
 
-def _build_modules(tmgr, msize, icount, ocount):
-  mods = [tmgr.get(msize) for _ in range(icount * ocount)]
+    parts = []
+    for i in range(icount):
+      offset = i * ocount
+      parts.append([m.weight for m in mods[offset: offset + ocount]])
 
-  parts = []
-  for i in range(icount):
-    offset = i * ocount
-    parts.append([m.weight for m in mods[offset: offset + ocount]])
-
-  return nn.ModuleList(mods), parts
+    return nn.ModuleList(mods), parts
 
 
 class TinyMod(nn.Module):
@@ -104,7 +104,7 @@ class TinyMod(nn.Module):
                post=None,
                bias=True,
                pad_value=None):
-    msize = msize or tmgr.module_size(idim, odim)
+    msize = tmgr.module_size(idim, odim, msize=msize)
     icount = (idim + msize - 1) // msize
     ocount = (odim + msize - 1) // msize
     rem = idim % msize
@@ -116,7 +116,7 @@ class TinyMod(nn.Module):
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
       self.pad = lambda x: x
-    self.mods, self.parts = _build_modules(tmgr, msize, icount, ocount)
+    self.mods, self.parts = tmgr.build_modules(msize, icount, ocount)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=tmgr.dtype).uniform_(-bound, bound)
