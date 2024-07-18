@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from . import layer_utils as lu
+
 
 class ModsPod:
 
@@ -111,7 +113,7 @@ class TinyMod(nn.Module):
 
     super().__init__()
     self.odim = odim
-    self.post = post or nn.Identity()
+    self.post = lu.create(post or nn.Identity())
     if rem != 0:
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:

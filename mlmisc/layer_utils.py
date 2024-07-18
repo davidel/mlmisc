@@ -27,7 +27,8 @@ def create(lay):
     if am.is_auto(lay):
       return am.new_as(lay)
 
-    alog.xraise(ValueError, f'Module object not accept since cannot be replicated: {lay}')
+    alog.xraise(ValueError, f'Module object not accept since cannot be replicated ' \
+                f'(use auto_module.create() to create an instance): {lay}')
   elif callable(lay):
     return lay()
   else:
