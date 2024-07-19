@@ -125,13 +125,27 @@ class TinyMod(nn.Module):
       self.bias = nn.Parameter(weight)
     else:
       self.bias = 0
+    self.fc_mat = None
+
+  def _get_fc_mat(self):
+    if self.training:
+      self.fc_mat = None
+      fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+    else:
+      fc_mat = self.fc_mat
+      if fc_mat is None:
+        with torch.no_grad():
+          fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+          self.fc_mat = fc_mat
+
+    return fc_mat
 
   def forward(self, x):
     x = self.pad(x)
 
-    mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+    fc_mat = self._get_fc_mat()
 
-    x = x @ mat
+    x = x @ fc_mat
     x = x[..., : self.odim]
     x = self.post(x + self.bias)
 
