@@ -51,7 +51,7 @@ class TinyModManager:
       msize = round(max(idim, odim) / self.div_factor)
       sizes = sorted(self.mods_budget.keys())
       x = bisect.bisect_left(sizes, msize)
-      msize = sizes[x]
+      msize = sizes[min(x, len(sizes) - 1)]
 
     alog.debug0(f'Selected block size {msize} for layer of size {idim}x{odim}')
 
