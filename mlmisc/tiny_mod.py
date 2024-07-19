@@ -141,10 +141,9 @@ class TinyMod(nn.Module):
     return fc_mat
 
   def forward(self, x):
-    x = self.pad(x)
-
     fc_mat = self._get_fc_mat()
 
+    x = self.pad(x)
     x = x @ fc_mat
     x = x[..., : self.odim]
     x = self.post(x + self.bias)
