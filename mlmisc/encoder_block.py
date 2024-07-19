@@ -11,13 +11,12 @@ class EncoderBlock(nn.Module):
                attn_dropout=None,
                dropout=None,
                act=None):
-    super().__init__()
-
     dim_feedforward = dim_feedforward or (4 * input_dim)
     attn_dropout = attn_dropout or 0.0
     dropout = dropout or 0.0
     act = act or 'relu'
 
+    super().__init__()
     self.attn = nn.MultiheadAttention(input_dim, num_heads,
                                       dropout=attn_dropout,
                                       batch_first=True)
