@@ -11,7 +11,7 @@ import torch.nn.functional as F
 from . import layer_utils as lu
 
 
-class ModsPod:
+class TilesPod:
 
   def __init__(self):
     self.mods = []
@@ -22,7 +22,7 @@ class ModsPod:
     self.used = 0
 
 
-class ModMat(nn.Module):
+class Tile(nn.Module):
 
   def __init__(self, n, dtype=None):
     super().__init__()
@@ -31,13 +31,13 @@ class ModMat(nn.Module):
     self.weight = nn.Parameter(weight)
 
 
-class TinyModManager:
+class MosaicManager:
 
   def __init__(self, mods_budget, dtype=None, div_factor=None):
     self.mods_budget = mods_budget
     self.dtype = dtype
     self.div_factor = div_factor or 16
-    self.mods = collections.defaultdict(ModsPod)
+    self.mods = collections.defaultdict(TilesPod)
 
   def _total_params(self):
     return sum(mod.params for mod in self.mods.values())
@@ -72,7 +72,7 @@ class TinyModManager:
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
-      m = ModMat(n, dtype=self.dtype)
+      m = Tile(n, dtype=self.dtype)
       mod.mods.append(m)
 
     mod.used += 1
@@ -99,7 +99,7 @@ class TinyModManager:
     return nn.ModuleList(mods), parts
 
 
-class TinyMod(nn.Module):
+class Mosaic(nn.Module):
 
   def __init__(self, idim, odim, tmgr,
                msize=None,
