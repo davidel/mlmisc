@@ -101,12 +101,12 @@ class MosaicManager:
 
 class Mosaic(nn.Module):
 
-  def __init__(self, idim, odim, tmgr,
+  def __init__(self, idim, odim, mmgr,
                msize=None,
                post=None,
                bias=True,
                pad_value=None):
-    msize = tmgr.module_size(idim, odim, msize=msize)
+    msize = mmgr.module_size(idim, odim, msize=msize)
     icount = (idim + msize - 1) // msize
     ocount = (odim + msize - 1) // msize
     rem = idim % msize
@@ -118,10 +118,10 @@ class Mosaic(nn.Module):
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
       self.pad = lambda x: x
-    self.mods, self.parts = tmgr.build_modules(msize, icount, ocount)
+    self.mods, self.parts = mmgr.build_modules(msize, icount, ocount)
     if bias:
       bound = 1.0 / math.sqrt(odim)
-      weight = torch.empty(odim, dtype=tmgr.dtype).uniform_(-bound, bound)
+      weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
       self.bias = nn.Parameter(weight)
     else:
       self.bias = 0
