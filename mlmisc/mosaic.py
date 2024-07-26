@@ -39,9 +39,6 @@ class MosaicManager:
     self.div_factor = div_factor or 16
     self.mods = collections.defaultdict(TilesPod)
 
-  def _total_params(self):
-    return sum(mod.params for mod in self.mods.values())
-
   def reset(self):
     for mod in self.mods.values():
       mod.reset()
