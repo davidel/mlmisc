@@ -11,6 +11,15 @@ import torch.nn.functional as F
 from . import layer_utils as lu
 
 
+class Tile(nn.Module):
+
+  def __init__(self, n, dtype=None):
+    super().__init__()
+    weight = torch.empty(n, n, dtype=dtype)
+    nn.init.kaiming_uniform_(weight)
+    self.weight = nn.Parameter(weight)
+
+
 class TilesPod:
 
   def __init__(self):
@@ -20,15 +29,6 @@ class TilesPod:
   def reset(self):
     self.idx = 0
     self.used = 0
-
-
-class Tile(nn.Module):
-
-  def __init__(self, n, dtype=None):
-    super().__init__()
-    weight = torch.empty(n, n, dtype=dtype)
-    nn.init.kaiming_uniform_(weight)
-    self.weight = nn.Parameter(weight)
 
 
 class MosaicManager:
