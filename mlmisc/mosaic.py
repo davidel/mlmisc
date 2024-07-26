@@ -13,10 +13,10 @@ from . import layer_utils as lu
 
 class Tile(nn.Module):
 
-  def __init__(self, n, dtype=None):
+  def __init__(self, n, dtype=None, init=None):
     super().__init__()
     weight = torch.empty(n, n, dtype=dtype)
-    nn.init.kaiming_uniform_(weight)
+    (init or nn.init.kaiming_uniform_)(weight)
     self.weight = nn.Parameter(weight)
 
 
@@ -33,9 +33,10 @@ class TilesPod:
 
 class MosaicManager:
 
-  def __init__(self, mods_budget, dtype=None, div_factor=None):
+  def __init__(self, mods_budget, dtype=None, div_factor=None, init=None):
     self.mods_budget = mods_budget
     self.dtype = dtype
+    self.init = init
     self.div_factor = div_factor or 16
     self.mods = collections.defaultdict(TilesPod)
 
@@ -69,7 +70,7 @@ class MosaicManager:
       m = mod.mods[mod.idx]
       mod.idx = (mod.idx + 1) % len(mod.mods)
     else:
-      m = Tile(n, dtype=self.dtype)
+      m = Tile(n, dtype=self.dtype, init=self.init)
       mod.mods.append(m)
 
     mod.used += 1
