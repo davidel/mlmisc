@@ -197,7 +197,7 @@ class Trainer:
                         scheduler=scheduler)
         tsave = self._train_time.start()
 
-      if now > tval + val_logstep:
+      if now > tval + val_logstep or sd.stepno + 1 >= sd.num_batches:
         self._train_time.track()
         self._show_stats(model)
         vloss = self._run_validation(model, val_data, val_time, batch_size, sd.stepno,
@@ -210,8 +210,6 @@ class Trainer:
       if stopped:
         alog.info(f'Interrupted at batch {sd.stepno + 1}/{sd.num_batches}!')
         break
-
-    optimizer.step()
 
     if scheduler is not None and val_losses and not stopped:
       scheduler.step(np.mean(val_losses))
