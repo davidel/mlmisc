@@ -24,6 +24,7 @@ def get_device(kind=None):
 def randseed(seed):
   rseed = pyu.randseed(seed)
   torch.manual_seed(rseed)
+  torch.cuda.manual_seed_all(rseed)
 
   return rseed
 
