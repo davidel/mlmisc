@@ -39,7 +39,7 @@ def enum_chunks(path, chunk_size=None):
   with open(path, mode='rb') as f:
     pos, rem = 0, b''
     while True:
-      alog.info(f'Reading from {f.tell()}')
+      alog.debug0(f'Reading from {f.tell()}')
 
       rdata = f.read(chunk_size)
       data = rem + rdata
