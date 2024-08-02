@@ -1,7 +1,11 @@
+import array
 import io
 import os
 
 import sentencepiece as spm
+import torch
+
+from py_misc_utils import alog
 
 
 def create_tokenizer(path, max_vocab_size,
@@ -25,7 +29,36 @@ def create_tokenizer(path, max_vocab_size,
       with open(proto_path, mode='wb') as f:
         f.write(proto_data)
 
-  sp = spm.SentencePieceProcessor(model_proto=proto_data)
+  toknz = spm.SentencePieceProcessor(model_proto=proto_data)
 
-  return sp
+  return toknz
+
+
+def enum_chunks(path, chunk_size=None):
+  chunk_size = chunk_size or 50 * 1024 * 1024
+  with open(path, mode='rb') as f:
+    pos, rem = 0, b''
+    while True:
+      alog.info(f'Reading from {f.tell()}')
+
+      rdata = f.read(chunk_size)
+      data = rem + rdata
+      epos = data.rfind(b'\n')
+      if epos >= 0:
+        rem = data[epos + 1: ]
+        data = data[: epos + 1]
+
+      yield data
+
+      if chunk_size > len(rdata):
+        break
+
+
+def tokenize_data(path, toknz, chunk_size=None, dtype=None):
+  tokens = array.array('I')
+  for chunk in enum_chunks(path, chunk_size=chunk_size):
+    enc = toknz.encode(chunk)
+    tokens.extend(enc)
+
+  return torch.tensor(tokens, dtype=dtype or torch.long)
 
