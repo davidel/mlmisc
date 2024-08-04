@@ -36,7 +36,7 @@ class Attention(nn.Module):
     # (B, H, T, CH) @ (B, H, CH, T) => (B, H, T, T)
     att = queries @ keys.transpose(-2, -1)
     if mask is not None:
-      att = att.masked_fill(mask[:, :, :t, :t], float('-inf'))
+      att = att.masked_fill(mask, float('-inf'))
     att = F.softmax(att * ch**-0.5, dim=-1)
     att = self.attn_drop(att)
 
