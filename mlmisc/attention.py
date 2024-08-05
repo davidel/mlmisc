@@ -10,6 +10,9 @@ class Attention(nn.Module):
   def __init__(self, n_embd, n_head,
                attn_dropout=None,
                dropout=None):
+    attn_dropout = attn_dropout or 0.0
+    dropout = dropout or 0.0
+
     tas.check_eq(n_embd % n_head, 0,
                  msg=f'Embedding dimension ({n_embd}) must be multiple ' \
                  f'of the number of heads ({n_head})')
@@ -21,8 +24,8 @@ class Attention(nn.Module):
     self.v_prj = nn.Linear(n_embd, n_embd)
     self.unifyheads = nn.Linear(n_embd, n_embd)
 
-    self.attn_drop = nn.Dropout(attn_dropout or 0.1)
-    self.resid_drop = nn.Dropout(dropout or 0.1)
+    self.attn_drop = nn.Dropout(attn_dropout)
+    self.resid_drop = nn.Dropout(dropout)
 
   def forward(self, k, q, v, mask=None):
     b, t, c = k.shape
