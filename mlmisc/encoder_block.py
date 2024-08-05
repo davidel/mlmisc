@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from . import args_sequential as aseq
 from . import attention as atn
 from . import layer_utils as lu
 
@@ -21,11 +22,11 @@ class EncoderBlock(nn.Module):
     self.attn = atn.Attention(input_dim, num_heads,
                               dropout=attn_dropout)
 
-    self.linear_net = nn.Sequential(
-      nn.Linear(input_dim, dim_feedforward),
-      nn.Dropout(dropout),
-      lu.create(act),
-      nn.Linear(dim_feedforward, input_dim)
+    self.linear_net = aseq.ArgsSequential(
+      ifc=nn.Linear(input_dim, dim_feedforward),
+      act1=lu.create(act),
+      ofc=nn.Linear(dim_feedforward, input_dim),
+      odrop=nn.Dropout(dropout),
     )
 
     self.norm1 = nn.LayerNorm(input_dim)
