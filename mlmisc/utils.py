@@ -86,15 +86,15 @@ def save_data(path, **kwargs):
   alog.debug(f'Data saved to {path}')
 
 
-def load_data(path, strict=True, **kwargs):
+def load_data(path, map_location=None, strict=True, **kwargs):
   alog.debug(f'Loading data from {path}')
-  td = torch.load(path)
+  td = torch.load(path, map_location=map_location or torch.device('cpu'))
 
   data = dict()
   for name, ndata in td.items():
     sdobj = kwargs.get(name, None)
     if sdobj is not None:
-      sdobj.load_state_dict(ndata)
+      sdobj.load_state_dict(ndata, strict=strict)
     elif isinstance(ndata, dict) and am.is_auto_state(ndata):
       data[name] = am.load(ndata, strict=strict)
     else:
