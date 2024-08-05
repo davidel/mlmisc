@@ -24,7 +24,7 @@ class EncoderBlock(nn.Module):
 
     self.linear_net = aseq.ArgsSequential(
       ifc=nn.Linear(input_dim, dim_feedforward),
-      act1=lu.create(act),
+      act=lu.create(act),
       ofc=nn.Linear(dim_feedforward, input_dim),
       odrop=nn.Dropout(dropout),
     )
