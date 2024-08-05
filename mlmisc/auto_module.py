@@ -51,8 +51,11 @@ def is_auto(mod):
   return hasattr(mod, _MODARGS)
 
 
-def load(source, strict=True):
-  state = source.copy() if isinstance(source, dict) else torch.load(source)
+def load(source, map_location=None, strict=True):
+  if isinstance(source, dict):
+    state = source.copy()
+  else:
+    state = torch.load(source, map_location=map_location)
 
   create_args = state.pop(_STATE)
 

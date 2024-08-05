@@ -46,12 +46,14 @@ def model_save(model, path):
 
 
 def model_load(path, model=None, device=None, strict=True):
+  map_location = torch.device('cpu') if device is not None else None
   if model is None:
     alog.debug(f'Loading model state from {path}')
-    model = am.load(path)
+    model = am.load(path, map_location=map_location, strict=strict)
   elif os.path.exists(path):
     alog.debug(f'Loading model state from {path}')
-    model.load_state_dict(torch.load(path), strict=strict)
+    model.load_state_dict(torch.load(path, map_location=map_location),
+                          strict=strict)
 
   return model.to(device) if device is not None else model
 
