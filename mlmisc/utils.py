@@ -158,17 +158,18 @@ def create_graph(x, path=None, params=None, model=None, format='svg'):
 
 def get_lr(optimizer):
   lrs = []
-  for group in optimizer.param_groups:
-    lr = group.get('lr', None)
+  for pgrp in optimizer.param_groups:
+    lr = pgrp.get('lr')
     if lr is not None:
       lrs.append(lr)
 
-  return sum(lrs) / len(lrs) if lrs else 0.0
+  return np.mean(lrs) if lrs else None
 
 
 def reset_lr(optimizer, lr):
-  for g in optimizer.param_groups:
-    g['lr'] = lr
+  for pgrp in optimizer.param_groups:
+    if 'lr' in pgrp:
+      pgrp['lr'] = lr
 
 
 def minmax_bbox(bbox):
