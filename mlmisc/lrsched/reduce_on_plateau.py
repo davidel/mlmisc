@@ -33,5 +33,5 @@ class ReduceOnPlateau:
       self.sched.step(np.mean(self.losses))
       self.samples = 0
       self.losses = []
-      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), '.4e')}')
+      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".4e")}')
 
