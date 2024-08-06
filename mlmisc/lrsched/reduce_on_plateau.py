@@ -1,5 +1,6 @@
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.utils as pyu
 import torch
 import torch.optim as optim
 
@@ -32,4 +33,5 @@ class ReduceOnPlateau:
       self.sched.step(np.mean(self.losses))
       self.samples = 0
       self.losses = []
+      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), '.4e')}')
 
