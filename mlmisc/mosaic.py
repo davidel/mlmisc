@@ -49,7 +49,8 @@ class TilesPod(nn.Module):
 
   def state_dict(self, *args, **kwargs):
     state = super().state_dict(*args, **kwargs)
-    state['mods'] = torch.vstack([m.weight for m in self.mods])
+    with torch.no_grad():
+      state['mods'] = torch.hstack([m.weight for m in self.mods])
 
     return state
 
