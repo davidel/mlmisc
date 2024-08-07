@@ -47,6 +47,25 @@ class TilesPod(nn.Module):
 
     return m
 
+  def state_dict(self, *args, **kwargs):
+    state = super().state_dict(*args, **kwargs)
+    state['mods'] = torch.vstack([m.weight for m in self.mods])
+
+    return state
+
+  def load_state_dict(self, state, *args, **kwargs):
+    missing, known_keys = [], ('mods',)
+    stack = state.get('mods')
+    if stack is None:
+      if kwargs.get('strict', True):
+        alog.xraise(ValueError, f'Input state mossing "mods" key')
+      missing.append('mods')
+    else:
+      for i, m in enumerate(self.mods):
+        m.weight.copy_(stack[:, i * self.msize: (i + 1) * self.msize])
+
+    return missing, list(set(state.keys()) - set(known_keys))
+
 
 class MosaicManager:
 
