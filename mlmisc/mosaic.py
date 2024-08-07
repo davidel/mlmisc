@@ -20,15 +20,32 @@ class Tile(nn.Module):
     self.weight = nn.Parameter(weight)
 
 
-class TilesPod:
+class TilesPod(nn.Module):
 
-  def __init__(self):
-    self.mods = []
+  def __init__(self, msize, count, dtype=None, init=None):
+    super().__init__()
+    self.msize = msize
+    self.count = count
+    self.dtype = dtype
+    self.init = init
+    self.mods = nn.ModuleList()
     self.reset()
 
   def reset(self):
     self.idx = 0
     self.used = 0
+
+  def get_tile(self):
+    if len(self.mods) > self.count:
+      m = self.mods[self.idx]
+      self.idx = (self.idx + 1) % len(self.mods)
+    else:
+      m = Tile(self.msize, dtype=self.dtype, init=self.init)
+      self.mods.append(m)
+
+    self.used += 1
+
+    return m
 
 
 class MosaicManager:
@@ -38,7 +55,7 @@ class MosaicManager:
     self.dtype = dtype
     self.init = init
     self.div_factor = div_factor or 16
-    self.mods = collections.defaultdict(TilesPod)
+    self.mods = dict()
 
   def reset(self):
     for mod in self.mods.values():
@@ -61,21 +78,12 @@ class MosaicManager:
                           msg=f'Unlisted module size {n}: ' \
                           f'available={list(self.mods_budget.keys())}')
 
-    mod = self.mods[n]
+    mod = self.mods.get(n)
+    if mod is None:
+      mod = TilesPod(n, budget, dtype=self.dtype, init=self.init)
+      self.mods[n] = mod
 
-    if len(mod.mods) >= budget:
-      tas.check(mod.mods, msg=f'Cannot create module of size {n}, no available ' \
-                f'budget (mods_budget={self.mods_budget})')
-
-      m = mod.mods[mod.idx]
-      mod.idx = (mod.idx + 1) % len(mod.mods)
-    else:
-      m = Tile(n, dtype=self.dtype, init=self.init)
-      mod.mods.append(m)
-
-    mod.used += 1
-
-    return m
+    return mod
 
   def stats(self):
     stats = dict()
@@ -87,14 +95,13 @@ class MosaicManager:
     return stats
 
   def build_modules(self, msize, icount, ocount):
-    mods = [self.get(msize) for _ in range(icount * ocount)]
+    mod = self.get(msize)
 
     parts = []
     for i in range(icount):
-      offset = i * ocount
-      parts.append([m.weight for m in mods[offset: offset + ocount]])
+      parts.append([mod.get_tile().weight for _ in range(ocount)])
 
-    return nn.ModuleList(mods), parts
+    return mod, parts
 
 
 class Mosaic(nn.Module):
@@ -116,7 +123,7 @@ class Mosaic(nn.Module):
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
       self.pad = lambda x: x
-    self.mods, self.parts = mmgr.build_modules(msize, icount, ocount)
+    self.mod, self.parts = mmgr.build_modules(msize, icount, ocount)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
