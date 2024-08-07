@@ -36,7 +36,7 @@ class TilesPod(nn.Module):
     self.used = 0
 
   def get_tile(self):
-    if len(self.mods) > self.count:
+    if len(self.mods) >= self.count:
       m = self.mods[self.idx]
       self.idx = (self.idx + 1) % len(self.mods)
     else:
