@@ -62,8 +62,15 @@ class TilesPod(nn.Module):
         alog.xraise(ValueError, f'Input state mossing "mods" key')
       missing.append('mods')
     else:
+      assign = kwargs.get('assign', False)
       for i, m in enumerate(self.mods):
-        m.weight.copy_(stack[:, i * self.msize: (i + 1) * self.msize])
+        param_window = stack[:, i * self.msize: (i + 1) * self.msize]
+        if assign:
+          new_param = nn.Parameter(param_window.detach().clone(),
+                                   requires_grad=m.weight.requires_grad)
+          torch.utils.swap_tensors(m.weight, new_param)
+        else:
+          m.weight.copy_(param_window)
 
     return missing, list(set(state.keys()) - set(known_keys))
 
