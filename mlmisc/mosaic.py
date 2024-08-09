@@ -167,8 +167,7 @@ class Mosaic(nn.Module):
       fc_mat = self.fc_mat
       if fc_mat is None:
         with torch.no_grad():
-          fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
-          self.fc_mat = fc_mat
+          self.fc_mat = fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
 
     return fc_mat
 
