@@ -81,30 +81,30 @@ class Trainer:
       f'val={self._val_time.total}\t' \
       f'save={self._save_time.total}'
 
-  def _val_loss(self, model, val_data, val_time, device, batch_size, should_stop):
-    loader = torch.utils.data.DataLoader(val_data,
-                                         batch_size=batch_size or 1,
+  def _val_loss(self, tctx):
+    loader = torch.utils.data.DataLoader(tctx.val_data,
+                                         batch_size=tctx.batch_size or 1,
                                          shuffle=True)
 
     alog.info(f'Running validation on {len(loader)} batches')
 
-    model.eval()
+    tctx.model.eval()
     with torch.no_grad():
       losses, val_start = [], self._val_time.start()
       for i, (x, y) in enumerate(loader):
-        if device is not None:
-          x, y = x.to(device), y.to(device)
+        if tctx.device is not None:
+          x, y = x.to(tctx.device), y.to(tctx.device)
 
-        _, loss = model(x, targets=y)
+        _, loss = tctx.model(x, targets=y)
         losses.append(loss.item())
 
-        if ((val_time is not None and time.time() > val_start + val_time) or
-            (callable(should_stop) and should_stop())):
+        if ((tctx.val_time is not None and time.time() > val_start + tctx.val_time) or
+            (callable(tctx.should_stop) and tctx.should_stop())):
           alog.info(f'Validation run on {i} of {len(loader)} batches due to ' \
-                    f'{datetime.timedelta(seconds=val_time)} required time stop')
+                    f'{datetime.timedelta(seconds=tctx.val_time)} required time stop')
           break
 
-    model.train()
+    tctx.model.train()
 
     self._val_time.track()
 
@@ -117,17 +117,17 @@ class Trainer:
 
     return epoch
 
-  def _log_train_loss(self, loss, batch_num, num_batches, batch_size, tb_writer):
-    epoch = self._tblog(tb_writer, num_batches * batch_size, 'Train Loss', loss)
+  def _log_train_loss(self, loss, batch_num, num_batches, tctx):
+    epoch = self._tblog(tctx.tb_writer, num_batches * tctx.batch_size, 'Train Loss', loss)
     alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
               f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
 
-  def _run_validation(self, model, val_data, val_time, batch_size, batch_num, num_batches,
-                      device, should_stop, tb_writer):
-    vloss = self._val_loss(model, val_data, val_time, device, batch_size, should_stop)
+  def _run_validation(self, batch_num, num_batches, tctx):
+    vloss = self._val_loss(tctx)
     if vloss is not None:
-      epoch = self._tblog(tb_writer, num_batches * batch_size, 'Validation Loss', vloss)
+      epoch = self._tblog(tctx.tb_writer, num_batches * tctx.batch_size,
+                          'Validation Loss', vloss)
       alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
                 f'Validation Loss {vloss:.4f}')
 
@@ -139,38 +139,37 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                           dict(value_stats=alog.DEBUG))
 
-  def _step(self, model, optimizer, train_data, batch_size, device, accum_steps,
-            grad_clip):
-    loader = torch.utils.data.DataLoader(train_data,
-                                         batch_size=batch_size,
+  def _step(self, tctx):
+    loader = torch.utils.data.DataLoader(tctx.train_data,
+                                         batch_size=tctx.batch_size,
                                          shuffle=True)
 
     num_batches = len(loader)
     alog.info(f'Running EPOCH train on {num_batches} batches')
 
-    model.train()
-    optimizer.zero_grad()
+    tctx.model.train()
+    tctx.optimizer.zero_grad()
 
     for i, (x, y) in enumerate(loader):
-      if device is not None:
-        x, y = x.to(device), y.to(device)
+      if tctx.device is not None:
+        x, y = x.to(tctx.device), y.to(tctx.device)
 
-      _, loss = model(x, targets=y)
+      _, loss = tctx.model(x, targets=y)
 
-      bloss = loss if accum_steps == 1 else loss / accum_steps
+      bloss = loss if tctx.accum_steps == 1 else loss / tctx.accum_steps
 
       bloss.backward()
 
-      self._num_samples += batch_size
-      if (i + 1) % accum_steps == 0:
-        if grad_clip is not None and grad_clip > 0:
-          nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+      self._num_samples += tctx.batch_size
+      if (i + 1) % tctx.accum_steps == 0:
+        if tctx.grad_clip is not None and tctx.grad_clip > 0:
+          nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
 
-        optimizer.step()
+        tctx.optimizer.step()
 
         yield pyu.make_object(stepno=i, loss=loss, num_batches=num_batches)
 
-        optimizer.zero_grad()
+        tctx.optimizer.zero_grad()
 
   def train_epoch(self, model, optimizer, train_data, val_data, batch_size,
                   device=None,
@@ -184,16 +183,15 @@ class Trainer:
                   model_path=None,
                   tb_writer=None,
                   should_stop=None):
-    tstep, tval, tsave = [self._train_time.start()] * 3
+    tctx = pyu.make_object(**locals())
 
+    tstep, tval, tsave = [self._train_time.start()] * 3
     train_losses, val_losses = array.array('f'), array.array('f')
-    for sd in self._step(model, optimizer, train_data, batch_size, device,
-                         accum_steps, grad_clip):
+    for sd in self._step(tctx):
       now = self._train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
-        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches, batch_size,
-                             tb_writer)
+        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches, tctx)
         tstep = now
 
       if model_path is not None and now > tsave + model_chkptstep:
@@ -206,8 +204,7 @@ class Trainer:
       if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
         self._train_time.track()
         self._show_stats(model)
-        vloss = self._run_validation(model, val_data, val_time, batch_size, sd.stepno,
-                                     sd.num_batches, device, should_stop, tb_writer)
+        vloss = self._run_validation(sd.stepno, sd.num_batches, tctx)
         if vloss is not None:
           val_losses.append(vloss)
         tval = self._train_time.start()
