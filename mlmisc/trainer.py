@@ -183,7 +183,7 @@ class Trainer:
                   model_path=None,
                   tb_writer=None,
                   should_stop=None):
-    tctx = pyu.make_object(**locals())
+    tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
     tstep, tval, tsave = [self._train_time.start()] * 3
     train_losses, val_losses = array.array('f'), array.array('f')
