@@ -6,6 +6,7 @@ import numpy as np
 from py_misc_utils import alog
 from py_misc_utils import utils as pyu
 import torch
+import torch.nn as nn
 
 from . import debug_utils as du
 from . import utils as ut
@@ -138,7 +139,8 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                           dict(value_stats=alog.DEBUG))
 
-  def _step(self, model, optimizer, train_data, batch_size, device, accum_steps):
+  def _step(self, model, optimizer, train_data, batch_size, device, accum_steps,
+            grad_clip):
     loader = torch.utils.data.DataLoader(train_data,
                                          batch_size=batch_size,
                                          shuffle=True)
@@ -161,6 +163,9 @@ class Trainer:
 
       self._num_samples += batch_size
       if (i + 1) % accum_steps == 0:
+        if grad_clip is not None and grad_clip > 0:
+          nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
+
         optimizer.step()
 
         yield pyu.make_object(stepno=i, loss=loss, num_batches=num_batches)
@@ -171,6 +176,7 @@ class Trainer:
                   device=None,
                   scheduler=None,
                   accum_steps=1,
+                  grad_clip=None,
                   val_time=None,
                   loss_logstep=60,
                   val_logstep=900,
@@ -182,7 +188,7 @@ class Trainer:
 
     train_losses, val_losses = array.array('f'), array.array('f')
     for sd in self._step(model, optimizer, train_data, batch_size, device,
-                        accum_steps):
+                         accum_steps, grad_clip):
       now = self._train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
