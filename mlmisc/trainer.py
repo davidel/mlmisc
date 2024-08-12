@@ -84,7 +84,8 @@ class Trainer:
   def _val_loss(self, tctx):
     loader = torch.utils.data.DataLoader(tctx.val_data,
                                          batch_size=tctx.batch_size or 1,
-                                         shuffle=True)
+                                         shuffle=True,
+                                         num_workers=tctx.num_workers)
 
     alog.info(f'Running validation on {len(loader)} batches')
 
@@ -142,7 +143,8 @@ class Trainer:
   def _step(self, tctx):
     loader = torch.utils.data.DataLoader(tctx.train_data,
                                          batch_size=tctx.batch_size,
-                                         shuffle=True)
+                                         shuffle=True,
+                                         num_workers=tctx.num_workers)
 
     num_batches = len(loader)
     alog.info(f'Running EPOCH train on {num_batches} batches')
@@ -182,6 +184,7 @@ class Trainer:
                   model_chkptstep=600,
                   model_path=None,
                   tb_writer=None,
+                  num_workers=0,
                   should_stop=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
