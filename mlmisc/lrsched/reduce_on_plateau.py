@@ -7,17 +7,19 @@ import torch.optim as optim
 
 class ReduceOnPlateau:
 
-  def __init__(self, optimizer, num_samples, patience_span=None, **kwargs):
+  STATE_FIELDS = ()
+
+  def __init__(self, optimizer, num_batches, patience_span=None, **kwargs):
     patience = kwargs.get('patience', 10)
-    patience_span = patience_span or 0.05
+    patience_span = patience_span or 0.1
 
     self.sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, **kwargs)
-    self.sched_samples = int(num_samples * patience_span / patience)
-    self.samples = 0
+    self.sched_batches = int(num_batches * patience_span / patience)
+    self.batchno = 0
     self.losses = []
 
   def state_dict(self):
-    state = self.__dict__.copy()
+    state = {k: getattr(self, k) for k in STATE_FIELDS}
     state['sched'] = self.sched.state_dict()
 
     return state
@@ -26,12 +28,15 @@ class ReduceOnPlateau:
     self.sched.load_state_dict(state.pop('sched'))
     self.__dict__.update(state)
 
-  def step(self, batch_samples, batch_loss):
-    self.samples += batch_samples
+  def train_step(self, batch_loss):
     self.losses.append(batch_loss)
-    if self.samples >= self.sched_samples:
+    self.batchno += 1
+    if self.batchno >= self.sched_batches:
       self.sched.step(np.mean(self.losses))
-      self.samples = 0
+      self.batchno = 0
       self.losses = []
       alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".4e")}')
+
+  def step(self, val_loss):
+    alog.debug(f'Scheduler step called with {val_loss:.4e} validation loss')
 

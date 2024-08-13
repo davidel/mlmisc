@@ -188,6 +188,8 @@ class Trainer:
                   should_stop=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
+    train_step = getattr(scheduler, 'train_step') if scheduler else None
+
     tstep, tval, tsave = [self._train_time.start()] * 3
     train_losses, val_losses = array.array('f'), array.array('f')
     for sd in self._step(tctx):
@@ -196,6 +198,9 @@ class Trainer:
         train_losses.append(sd.loss.item())
         self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches, tctx)
         tstep = now
+
+      if callable(train_step):
+        train_step(sd.loss.item())
 
       if model_path is not None and now > tsave + model_chkptstep:
         self._train_time.track()
