@@ -188,7 +188,7 @@ class Trainer:
                   should_stop=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
-    train_step = getattr(scheduler, 'train_step') if scheduler else None
+    train_step = getattr(scheduler, 'train_step', None) if scheduler else None
 
     tstep, tval, tsave = [self._train_time.start()] * 3
     train_losses, val_losses = array.array('f'), array.array('f')
