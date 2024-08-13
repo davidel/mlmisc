@@ -19,7 +19,7 @@ class ReduceOnPlateau:
     self.losses = []
 
   def state_dict(self):
-    state = {k: getattr(self, k) for k in STATE_FIELDS}
+    state = {k: getattr(self, k) for k in self.STATE_FIELDS}
     state['sched'] = self.sched.state_dict()
 
     return state
