@@ -38,7 +38,8 @@ def get_tensors_stats(prefix, tensor_list,
                       abs_stats=True,
                       sort_by='mean',
                       percentiles=(),
-                      top_n=None):
+                      top_n=None,
+                      fmt='.4e'):
   tensor_devices = collections.defaultdict(list)
   stats = []
   for name, tensor in tensor_list:
@@ -59,10 +60,10 @@ def get_tensors_stats(prefix, tensor_list,
 
   value_stats = [f'{prefix} Values:']
   for tstat in stats:
-    pcts = pyu.format(tstat.percentile_values, '.5e')
-    value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmin={tstat.min:.5e}\t' \
-                       f'max={tstat.max:.5e}\tmean={tstat.mean:.5e}' \
-                       f'\tstd={tstat.std:.5e}\tpercentiles={pcts}')
+    pcts = [f'{int(100 * pp)}%={pv:{fmt}}' for pp, pv in zip(percentiles, tstat.percentile_values)]
+    value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmin={tstat.min:{fmt}}\t' \
+                       f'max={tstat.max:{fmt}}\tmean={tstat.mean:{fmt}}' \
+                       f'\tstd={tstat.std:{fmt}}\tpercentiles={pcts}')
 
   return pyu.make_object(device_stats='\n'.join(device_stats),
                          value_stats='\n'.join(value_stats))
