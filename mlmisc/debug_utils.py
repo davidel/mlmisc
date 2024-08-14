@@ -39,7 +39,7 @@ def get_tensors_stats(prefix, tensor_list,
                       sort_by='mean',
                       percentiles=(),
                       top_n=None,
-                      fmt='.4e'):
+                      fmt='.3e'):
   tensor_devices = collections.defaultdict(list)
   stats = []
   for name, tensor in tensor_list:
