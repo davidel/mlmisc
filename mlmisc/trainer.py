@@ -144,6 +144,16 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model, device='cpu'),
                           dict(value_stats=alog.DEBUG))
 
+  def _save_checkpoint(self, tctx):
+    checkpoint = tctx.checkpoint or ('optimizer', 'scheduler')
+    cargs = dict()
+    for name in checkpoint:
+      data = getattr(tctx, name, None)
+      if data is not None:
+        cargs[name] = data
+
+    self.save_model(tctx.model, tctx.model_path, **cargs)
+
   def _step(self, tctx):
     loader = torch.utils.data.DataLoader(tctx.train_data,
                                          batch_size=tctx.batch_size,
@@ -186,6 +196,7 @@ class Trainer:
                   loss_logstep=60,
                   val_logstep=900,
                   model_chkptstep=600,
+                  checkpoint=None,
                   model_path=None,
                   tb_writer=None,
                   num_workers=0,
@@ -208,9 +219,7 @@ class Trainer:
 
       if model_path is not None and now > tsave + model_chkptstep:
         self._train_time.track()
-        self.save_model(model, model_path,
-                        optimizer=optimizer,
-                        scheduler=scheduler)
+        self._save_checkpoint(tctx)
         tsave = self._train_time.start()
 
       if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
@@ -234,9 +243,7 @@ class Trainer:
     self._train_time.track()
 
     if model_path is not None:
-      self.save_model(model, model_path,
-                      optimizer=optimizer,
-                      scheduler=scheduler)
+      self._save_checkpoint(tctx)
 
     return train_losses, val_losses
 
