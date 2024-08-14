@@ -141,11 +141,9 @@ class Trainer:
   def _show_stats(self, model):
     percentiles = (0.5, 0.9, 0.95, 0.99)
     du.show_tensors_stats(du.get_parameters_stats(model,
-                                                  device='cpu',
                                                   percentiles=percentiles),
                           dict(value_stats=alog.DEBUG))
     du.show_tensors_stats(du.get_grads_stats(model,
-                                             device='cpu',
                                              percentiles=percentiles),
                           dict(value_stats=alog.DEBUG))
 
