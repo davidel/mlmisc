@@ -71,10 +71,14 @@ class Trainer:
     return model, state
 
   def load_aux_state(self, state, **kwargs):
+    loaded = []
     for name, obj in kwargs.items():
       ostate = state.get(name)
       if ostate is not None:
         obj.load_state_dict(ostate)
+        loaded.append(name)
+
+    return tuple(loaded)
 
   def _times(self):
     return f'train={self._train_time.total}\t' \
