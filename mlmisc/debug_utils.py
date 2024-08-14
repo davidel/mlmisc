@@ -1,5 +1,6 @@
 import collections
 
+import numpy as np
 from py_misc_utils import alog
 from py_misc_utils import utils as pyu
 import torch
@@ -10,19 +11,16 @@ STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
 
 def tensor_stats(tensor,
                  name=None,
-                 device=None,
                  abs_stats=True,
                  percentiles=()):
-  if device is not None:
-    tensor = tensor.to(device)
   if abs_stats:
     tensor = torch.abs(tensor)
   std, mean = torch.std_mean(tensor)
   mm = torch.aminmax(tensor)
 
   if percentiles:
-    pct_tensor = torch.tensor(percentiles).to(tensor.device)
-    quantile = torch.quantile(tensor, pct_tensor).tolist()
+    # Run the quantile with Numpy as Pytorch has too strict tensor size limits.
+    quantile = np.quantile(tensor.numpy(force=True), percentiles).tolist()
   else:
     quantile = []
 
@@ -37,7 +35,6 @@ def tensor_stats(tensor,
 
 
 def get_tensors_stats(prefix, tensor_list,
-                      device=None,
                       abs_stats=True,
                       sort_by='mean',
                       percentiles=(),
@@ -47,7 +44,6 @@ def get_tensors_stats(prefix, tensor_list,
   for name, tensor in tensor_list:
     stats.append(tensor_stats(tensor,
                               name=name,
-                              device=device,
                               abs_stats=abs_stats,
                               percentiles=percentiles))
     tensor_devices[tensor.device].append(name)
@@ -73,13 +69,11 @@ def get_tensors_stats(prefix, tensor_list,
 
 
 def get_parameters_stats(model,
-                         device=None,
                          abs_stats=True,
                          sort_by='mean',
                          percentiles=(),
                          top_n=None):
   return get_tensors_stats('Parameters', model.named_parameters(),
-                           device=device,
                            abs_stats=abs_stats,
                            sort_by=sort_by,
                            percentiles=percentiles,
@@ -87,7 +81,6 @@ def get_parameters_stats(model,
 
 
 def get_grads_stats(model,
-                    device=None,
                     abs_stats=True,
                     sort_by='mean',
                     percentiles=(),
@@ -100,7 +93,6 @@ def get_grads_stats(model,
       alog.debug0(f'Parameter has no gradient: {name}')
 
   return get_tensors_stats('Gradients', grads,
-                           device=device,
                            abs_stats=abs_stats,
                            sort_by=sort_by,
                            percentiles=percentiles,
