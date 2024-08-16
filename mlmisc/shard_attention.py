@@ -1,0 +1,53 @@
+import torch
+import torch.nn as nn
+
+import py_misc_utils.assert_checks as tas
+
+from . import layer_utils as lu
+
+
+class ShardAttention(nn.Module):
+
+  def __init__(self, embed_size, num_heads, post=None):
+    tas.check_eq(embed_size % num_heads, 0,
+                 f'Number of heads ({num_heads}) should divide the ' \
+                 f'embedding size ({embed_size})')
+
+    super().__init__()
+    self.num_heads = num_heads
+    self.weight = nn.Parameter(torch.randn(num_heads * embed_size, embed_size))
+    self.post = lu.create(post or nn.Identity)
+
+  def forward(self, x):
+    b, t, c = x.shape
+
+    # (B, T, C) => (B, T, CH, CK)
+    y = x.view(b, t, self.num_heads, -1)
+    # (B, T, CH, CK) => (B, CH, T, CK)
+    y = torch.permute(y, (0, 2, 1, 3))
+    # (B, CH, T, CK) => (B, CH, CK, T)
+    yt = torch.permute(y, (0, 1, 3, 2))
+    # (B, CH, T, CK) @ (B, CH, CK, T) => (B, CH, T, T)
+    y = torch.einsum('bhtk,bhks->bhts', y, yt)
+
+    # (B, T, C) => (B, 1, T, C)
+    xx = x.unsqueeze(1)
+    # (B, 1, T, C) => (B, CH, T, C)
+    xx = xx.expand(b, self.num_heads, t, c)
+
+    # (B, CH, T, T) @ (B, CH, T, C) => (B, CH, T, C)
+    y = torch.einsum('bhts,bhsk->bhtk', y, xx)
+    # (B, CH, T, C) => (B, T, CH, C)
+    y = torch.permute(y, (0, 2, 1, 3))
+    # (B, T, CH, C) => (B, T, CH * C)
+    y = y.reshape(b, t, -1)
+
+    # (CH * C, C) => (1, CH * C, C)
+    w = self.weight.unsqueeze(0)
+    # (1, CH * C, C) => (B, CH * C, C)
+    w = w.expand(b, *w.shape[1: ])
+    # (B, T, CH * C) @ (B, CH * C, C) => (B, T, C)
+    y = torch.einsum('btn,bnm->btm', y, w)
+
+    return self.post(x + y)
+
