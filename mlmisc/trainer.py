@@ -122,11 +122,12 @@ class Trainer:
 
     return epoch
 
-  def _log_train_loss(self, loss, batch_num, num_batches, tctx):
+  def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
     epoch = self._tblog(tctx.tb_writer, num_batches * tctx.batch_size, 'Train Loss', loss)
     alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
               f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
+    alog.info(f'Perf: {tctx.batch_size / step_time:.2e} samples/sec')
 
   def _run_validation(self, batch_num, num_batches, tctx):
     vloss = self._val_loss(tctx)
@@ -209,13 +210,14 @@ class Trainer:
     train_step = getattr(scheduler, 'train_step', None) if scheduler else None
 
     tstep, tval, tsave = [self._train_time.start()] * 3
-    train_losses, val_losses = array.array('f'), array.array('f')
+    train_losses, val_losses, last_stepno = array.array('f'), array.array('f'), -1
     for sd in self._step(tctx):
       now = self._train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
-        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches, tctx)
-        tstep = now
+        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches,
+                             (now - tstep) / (sd.stepno - last_stepno), tctx)
+        tstep, last_stepno = now, sd.stepno
 
       if callable(train_step):
         train_step(sd.loss.item())
