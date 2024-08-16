@@ -8,7 +8,7 @@ from . import layer_utils as lu
 
 class ShardAttention(nn.Module):
 
-  def __init__(self, embed_size, num_heads, post=None):
+  def __init__(self, embed_size, num_heads, post=None, post_feed=None):
     tas.check_eq(embed_size % num_heads, 0,
                  f'Number of heads ({num_heads}) should divide the ' \
                  f'embedding size ({embed_size})')
@@ -17,6 +17,7 @@ class ShardAttention(nn.Module):
     self.num_heads = num_heads
     self.weight = nn.Parameter(torch.randn(num_heads * embed_size, embed_size))
     self.post = lu.create(post or nn.Identity)
+    self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
   def forward(self, x):
     b, t, c = x.shape
@@ -49,5 +50,5 @@ class ShardAttention(nn.Module):
     # (B, T, CH * C) @ (B, CH * C, C) => (B, T, C)
     y = torch.einsum('btn,bnm->btm', y, w)
 
-    return self.post(x + y)
+    return self.post(self.post_feed(x, y))
 
