@@ -15,19 +15,26 @@ def create_tokenizer(path, max_vocab_size,
   if proto_path is not None and os.path.isfile(proto_path):
     with open(proto_path, mode='rb') as f:
       proto_data = f.read()
-  else:
-    spstg = io.BytesIO()
-    spm.SentencePieceTrainer.train(input=path,
-                                   model_writer=spstg,
-                                   model_type=model_type or 'bpe',
-                                   vocab_size=max_vocab_size,
-                                   **kwargs)
 
-    proto_data = spstg.getvalue()
+    toknz = spm.SentencePieceProcessor(model_proto=proto_data)
+    if toknz.vocab_size() == max_vocab_size:
+      return toknz
 
-    if proto_path is not None:
-      with open(proto_path, mode='wb') as f:
-        f.write(proto_data)
+    alog.warning(f'Existing tokenizer has vocabulary size {toknz.vocab_size()} ' \
+                 f'but {max_vocab_size} is required. Rebuilding ...')
+
+  spstg = io.BytesIO()
+  spm.SentencePieceTrainer.train(input=path,
+                                 model_writer=spstg,
+                                 model_type=model_type or 'bpe',
+                                 vocab_size=max_vocab_size,
+                                 **kwargs)
+
+  proto_data = spstg.getvalue()
+
+  if proto_path is not None:
+    with open(proto_path, mode='wb') as f:
+      f.write(proto_data)
 
   toknz = spm.SentencePieceProcessor(model_proto=proto_data)
 
