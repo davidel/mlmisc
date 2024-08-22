@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 
-class NextTokenDataset(torch.utils.data.Dataset):
+class NextSequenceDataset(torch.utils.data.Dataset):
 
   def __init__(self, data, context_size, pad=None):
     pad_size = sum(pad['pad']) if pad is not None else 0
@@ -17,7 +17,7 @@ class NextTokenDataset(torch.utils.data.Dataset):
 
   def __getitem__(self, i):
     offset = i + self.context_size
-    x, y = self.data[i: offset], self.data[offset: offset + 1]
+    x, y = self.data[i: offset], self.data[i + 1: offset + 1]
 
     if self.pad is not None:
       x = F.pad(x, self.pad['pad'], value=self.pad['value'])
