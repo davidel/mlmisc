@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,7 +42,7 @@ class Attention(nn.Module):
     att = queries @ keys.transpose(-2, -1)
     if mask is not None:
       att = att.masked_fill(mask, float('-inf'))
-    att = F.softmax(att * ch**-0.5, dim=-1)
+    att = F.softmax(att / math.sqrt(ch), dim=-1)
     att = self.attn_drop(att)
 
     # (B, H, T, T) @ (B, H, T, CH) => (B, H, T, CH)

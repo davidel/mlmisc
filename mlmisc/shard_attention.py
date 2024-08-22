@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,7 +36,7 @@ class ShardAttention(nn.Module):
 
     if mask is not None:
       y = y.masked_fill(mask, float('-inf'))
-      y = F.softmax(y * y.shape[1]**-0.5, dim=-1)
+    y = F.softmax(y / math.sqrt(y.shape[1]), dim=-1)
 
     # (B, T, C) => (B, 1, T, C)
     xx = x.unsqueeze(1)
