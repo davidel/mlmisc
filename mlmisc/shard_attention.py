@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 import py_misc_utils.assert_checks as tas
 
@@ -19,7 +20,7 @@ class ShardAttention(nn.Module):
     self.post = lu.create(post or nn.Identity)
     self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
-  def forward(self, x):
+  def forward(self, x, mask=None):
     b, t, c = x.shape
 
     # (B, T, C) => (B, T, CH, CK)
@@ -30,6 +31,10 @@ class ShardAttention(nn.Module):
     yt = torch.permute(y, (0, 1, 3, 2))
     # (B, CH, T, CK) @ (B, CH, CK, T) => (B, CH, T, T)
     y = torch.einsum('bhtk,bhks->bhts', y, yt)
+
+    if mask is not None:
+      y = y.masked_fill(mask, float('-inf'))
+    y = F.softmax(y * y.shape[1]**-0.5, dim=-1)
 
     # (B, T, C) => (B, 1, T, C)
     xx = x.unsqueeze(1)
