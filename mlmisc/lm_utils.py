@@ -45,9 +45,11 @@ def sample(model, seq, context_size, steps, pad_mode, pad_value,
            temperature=None,
            sample=False,
            top_k=None):
+  iseq = seq.unsqueeze(0) if seq.dim() == 1 else seq
+
   model.eval()
   for i in range(steps):
-    cseq, ssize = create_eval_sequence(seq, context_size, pad_mode, pad_value)
+    cseq, ssize = create_eval_sequence(iseq, context_size, pad_mode, pad_value)
 
     y = model(cseq)
 
@@ -67,7 +69,7 @@ def sample(model, seq, context_size, steps, pad_mode, pad_value,
     else:
       next_token = torch.argmax(probs, dim=-1, keepdim=True)
 
-    seq = torch.cat((seq, next_token), dim=1)
+    iseq = torch.cat((iseq, next_token), dim=1)
 
-  return seq
+  return iseq.squeeze(0) if iseq.dim() > seq.dim() else iseq
 
