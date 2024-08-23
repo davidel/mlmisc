@@ -49,7 +49,12 @@ def sample(model, seq, context_size, steps, pad_mode, pad_value,
   for i in range(steps):
     cseq, ssize = create_eval_sequence(seq, context_size, pad_mode, pad_value)
 
-    logits, _ = model(cseq)
+    y = model(cseq)
+
+    # Handle both model which return the simple output (loss handled externally)
+    # and the ones which return the (output, less) tuple.
+    logits = y[0] if isinstance(y, (list, tuple)) else y
+
     logits = select_prediction_logits(logits, ssize)
     if temperature is not None:
       logits /= temperature
