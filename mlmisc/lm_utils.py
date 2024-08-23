@@ -41,10 +41,10 @@ def select_prediction_logits(logits, seqlen):
 
 
 @torch.no_grad()
-def sample(model, seq, context_size, steps, pad_mode, pad_value,
-           temperature=None,
-           sample=False,
-           top_k=None):
+def generate(model, seq, context_size, steps, pad_mode, pad_value,
+             temperature=None,
+             sample=False,
+             top_k=None):
   iseq = seq.unsqueeze(0) if seq.dim() == 1 else seq
 
   model.eval()
