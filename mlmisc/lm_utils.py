@@ -36,8 +36,8 @@ def select_prediction_logits(logits, seqlen):
   # If a model is trained with next next sequence as target (example:
   # 'a b c d' -> 'b c d e') the logits shape is (N, C, V) with N being
   # the batch size, C the context length, and V the vocaboulary size,
-  # and the target token is the entry @ seqlen.
-  return logits if logits.dim() <= 2 else logits[:, seqlen, :]
+  # and the target token is the entry @ (seqlen - 1).
+  return logits if logits.dim() <= 2 else logits[:, seqlen - 1, :]
 
 
 @torch.no_grad()
@@ -50,7 +50,7 @@ def sample(model, seq, context_size, steps, pad_mode, pad_value,
     cseq, ssize = create_eval_sequence(seq, context_size, pad_mode, pad_value)
 
     logits, _ = model(cseq)
-    logits = select_prediction_logits(logits, ssize - 1)
+    logits = select_prediction_logits(logits, ssize)
     if temperature is not None:
       logits /= temperature
     if top_k is not None and top_k > 0:
