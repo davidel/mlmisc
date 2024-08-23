@@ -45,7 +45,8 @@ def generate(model, seq, context_size, steps, pad_mode, pad_value,
              temperature=None,
              sample=False,
              top_k=None):
-  iseq = seq.unsqueeze(0) if seq.dim() == 1 else seq
+  # Add artificial batch dimension.
+  iseq = seq.unsqueeze(0)
 
   model.eval()
   for i in range(steps):
@@ -71,5 +72,5 @@ def generate(model, seq, context_size, steps, pad_mode, pad_value,
 
     iseq = torch.cat((iseq, next_token), dim=1)
 
-  return iseq.squeeze(0) if iseq.dim() > seq.dim() else iseq
+  return iseq.squeeze(0)
 
