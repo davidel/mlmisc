@@ -12,7 +12,7 @@ def top_k_logits(logits, k):
   return logits
 
 
-def create_eval_sequence(iseq, context_size, pad_front, pad_value):
+def create_eval_sequence(iseq, context_size, pad_mode, pad_value):
   ssize = min(context_size, iseq.shape[1])
   if iseq.shape[1] >= context_size:
     seq = iseq[:, -context_size:]
