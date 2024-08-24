@@ -49,7 +49,6 @@ class ShardAttention(nn.Module):
     y = torch.permute(y, (0, 2, 1, 3))
     # (B, T, CH, C) => (B, T, CH * C)
     y = y.reshape(b, t, -1)
-
     # (B, T, CH * C) @ (CH * C, C) => (B, T, C)
     y = y @ self.weight
 
