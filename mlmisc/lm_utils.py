@@ -38,7 +38,7 @@ def select_prediction_logits(logits, seqlen):
   # 'a b c d' -> 'b c d e') the logits shape is (N, C, V) with N being
   # the batch size, C the context length, and V the vocaboulary size,
   # and the target token is the entry @ (seqlen - 1).
-  return logits if logits.dim() <= 2 else logits[:, seqlen - 1, :]
+  return logits if logits.dim() <= 2 else logits[..., seqlen - 1, :]
 
 
 def generate(evalfn, seq, context_size, steps, pad_mode, pad_value,
