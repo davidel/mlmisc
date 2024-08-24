@@ -7,15 +7,16 @@ import py_misc_utils.alog as alog
 
 def top_k_logits(logits, k):
   v, _ = torch.topk(logits, k)
-  logits[logits < v[:, -1:]] = float('-inf')
+  logits[logits < v[..., -1:]] = float('-inf')
 
   return logits
 
 
 def create_eval_sequence(iseq, context_size, pad_mode, pad_value):
-  ssize = min(context_size, iseq.shape[1])
-  if iseq.shape[1] >= context_size:
-    seq = iseq[:, -context_size:]
+  seqlen = iseq.shape[1]
+  ssize = min(context_size, seqlen)
+  if seqlen >= context_size:
+    seq = iseq[..., -context_size:]
   elif pad_mode == 'none':
     seq = iseq
   else:
@@ -23,9 +24,9 @@ def create_eval_sequence(iseq, context_size, pad_mode, pad_value):
                      dtype=iseq.dtype,
                      device=iseq.device)
     if pad_mode == 'front':
-      seq[:, -iseq.shape[1]: ] = iseq
+      seq[..., -seqlen: ] = iseq
     elif pad_mode == 'back':
-      seq[:, : iseq.shape[1]] = iseq
+      seq[..., : seqlen] = iseq
     else:
       alog.xraise(ValueError, f'Unknown pad mode: {pad_mode}')
 
