@@ -50,12 +50,8 @@ class ShardAttention(nn.Module):
     # (B, T, CH, C) => (B, T, CH * C)
     y = y.reshape(b, t, -1)
 
-    # (CH * C, C) => (1, CH * C, C)
-    w = self.weight.unsqueeze(0)
-    # (1, CH * C, C) => (B, CH * C, C)
-    w = w.expand(b, *w.shape[1: ])
-    # (B, T, CH * C) @ (B, CH * C, C) => (B, T, C)
-    y = torch.einsum('btn,bnm->btm', y, w)
+    # (B, T, CH * C) @ (CH * C, C) => (B, T, C)
+    y = y @ self.weight
 
     return self.post(self.post_feed(x, y))
 
