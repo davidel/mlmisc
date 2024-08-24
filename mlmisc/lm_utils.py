@@ -40,23 +40,17 @@ def select_prediction_logits(logits, seqlen):
   return logits if logits.dim() <= 2 else logits[:, seqlen - 1, :]
 
 
-@torch.no_grad()
-def generate(model, seq, context_size, steps, pad_mode, pad_value,
+def generate(evalfn, seq, context_size, steps, pad_mode, pad_value,
              temperature=None,
-             sample=False,
+             sample=True,
              top_k=None):
   # Add artificial batch dimension.
   iseq = seq.unsqueeze(0)
 
-  model.eval()
   for i in range(steps):
     cseq, ssize = create_eval_sequence(iseq, context_size, pad_mode, pad_value)
 
-    y = model(cseq)
-
-    # Handle both model which return the simple output (loss handled externally)
-    # and the ones which return the (output, less) tuple.
-    logits = y[0] if isinstance(y, (list, tuple)) else y
+    logits = evalfn(cseq)
 
     logits = select_prediction_logits(logits, ssize)
     if temperature is not None:
