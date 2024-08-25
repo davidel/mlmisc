@@ -40,6 +40,13 @@ class TilesPod(nn.Module):
 
     return indices
 
+  def get_parts(self, icount, ocount):
+    parts = []
+    for i in range(icount):
+      parts.append(self.get_indices(ocount))
+
+    return parts
+
   def buil_row(self, indices):
     row_parts = []
     for start, end in indices:
@@ -106,11 +113,7 @@ class MosaicManager:
   def build_modules(self, msize, icount, ocount):
     mod = self.get(msize)
 
-    parts = []
-    for i in range(icount):
-      parts.append(mod.get_indices(ocount))
-
-    return mod, parts
+    return mod, mode.get_parts(icount, ocount)
 
 
 class Mosaic(nn.Module):
