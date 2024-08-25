@@ -46,16 +46,12 @@ class TilesPod(nn.Module):
 
     return torch.vstack(parts)
 
-  def buil_row(self, indices):
-    row_parts = []
-    for idx in indices:
-      row_parts.append(torch.index_select(self.weight, 0, idx))
-
-    return torch.hstack(row_parts)
-
   def build_mosaic(self, parts):
     msize = self.weight.shape[-1]
-    col_parts = [torch.index_select(self.weight, 0, indices).view(-1, msize) for indices in parts]
+    col_parts = []
+    for indices in parts:
+      row = torch.index_select(self.weight, 0, indices)
+      col_parts.append(row.view(-1, msize).transpose(0, 1))
 
     return torch.vstack(col_parts)
 
