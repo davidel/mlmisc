@@ -113,7 +113,7 @@ class MosaicManager:
   def build_modules(self, msize, icount, ocount):
     mod = self.get(msize)
 
-    return mod, mode.get_parts(icount, ocount)
+    return mod, mod.get_parts(icount, ocount)
 
 
 class Mosaic(nn.Module):
