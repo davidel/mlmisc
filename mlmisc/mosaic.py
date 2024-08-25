@@ -131,6 +131,7 @@ class Mosaic(nn.Module):
     else:
       self.pad = lambda x: x
     self.mod, self.parts = mmgr.build_modules(msize, icount, ocount)
+    self.register_buffer('parts', self.parts)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
@@ -138,12 +139,6 @@ class Mosaic(nn.Module):
     else:
       self.bias = 0
     self.fc_mat = None
-
-  def get_extra_state(self):
-    return self.parts
-
-  def set_extra_state(self, state):
-    self.parts = state
 
   def _get_fc_mat(self):
     if self.training:
