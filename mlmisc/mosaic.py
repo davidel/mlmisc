@@ -11,24 +11,14 @@ import torch.nn.functional as F
 from . import layer_utils as lu
 
 
-class Tile(nn.Module):
-
-  def __init__(self, n, dtype=None, init=None):
-    super().__init__()
-    weight = torch.empty(n, n, dtype=dtype)
-    (init or nn.init.kaiming_uniform_)(weight)
-    self.weight = nn.Parameter(weight)
-
-
 class TilesPod(nn.Module):
 
   def __init__(self, msize, count, dtype=None, init=None):
+    weight = torch.empty(msize, count * msize, dtype=dtype)
+    (init or nn.init.kaiming_uniform_)(weight)
+
     super().__init__()
-    self.msize = msize
-    self.count = count
-    self.dtype = dtype
-    self.init = init
-    self.mods = nn.ModuleList()
+    self.weight = nn.Parameter(weight)
     self.reset()
 
   def reset(self):
@@ -36,46 +26,13 @@ class TilesPod(nn.Module):
     self.used = 0
 
   def get_tile(self):
-    if len(self.mods) >= self.count:
-      m = self.mods[self.idx]
-      self.idx = (self.idx + 1) % len(self.mods)
-    else:
-      m = Tile(self.msize, dtype=self.dtype, init=self.init)
-      self.mods.append(m)
+    msize, count = self.weight.shape
 
+    offset = self.idx * msize
+    self.idx = (self.idx + 1) % count
     self.used += 1
 
-    return m
-
-  def state_dict(self, *args, **kwargs):
-    state = super().state_dict(*args, **kwargs)
-    with torch.no_grad():
-      state['mods'] = torch.hstack([m.weight for m in self.mods])
-
-    return state
-
-  def load_state_dict(self, state, *args, **kwargs):
-    missing, known_keys = [], ('mods',)
-    stack = state.pop('mods', None)
-    if stack is None:
-      if kwargs.get('strict', True):
-        alog.xraise(ValueError, f'Input state mossing "mods" key')
-      missing.append('mods')
-    else:
-      assign = kwargs.get('assign', False)
-      for i, m in enumerate(self.mods):
-        param_window = stack[:, i * self.msize: (i + 1) * self.msize]
-        if assign:
-          new_param = nn.Parameter(param_window.detach().clone(),
-                                   requires_grad=m.weight.requires_grad)
-          torch.utils.swap_tensors(m.weight, new_param)
-        else:
-          m.weight.copy_(param_window)
-
-    extra = list(set(state.keys()) - set(known_keys))
-    alog.info(f'EXTRA = {extra}\tKEYS = {list(state.keys())}\tKNOWN = {list(known_keys)}')
-
-    return missing, list(set(state.keys()) - set(known_keys))
+    return self.weight[:, offset: offset + msize]
 
 
 class MosaicManager:
@@ -129,7 +86,7 @@ class MosaicManager:
 
     parts = []
     for i in range(icount):
-      parts.append([mod.get_tile().weight for _ in range(ocount)])
+      parts.append([mod.get_tile() for _ in range(ocount)])
 
     return mod, parts
 
