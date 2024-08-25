@@ -55,7 +55,10 @@ class TilesPod(nn.Module):
     return torch.vstack(col_parts)
 
   def stats(self):
-    return dict(used=self.used, nparams=self.weight.numel())
+    msize, wsize = self.weight.shape
+    count = wsize // msize
+
+    return dict(msize=msize, count=count, used=self.used, nparams=self.weight.numel())
 
 
 class MosaicManager:
