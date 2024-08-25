@@ -25,14 +25,34 @@ class TilesPod(nn.Module):
     self.idx = 0
     self.used = 0
 
-  def get_tile(self):
+  def get_indices(self, n):
+    msize, wsize = self.weight.shape
+    count = wsize // msize
+
+    indices, left = [], n
+    while left > 0:
+      size = min(left, count - self.idx)
+      indices.append((self.idx, self.idx + size))
+      self.idx += size
+      left -= size
+
+    self.used += count
+
+    return indices
+
+  def buil_row(self, indices):
     msize, wsize = self.weight.shape
 
-    tile = self.weight[:, self.idx: self.idx + msize]
-    self.idx = (self.idx + msize) % wsize
-    self.used += 1
+    row_parts = []
+    for start, end in indices:
+      row_parts.append(self.weight[:, start: end])
 
-    return tile
+    return torch.hstack(row_parts)
+
+  def build_mosaic(self, parts):
+    col_parts = [self.buil_row(indices) for indices in parts]
+
+    return torch.vstack(col_parts)
 
   def stats(self):
     return dict(used=self.used, nparams=self.weight.numel())
@@ -87,7 +107,7 @@ class MosaicManager:
 
     parts = []
     for i in range(icount):
-      parts.append([mod.get_tile() for _ in range(ocount)])
+      parts.append(mod.get_indices(ocount))
 
     return mod, parts
 
@@ -123,12 +143,12 @@ class Mosaic(nn.Module):
   def _get_fc_mat(self):
     if self.training:
       self.fc_mat = None
-      fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+      fc_mat = self.mod.build_mosaic(self.parts)
     else:
       fc_mat = self.fc_mat
       if fc_mat is None:
         with torch.no_grad():
-          self.fc_mat = fc_mat = torch.vstack([torch.hstack(oparts) for oparts in self.parts])
+          self.fc_mat = fc_mat = self.mod.build_mosaic(self.parts)
 
     return fc_mat
 
