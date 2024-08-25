@@ -4,6 +4,20 @@ import torch.nn.functional as F
 
 import py_misc_utils.alog as alog
 
+from . import layer_utils as lu
+
+
+def build_vocab_head(embed_size, vocab_size, activation=None):
+  activation = activation or nn.GELU
+
+  return nn.Sequential(
+    lu.create(activation),
+    nn.Linear(embed_size, embed_size, bias=False),
+    nn.LayerNorm(embed_size),
+    lu.create(activation),
+    nn.Linear(embed_size, vocab_size, bias=False),
+  )
+
 
 def top_k_logits(logits, k):
   v, _ = torch.topk(logits, k)
