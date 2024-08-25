@@ -72,6 +72,9 @@ class TilesPod(nn.Module):
         else:
           m.weight.copy_(param_window)
 
+    extra = list(set(state.keys()) - set(known_keys))
+    alog.info(f'EXTRA = {extra}\tKEYS = {list(state.keys())}\tKNOWN = {list(known_keys)}')
+
     return missing, list(set(state.keys()) - set(known_keys))
 
 
