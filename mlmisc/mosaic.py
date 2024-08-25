@@ -56,7 +56,7 @@ class TilesPod(nn.Module):
 
   def load_state_dict(self, state, *args, **kwargs):
     missing, known_keys = [], ('mods',)
-    stack = state.get('mods')
+    stack = state.pop('mods', None)
     if stack is None:
       if kwargs.get('strict', True):
         alog.xraise(ValueError, f'Input state mossing "mods" key')
