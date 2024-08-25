@@ -34,6 +34,9 @@ class TilesPod(nn.Module):
 
     return self.weight[:, offset: offset + msize]
 
+  def stats(self):
+    return dict(used=self.used, nparams=self.weight.numel())
+
 
 class MosaicManager:
 
@@ -75,9 +78,7 @@ class MosaicManager:
   def stats(self):
     stats = dict()
     for n, mod in self.mods.items():
-      stats[n] = dict(count=len(mod.mods),
-                      used=mod.used,
-                      params=len(mod.mods) * n**2)
+      stats[n] = mod.stats()
 
     return stats
 
