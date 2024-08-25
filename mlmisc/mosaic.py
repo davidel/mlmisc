@@ -32,7 +32,7 @@ class TilesPod(nn.Module):
     indices, left = [], n
     while left > 0:
       size = min(left, count - self.idx)
-      indices.append((self.idx, self.idx + size))
+      indices.append((self.idx * msize, (self.idx + size) * msize))
       self.idx = (self.idx + size) % count
       left -= size
 
