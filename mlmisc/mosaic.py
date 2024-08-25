@@ -41,8 +41,6 @@ class TilesPod(nn.Module):
     return indices
 
   def buil_row(self, indices):
-    msize, wsize = self.weight.shape
-
     row_parts = []
     for start, end in indices:
       row_parts.append(self.weight[:, start: end])
