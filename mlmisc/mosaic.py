@@ -130,8 +130,8 @@ class Mosaic(nn.Module):
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
       self.pad = lambda x: x
-    self.mod, self.parts = mmgr.build_modules(msize, icount, ocount)
-    self.register_buffer('parts', self.parts)
+    self.mod, parts = mmgr.build_modules(msize, icount, ocount)
+    self.register_buffer('parts', parts)
     if bias:
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
