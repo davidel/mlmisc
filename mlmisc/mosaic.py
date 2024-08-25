@@ -26,13 +26,13 @@ class TilesPod(nn.Module):
     self.used = 0
 
   def get_tile(self):
-    msize, count = self.weight.shape
+    msize, wsize = self.weight.shape
 
-    offset = self.idx * msize
-    self.idx = (self.idx + 1) % count
+    tile = self.weight[:, self.idx: self.idx + msize]
+    self.idx = (self.idx + msize) % wsize
     self.used += 1
 
-    return self.weight[:, offset: offset + msize]
+    return tile
 
   def stats(self):
     return dict(used=self.used, nparams=self.weight.numel())
