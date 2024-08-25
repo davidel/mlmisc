@@ -36,7 +36,7 @@ class TilesPod(nn.Module):
       self.idx = (self.idx + size) % count
       left -= size
 
-    self.used += count
+    self.used += n
 
     return indices
 
