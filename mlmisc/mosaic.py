@@ -145,9 +145,11 @@ class Mosaic(nn.Module):
     self.fc_mat = None
 
   def get_extra_state(self):
+    alog.info(f'************* GET EXTRA CALLED')
     return self.parts
 
   def set_extra_state(self, state):
+    alog.info(f'************* SET EXTRA CALLED')
     self.parts = state
 
   def _get_fc_mat(self):
