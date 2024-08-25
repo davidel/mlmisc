@@ -14,7 +14,7 @@ from . import layer_utils as lu
 class TilesPod(nn.Module):
 
   def __init__(self, msize, count, dtype=None, init=None):
-    weight = torch.empty(msize, count * msize, dtype=dtype)
+    weight = torch.empty(count, msize, msize, dtype=dtype)
     (init or nn.init.kaiming_uniform_)(weight)
 
     super().__init__()
@@ -26,42 +26,41 @@ class TilesPod(nn.Module):
     self.used = 0
 
   def get_indices(self, n):
-    msize, wsize = self.weight.shape
-    count = wsize // msize
+    count, msize, _ = self.weight.shape
 
     indices, left = [], n
     while left > 0:
       size = min(left, count - self.idx)
-      indices.append((self.idx * msize, (self.idx + size) * msize))
+      indices.extend(range(self.idx, self.idx + size))
       self.idx = (self.idx + size) % count
       left -= size
 
     self.used += n
 
-    return indices
+    return torch.tensor(indices, dtype=torch.long)
 
   def get_parts(self, icount, ocount):
     parts = []
     for i in range(icount):
       parts.append(self.get_indices(ocount))
 
-    return parts
+    return torch.vstack(parts)
 
   def buil_row(self, indices):
     row_parts = []
-    for start, end in indices:
-      row_parts.append(self.weight[:, start: end])
+    for idx in indices:
+      row_parts.append(torch.index_select(self.weight, 0, idx))
 
     return torch.hstack(row_parts)
 
   def build_mosaic(self, parts):
-    col_parts = [self.buil_row(indices) for indices in parts]
+    msize = self.weight.shape[-1]
+    col_parts = [torch.index_select(self.weight, 0, indices).view(-1, msize) for indices in parts]
 
     return torch.vstack(col_parts)
 
   def stats(self):
-    msize, wsize = self.weight.shape
-    count = wsize // msize
+    count, msize, _ = self.weight.shape
 
     return dict(msize=msize, count=count, used=self.used, nparams=self.weight.numel())
 
