@@ -91,13 +91,13 @@ class MosaicManager:
     return msize
 
   def get(self, n):
-    budget = self.mods_budget.get(n)
-    tas.check_is_not_none(budget,
-                          msg=f'Unlisted module size {n}: ' \
-                          f'available={list(self.mods_budget.keys())}')
-
     mod = self.mods.get(n)
     if mod is None:
+      budget = self.mods_budget.get(n)
+      tas.check_is_not_none(budget,
+                            msg=f'Unlisted module size {n}: ' \
+                            f'available={list(self.mods_budget.keys())}')
+
       mod = TilesPod(n, budget, dtype=self.dtype, init=self.init)
       self.mods[n] = mod
 
@@ -143,6 +143,12 @@ class Mosaic(nn.Module):
     else:
       self.bias = 0
     self.fc_mat = None
+
+  def get_extra_state(self):
+    return self.parts
+
+  def set_extra_state(self, state):
+    self.parts = state
 
   def _get_fc_mat(self):
     if self.training:
