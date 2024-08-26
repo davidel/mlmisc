@@ -1,6 +1,7 @@
 import collections
 import bisect
 import math
+import random
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -25,24 +26,28 @@ class TilesPod(nn.Module):
     self.idx = 0
     self.used = 0
 
-  def get_indices(self, n):
+  def get_indices(self, n, use_random=False):
     count, msize, _ = self.weight.shape
 
-    indices, left = [], n
-    while left > 0:
-      size = min(left, count - self.idx)
-      indices.extend(range(self.idx, self.idx + size))
-      self.idx = (self.idx + size) % count
-      left -= size
+    if use_random:
+      all_indices = list(range(count))
+      indices = random.choices(list(range(count)), k=n)
+    else:
+      indices, left = [], n
+      while left > 0:
+        size = min(left, count - self.idx)
+        indices.extend(range(self.idx, self.idx + size))
+        self.idx = (self.idx + size) % count
+        left -= size
 
     self.used += n
 
     return torch.tensor(indices, dtype=torch.long)
 
-  def get_parts(self, icount, ocount):
+  def get_parts(self, icount, ocount, use_random=False):
     parts = []
     for i in range(icount):
-      parts.append(self.get_indices(ocount))
+      parts.append(self.get_indices(ocount, use_random=use_random))
 
     return torch.vstack(parts)
 
@@ -105,10 +110,10 @@ class MosaicManager:
 
     return stats
 
-  def build_modules(self, msize, icount, ocount):
+  def build_modules(self, msize, icount, ocount, use_random=False):
     mod = self.get(msize)
 
-    return mod, mod.get_parts(icount, ocount)
+    return mod, mod.get_parts(icount, ocount, use_random=use_random)
 
 
 class Mosaic(nn.Module):
@@ -117,7 +122,8 @@ class Mosaic(nn.Module):
                msize=None,
                post=None,
                bias=True,
-               pad_value=None):
+               pad_value=None,
+               use_random=False):
     msize = mmgr.module_size(idim, odim, msize=msize)
     icount = (idim + msize - 1) // msize
     ocount = (odim + msize - 1) // msize
@@ -130,7 +136,8 @@ class Mosaic(nn.Module):
       self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
       self.pad = lambda x: x
-    self.mod, parts = mmgr.build_modules(msize, icount, ocount)
+    self.mod, parts = mmgr.build_modules(msize, icount, ocount,
+                                         use_random=use_random)
     self.register_buffer('parts', parts)
     if bias:
       bound = 1.0 / math.sqrt(odim)
