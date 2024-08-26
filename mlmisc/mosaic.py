@@ -30,7 +30,6 @@ class TilesPod(nn.Module):
     count, msize, _ = self.weight.shape
 
     if use_random:
-      all_indices = list(range(count))
       indices = random.choices(list(range(count)), k=n)
     else:
       indices, left = [], n
