@@ -142,8 +142,9 @@ class Mosaic(nn.Module):
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
       self.bias = nn.Parameter(weight)
+      self.bias_fn = lambda x: x + self.bias
     else:
-      self.bias = 0
+      self.bias_fn = lambda x: x
     self.fc_mat = None
 
   def _get_fc_mat(self):
@@ -164,7 +165,7 @@ class Mosaic(nn.Module):
     x = self.pad(x)
     x = x @ fc_mat
     x = x[..., : self.odim]
-    x = self.post(x + self.bias)
+    x = self.post(self.bias_fn(x))
 
     return x
 
