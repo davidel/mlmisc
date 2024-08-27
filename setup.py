@@ -13,5 +13,6 @@ setup(name='mlmisc',
           'numpy',
           'Pillow',
           'py_misc_utils @ git+https://github.com/davidel/py_misc_utils',
+          'einops',
       ],
       )
