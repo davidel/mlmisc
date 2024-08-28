@@ -36,7 +36,7 @@ class Attention(nn.Module):
     values = einops.rearrange(self.k_prj(v), 'b t (h ch) -> b h t ch', h=self.n_head)
 
     # (B, H, T, CH) @ (B, H, CH, T) => (B, H, T, T)
-    att = queries @ keys.transpose(-2, -1)
+    att = queries @ einops.rearrange(keys, 'b h t ch -> b h ch t')
     if mask is not None:
       att = att.masked_fill(mask, float('-inf'))
     att = F.softmax(att / math.sqrt(queries.shape[-1]), dim=-1)
