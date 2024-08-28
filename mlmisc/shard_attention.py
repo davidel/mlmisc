@@ -1,5 +1,6 @@
 import math
 
+import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,14 +24,8 @@ class ShardAttention(nn.Module):
     self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
   def forward(self, x, mask=None):
-    b, t, c = x.shape
-
-    # (B, T, C) => (B, T, CH, CK)
-    y = x.view(b, t, self.num_heads, -1)
-    # (B, T, CH, CK) => (B, CH, T, CK)
-    y = torch.permute(y, (0, 2, 1, 3))
-    # (B, CH, T, CK) => (B, CH, CK, T)
-    yt = torch.permute(y, (0, 1, 3, 2))
+    y = einops.rearrange(x, 'b t (ch ck) -> b ch t ck', ch=self.num_heads)
+    yt = einops.rearrange(y, 'b ch t ck -> b ch ck t')
     # (B, CH, T, CK) @ (B, CH, CK, T) => (B, CH, T, T)
     y = torch.einsum('bhtk,bhks->bhts', y, yt)
 
@@ -38,17 +33,10 @@ class ShardAttention(nn.Module):
       y = y.masked_fill(mask, float('-inf'))
     y = F.softmax(y / math.sqrt(y.shape[1]), dim=-1)
 
-    # (B, T, C) => (B, 1, T, C)
-    xx = x.unsqueeze(1)
-    # (B, 1, T, C) => (B, CH, T, C)
-    xx = xx.expand(b, self.num_heads, t, c)
-
+    xx = einops.repeat(x, 'b t c -> b ch t c', ch=self.num_heads)
     # (B, CH, T, T) @ (B, CH, T, C) => (B, CH, T, C)
     y = torch.einsum('bhts,bhsk->bhtk', y, xx)
-    # (B, CH, T, C) => (B, T, CH, C)
-    y = torch.permute(y, (0, 2, 1, 3))
-    # (B, T, CH, C) => (B, T, CH * C)
-    y = y.reshape(b, t, -1)
+    y = einops.rearrange(y, 'b ch t c -> b t (ch c)')
     # (B, T, CH * C) @ (CH * C, C) => (B, T, C)
     y = y @ self.weight
 
