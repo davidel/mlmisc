@@ -1,5 +1,6 @@
 import math
 
+import einops
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -30,13 +31,9 @@ class Attention(nn.Module):
     self.resid_drop = nn.Dropout(dropout)
 
   def forward(self, k, q, v, mask=None):
-    b, t, c = k.shape
-    h, ch = self.n_head, c // self.n_head
-
-    # Move all to the (B, H, T, CH) shape.
-    keys = self.k_prj(k).view(b, t, h, ch).transpose(1, 2)
-    queries = self.q_prj(q).view(b, t, h, ch).transpose(1, 2)
-    values = self.v_prj(v).view(b, t, h, ch).transpose(1, 2)
+    keys = einops.rearrange(self.k_prj(k), 'b t (h ch) -> b h t ch', h=self.n_head)
+    queries = einops.rearrange(self.k_prj(q), 'b t (h ch) -> b h t ch', h=self.n_head)
+    values = einops.rearrange(self.k_prj(v), 'b t (h ch) -> b h t ch', h=self.n_head)
 
     # (B, H, T, CH) @ (B, H, CH, T) => (B, H, T, T)
     att = queries @ keys.transpose(-2, -1)
@@ -47,9 +44,8 @@ class Attention(nn.Module):
 
     # (B, H, T, T) @ (B, H, T, CH) => (B, H, T, CH)
     out = att @ values
-    # 1) (B, H, T, CH) => (B, T, H, CH)
-    # 2) (B, T, H, CH) => (B, T, H * CH) == (B, T, C)
-    out = out.transpose(1, 2).contiguous().view(b, t, c)
+
+    out = einops.rearrange(out, 'b h t ch -> b t (h ch)')
     # (B, T, C) @ (C, C) => (B, T, C)
     out = self.unifyheads(out)
     out = self.resid_drop(out)
