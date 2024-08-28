@@ -55,7 +55,7 @@ def load(source, map_location=None, strict=True):
   if isinstance(source, dict):
     state = source.copy()
   else:
-    state = torch.load(source, map_location=map_location)
+    state = torch.load(source, map_location=map_location, weights_only=False)
 
   create_args = state.pop(_STATE)
 

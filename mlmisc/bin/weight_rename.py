@@ -7,7 +7,7 @@ import torch
 
 def main(args):
   alog.debug(f'Loading {args.input} checkpoint')
-  data = torch.load(args.input)
+  data = torch.load(args.input, weights_only=False)
 
   repl = []
   for k in data.keys():

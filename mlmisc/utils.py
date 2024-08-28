@@ -29,6 +29,10 @@ def randseed(seed):
   return rseed
 
 
+def torch_load(path, **kwargs):
+  return torch.load(path, weights_only=False, **kwargs)
+
+
 def model_shape(model, shape, device=None):
   model.eval()
   with torch.no_grad():
@@ -53,7 +57,7 @@ def model_load(path, model=None, device=None, strict=True):
   elif os.path.exists(path):
     alog.debug(f'Loading model state from {path}')
     model.load_state_dict(torch.load(path, map_location=map_location),
-                          strict=strict)
+                          strict=strict, weights_only=True)
 
   return model.to(device) if device is not None else model
 
@@ -88,7 +92,7 @@ def save_data(path, **kwargs):
 
 def load_data(path, map_location=None, strict=True, **kwargs):
   alog.debug(f'Loading data from {path}')
-  td = torch.load(path, map_location=map_location or torch.device('cpu'))
+  td = torch_load(path, map_location=map_location or torch.device('cpu'))
 
   data = dict()
   for name, ndata in td.items():
