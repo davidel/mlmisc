@@ -1,3 +1,4 @@
+import einops
 import torch
 import torch.nn as nn
 
@@ -13,14 +14,20 @@ class MOE(nn.Module):
     self.act = lu.create(act or 'gelu')
 
   def forward(self, x):
-    # x is (B, ID)
-    y = torch.einsum('noi,biz->bnoz', self.weight, torch.unsqueeze(x, -1))
-    y = y.squeeze(-1) # (B, N, OD)
-    y = torch.permute(y, (0, 2, 1)) # (B, OD, N)
+    # (B, IN) => (B, IN, 1)
+    xx = torch.unsqueeze(x, -1)
+    # (N, OUT, IN) @ (B, IN, 1) => (B, N, OUT, 1)
+    y = torch.einsum('noi,biz->bnoz', self.weight, xx)
+    # (B, N, OUT, 1) => (B, OUT, N)
+    y = einops.rearrange(y, 'b n o z -> b (o z) n')
+    # (B, IN) => (B, N)
+    g = self.act(self.gates(x))
+    # (B, N) => (B, N, 1)
+    g = torch.unsqueeze(g, -1)
+    # (B, OUT, N) @ (B, N, 1) => (B, OUT, 1)
+    y = y @ g
+    # (B, OUT, 1) => (B, OUT)
+    y = torch.squeeze(y, -1)
 
-    g = self.act(self.gates(x)) # (B, N)
-
-    z = y @ torch.unsqueeze(g, -1) # (B, OD, 1)
-
-    return z.squeeze(-1) # (B, OD)
+    return y
 
