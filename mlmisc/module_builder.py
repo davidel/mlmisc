@@ -15,7 +15,7 @@ class ModuleBuilder(nn.Module):
     self.net_args = []
 
   def add(self, net, input_fn=None, output_fn=None, net_args=()):
-    self.shape = ut.net_shape(net, self.shape, output_select=output_fn)
+    self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.input_fns.append(input_fn)
     self.output_fns.append(output_fn)
