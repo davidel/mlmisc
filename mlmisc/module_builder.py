@@ -1,3 +1,4 @@
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -43,13 +44,22 @@ class ModuleBuilder(nn.Module):
   def forward(self, x, **kwargs):
     y, results = x, []
     for i, net in enumerate(self.layers):
+      net_kwargs = dict()
       input_fn = self.input_fns[i]
-      xx = y if input_fn is None else input_fn(y, results)
-      net_args, net_kwargs = self.net_args[i], dict()
-      for k in net_args:
+      if input_fn is None:
+        xx = (y,)
+      else:
+        xx = input_fn(y, results)
+        if isinstance(xx, dict):
+          net_kwargs.update(xx['kwargs'])
+          xx = xx['args']
+
+        xx = pyu.as_sequence(xx)
+
+      for k in self.net_args[i]:
         net_kwargs[k] = kwargs.get(k)
 
-      res = net(xx, **net_kwargs)
+      res = net(*xx, **net_kwargs)
 
       results.append(res)
       output_fn = self.output_fns[i]
