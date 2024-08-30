@@ -49,10 +49,11 @@ def torch_load(path, **kwargs):
   return torch.load(path, weights_only=False, **kwargs)
 
 
-def net_shape(net, shape, device=None):
+def net_shape(net, shape, device=None, output_select=None):
   with torch.no_grad(), Training(net, False):
     zin = torch.zeros((1,) + tuple(shape), device=device)
     out = net(zin)
+    out = out if output_select is None else output_select(out)
 
     return out.shape[1:]
 
