@@ -12,9 +12,8 @@ class ModuleBuilder(nn.Module):
     self.layers = nn.ModuleList()
     self.input_fns = []
     self.net_args = []
-    self.results = []
 
-  def add(self, net, input_fn=None, net_args=None):
+  def add(self, net, input_fn=None, net_args=()):
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.input_fns.append(input_fn)
@@ -38,19 +37,16 @@ class ModuleBuilder(nn.Module):
     return self.results[i]
 
   def forward(self, x, **kwargs):
-    y = x
+    y, results = x, []
     for i, net in enumerate(self.layers):
       input_fn = self.input_fns[i]
-      xx = y if input_fn is None else input_fn(y)
+      xx = y if input_fn is None else input_fn(y, res=results)
       net_args, net_kwargs = self.net_args[i], dict()
-      if net_args:
-        for k in net_args:
-          net_kwargs[k] = kwargs.get(k)
+      for k in net_args:
+        net_kwargs[k] = kwargs.get(k)
 
       y = net(xx, **net_kwargs)
-      self.results.append(y)
-
-    self.results = []
+      results.append(y)
 
     return y
 
