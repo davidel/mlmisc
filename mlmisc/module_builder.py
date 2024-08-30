@@ -44,7 +44,7 @@ class ModuleBuilder(nn.Module):
     y, results = x, []
     for i, net in enumerate(self.layers):
       input_fn = self.input_fns[i]
-      xx = y if input_fn is None else input_fn(y, res=results)
+      xx = y if input_fn is None else input_fn(y, results)
       net_args, net_kwargs = self.net_args[i], dict()
       for k in net_args:
         net_kwargs[k] = kwargs.get(k)
