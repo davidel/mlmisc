@@ -10,28 +10,32 @@ class ModuleBuilder(nn.Module):
     super().__init__()
     self.shape = tuple(shape)
     self.layers = nn.ModuleList()
-    self.input_fns = []
+    self.input_fns, self.output_fns = [], []
     self.net_args = []
 
-  def add(self, net, input_fn=None, net_args=()):
+  def add(self, net, input_fn=None, output_fn=None, net_args=()):
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.input_fns.append(input_fn)
+    self.output_fns.append(output_fn)
     self.net_args.append(net_args)
 
     return len(self.layers) - 1
 
-  def fc(self, odim, input_fn=None, **kwargs):
+  def fc(self, odim, input_fn=None, output_fn=None, **kwargs):
     return self.add(nn.Linear(self.shape[-1], odim, **kwargs),
-                    input_fn=input_fn)
+                    input_fn=input_fn,
+                    output_fn=output_fn)
 
-  def conv2d(self, odim, input_fn=None, **kwargs):
+  def conv2d(self, odim, input_fn=None, output_fn=None, **kwargs):
     return self.add(nn.Conv2d(self.shape[-3], odim, **kwargs),
-                    input_fn=input_fn)
+                    input_fn=input_fn,
+                    output_fn=output_fn)
 
-  def deconv2d(self, odim, input_fn=None, **kwargs):
+  def deconv2d(self, odim, input_fn=None, output_fn=None, **kwargs):
     return self.add(nn.ConvTranspose2d(self.shape[-3], odim, **kwargs),
-                    input_fn=input_fn)
+                    input_fn=input_fn,
+                    output_fn=output_fn)
 
   def result(self, i):
     return self.results[i]
@@ -45,8 +49,11 @@ class ModuleBuilder(nn.Module):
       for k in net_args:
         net_kwargs[k] = kwargs.get(k)
 
-      y = net(xx, **net_kwargs)
-      results.append(y)
+      res = net(xx, **net_kwargs)
+
+      results.append(res)
+      output_fn = self.output_fns[i]
+      y = res if output_fn is None else output_fn(res)
 
     return y
 
