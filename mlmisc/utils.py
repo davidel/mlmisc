@@ -14,6 +14,22 @@ import torch.utils.tensorboard
 from . import auto_module as am
 
 
+class Training:
+
+  def __init__(self, net, training):
+    self.net = net
+    self.training = training
+
+  def __enter__(self):
+    self.prev_training = self.net.training
+    self.net.train(self.training)
+    return self
+
+  def __exit__(self, *exc):
+    self.net.train(self.prev_training)
+    return False
+
+
 def get_device(kind=None):
   if kind is None:
     kind = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -33,11 +49,10 @@ def torch_load(path, **kwargs):
   return torch.load(path, weights_only=False, **kwargs)
 
 
-def model_shape(model, shape, device=None):
-  model.eval()
-  with torch.no_grad():
+def net_shape(net, shape, device=None):
+  with torch.no_grad(), Training(net, False):
     zin = torch.zeros((1,) + tuple(shape), device=device)
-    out = model(zin)
+    out = net(zin)
 
     return out.shape[1:]
 
