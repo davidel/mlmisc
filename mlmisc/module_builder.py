@@ -1,8 +1,16 @@
+import collections
+
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
 from . import utils as ut
+
+
+NetConfig = collections.namedtuple(
+  'NetConfig',
+  'input_fn, output_fn, net_args'
+)
 
 
 class ModuleBuilder(nn.Module):
@@ -11,15 +19,14 @@ class ModuleBuilder(nn.Module):
     super().__init__()
     self.shape = tuple(shape)
     self.layers = nn.ModuleList()
-    self.input_fns, self.output_fns = [], []
-    self.net_args = []
+    self.config = []
 
   def add(self, net, input_fn=None, output_fn=None, net_args=()):
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
-    self.input_fns.append(input_fn)
-    self.output_fns.append(output_fn)
-    self.net_args.append(net_args)
+    self.config.append(NetConfig(input_fn=input_fn,
+                                 output_fn=output_fn,
+                                 net_args=net_args))
 
     return len(self.layers) - 1
 
@@ -43,27 +50,25 @@ class ModuleBuilder(nn.Module):
 
   def forward(self, x, **kwargs):
     y, results = x, []
-    for i, net in enumerate(self.layers):
+    for i, (net, cfg) in enumerate(zip(self.layers, self.config)):
       net_kwargs = dict()
-      input_fn = self.input_fns[i]
-      if input_fn is None:
+      if cfg.input_fn is None:
         xx = (y,)
       else:
-        xx = input_fn(y, results)
+        xx = cfg.input_fn(y, results)
         if isinstance(xx, dict):
           net_kwargs.update(xx['kwargs'])
           xx = xx['args']
 
         xx = pyu.as_sequence(xx)
 
-      for k in self.net_args[i]:
+      for k in cfg.net_args:
         net_kwargs[k] = kwargs.get(k)
 
       res = net(*xx, **net_kwargs)
 
       results.append(res)
-      output_fn = self.output_fns[i]
-      y = res if output_fn is None else output_fn(res)
+      y = res if cfg.output_fn is None else cfg.output_fn(res)
 
     return y
 
