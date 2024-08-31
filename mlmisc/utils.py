@@ -111,9 +111,10 @@ def load_data(path, map_location=None, strict=True, **kwargs):
 
   data = dict()
   for name, ndata in td.items():
-    sdobj = kwargs.get(name, None)
+    sdobj = kwargs.get(name)
     if sdobj is not None:
       sdobj.load_state_dict(ndata, strict=strict)
+      data[name] = sdobj
     elif isinstance(ndata, dict) and am.is_auto_state(ndata):
       data[name] = am.load(ndata, strict=strict)
     else:
