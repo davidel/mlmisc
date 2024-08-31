@@ -50,8 +50,8 @@ class ModuleBuilder(nn.Module):
                     input_fn=input_fn,
                     output_fn=output_fn)
 
-  def layernorm(self, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.LayerNorm(self.shape[-1], **kwargs),
+  def layernorm(self, ndims, input_fn=None, output_fn=None, **kwargs):
+    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs),
                     input_fn=input_fn,
                     output_fn=output_fn)
 
