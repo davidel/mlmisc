@@ -55,19 +55,19 @@ class ModuleBuilder(nn.Module):
                     input_fn=input_fn,
                     output_fn=output_fn)
 
-  def forward(self, x, **kwargs):
-    y, results = x, []
+  def forward(self, *args, **kwargs):
+    y, results = args, []
     for i, (net, cfg) in enumerate(zip(self.layers, self.config)):
       net_kwargs = dict()
       if cfg.input_fn is None:
-        xx = (y,)
+        xx = y
       else:
         xx = cfg.input_fn(y, results)
         if isinstance(xx, dict):
           net_kwargs.update(xx['kwargs'])
           xx = xx['args']
 
-        xx = pyu.as_sequence(xx)
+      xx = pyu.as_sequence(xx)
 
       for k in cfg.net_args:
         net_kwargs[k] = kwargs.get(k)
