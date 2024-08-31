@@ -30,7 +30,7 @@ class ModuleBuilder(nn.Module):
 
     return len(self.layers) - 1
 
-  def fc(self, odim, input_fn=None, output_fn=None, **kwargs):
+  def linear(self, odim, input_fn=None, output_fn=None, **kwargs):
     return self.add(nn.Linear(self.shape[-1], odim, **kwargs),
                     input_fn=input_fn,
                     output_fn=output_fn)
@@ -45,8 +45,15 @@ class ModuleBuilder(nn.Module):
                     input_fn=input_fn,
                     output_fn=output_fn)
 
-  def result(self, i):
-    return self.results[i]
+  def batchnorm2d(self, input_fn=None, output_fn=None, **kwargs):
+    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs),
+                    input_fn=input_fn,
+                    output_fn=output_fn)
+
+  def layernorm(self, input_fn=None, output_fn=None, **kwargs):
+    return self.add(nn.LayerNorm(self.shape[-1], **kwargs),
+                    input_fn=input_fn,
+                    output_fn=output_fn)
 
   def forward(self, x, **kwargs):
     y, results = x, []
