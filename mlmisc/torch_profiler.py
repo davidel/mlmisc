@@ -6,6 +6,18 @@ from py_misc_utils import utils as pyu
 import torch
 
 
+class NoopProfiler:
+
+  def __enter__(self):
+    return self
+
+  def __exit__(self, *exc):
+    return False
+
+  def step(self):
+    pass
+
+
 def _make_trace_handler(args):
   # https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
   # https://pytorch.org/docs/stable/profiler.html
