@@ -32,8 +32,8 @@ class Attention(nn.Module):
 
   def forward(self, k, q, v, mask=None):
     keys = einops.rearrange(self.k_prj(k), 'b t (h ch) -> b h t ch', h=self.n_head)
-    queries = einops.rearrange(self.k_prj(q), 'b t (h ch) -> b h t ch', h=self.n_head)
-    values = einops.rearrange(self.k_prj(v), 'b t (h ch) -> b h t ch', h=self.n_head)
+    queries = einops.rearrange(self.q_prj(q), 'b t (h ch) -> b h t ch', h=self.n_head)
+    values = einops.rearrange(self.v_prj(v), 'b t (h ch) -> b h t ch', h=self.n_head)
 
     # (B, H, T, CH) @ (B, H, CH, T) => (B, H, T, T)
     att = queries @ einops.rearrange(keys, 'b h t ch -> b h ch t')
