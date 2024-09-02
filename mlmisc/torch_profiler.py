@@ -40,7 +40,7 @@ def create_profiler(args):
 
   schedule = torch.profiler.schedule(
     skip_first=pyu.dget(args, 'prof.skip_first', 0),
-    wait=pyu.dget(args, 'prof.wait', 16),
+    wait=pyu.dget(args, 'prof.wait', 8),
     warmup=pyu.dget(args, 'prof.warmup', 2),
     active=pyu.dget(args, 'prof.active', 2),
     repeat=pyu.dget(args, 'prof.repeat', 0))
