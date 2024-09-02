@@ -9,7 +9,7 @@ from . import utils as ut
 
 NetConfig = collections.namedtuple(
   'NetConfig',
-  'input_fn, output_fn, net_args, use_result'
+  'input_fn, output_fn, net_args'
 )
 
 
@@ -21,15 +21,14 @@ class ModuleBuilder(nn.Module):
     self.layers = nn.ModuleList()
     self.config = []
 
-  def add(self, net, input_fn=None, output_fn=None, net_args=(), use_result=False):
+  def add(self, net, input_fn=None, output_fn=None, net_args=()):
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
-                                 net_args=net_args,
-                                 use_result=use_result))
+                                 net_args=net_args))
 
-    return len(self.layers) - 1 if use_result else None
+    return len(self.layers) - 1
 
   def linear(self, odim, args={}, **kwargs):
     return self.add(nn.Linear(self.shape[-1], odim, **kwargs), **args)
@@ -65,7 +64,7 @@ class ModuleBuilder(nn.Module):
 
       res = net(*xx, **net_kwargs)
 
-      results.append(res if cfg.use_result else None)
+      results.append(res)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
 
     return y
