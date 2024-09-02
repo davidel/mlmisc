@@ -1,33 +1,20 @@
 import os
 
-import numpy as np
 from py_misc_utils import alog
 from py_misc_utils import assert_checks as tas
 from py_misc_utils import utils as pyu
 import torch
 
 
-class _DummyProfiler(object):
-
-  def __enter__(self):
-    return self
-
-  def __exit__(self, type, value, traceback):
-    return True
-
-  def step(self):
-    pass
-
-
 def _make_trace_handler(args):
   # https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
   # https://pytorch.org/docs/stable/profiler.html
-  row_limit = pyu.dget(args, 'prof.row_limit', 10, dtype=int)
-  sort_by = pyu.dget(args, 'prof.sort_by', None, dtype=str)
-  if sort_by is None:
+  row_limit = pyu.dget(args, 'prof.row_limit', 10)
+  sort_by = pyu.dget(args, 'prof.sort_by', '')
+  if not sort_by:
     sort_by = 'self_cuda_time_total' if torch.cuda.is_available() else 'cpu_time_total'
-  traces_path = pyu.dget(args, 'prof.traces_path', None, dtype=str)
-  stacks_path = pyu.dget(args, 'prof.stacks_path', None, dtype=str)
+  traces_path = pyu.dget(args, 'prof.traces_path', '')
+  stacks_path = pyu.dget(args, 'prof.stacks_path', '')
 
   def trace_handler(prof):
     alog.debug2(prof.key_averages().table(
@@ -52,11 +39,11 @@ def create_profiler(args):
     activities.append(torch.profiler.ProfilerActivity.CUDA)
 
   schedule = torch.profiler.schedule(
-    skip_first=pyu.dget(args, 'prof.skip_first', 0, dtype=int),
-    wait=pyu.dget(args, 'prof.wait', 16, dtype=int),
-    warmup=pyu.dget(args, 'prof.warmup', 2, dtype=int),
-    active=pyu.dget(args, 'prof.active', 2, dtype=int),
-    repeat=pyu.dget(args, 'prof.repeat', 0, dtype=int))
+    skip_first=pyu.dget(args, 'prof.skip_first', 0),
+    wait=pyu.dget(args, 'prof.wait', 16),
+    warmup=pyu.dget(args, 'prof.warmup', 2),
+    active=pyu.dget(args, 'prof.active', 2),
+    repeat=pyu.dget(args, 'prof.repeat', 0))
 
   trace_handler = _make_trace_handler(args)
 
