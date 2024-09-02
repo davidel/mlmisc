@@ -9,7 +9,7 @@ from . import utils as ut
 
 NetConfig = collections.namedtuple(
   'NetConfig',
-  'input_fn, output_fn, net_args'
+  'input_fn, output_fn, net_args, use_result'
 )
 
 
@@ -21,39 +21,30 @@ class ModuleBuilder(nn.Module):
     self.layers = nn.ModuleList()
     self.config = []
 
-  def add(self, net, input_fn=None, output_fn=None, net_args=()):
+  def add(self, net, input_fn=None, output_fn=None, net_args=(), use_result=False):
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
-                                 net_args=net_args))
+                                 net_args=net_args,
+                                 use_result=use_result))
 
-    return len(self.layers) - 1
+    return len(self.layers) - 1 if use_result else None
 
-  def linear(self, odim, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.Linear(self.shape[-1], odim, **kwargs),
-                    input_fn=input_fn,
-                    output_fn=output_fn)
+  def linear(self, odim, args={}, **kwargs):
+    return self.add(nn.Linear(self.shape[-1], odim, **kwargs), **args)
 
-  def conv2d(self, odim, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.Conv2d(self.shape[-3], odim, **kwargs),
-                    input_fn=input_fn,
-                    output_fn=output_fn)
+  def conv2d(self, odim, args={}, **kwargs):
+    return self.add(nn.Conv2d(self.shape[-3], odim, **kwargs), **args)
 
-  def deconv2d(self, odim, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.ConvTranspose2d(self.shape[-3], odim, **kwargs),
-                    input_fn=input_fn,
-                    output_fn=output_fn)
+  def deconv2d(self, odim, args={}, **kwargs):
+    return self.add(nn.ConvTranspose2d(self.shape[-3], odim, **kwargs), **args)
 
-  def batchnorm2d(self, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs),
-                    input_fn=input_fn,
-                    output_fn=output_fn)
+  def batchnorm2d(self, args={}, **kwargs):
+    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args)
 
-  def layernorm(self, ndims, input_fn=None, output_fn=None, **kwargs):
-    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs),
-                    input_fn=input_fn,
-                    output_fn=output_fn)
+  def layernorm(self, ndims, args={}, **kwargs):
+    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args)
 
   def forward(self, *args, **kwargs):
     y, results = args, []
@@ -74,7 +65,7 @@ class ModuleBuilder(nn.Module):
 
       res = net(*xx, **net_kwargs)
 
-      results.append(res)
+      results.append(res if cfg.use_result else None)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
 
     return y
