@@ -47,7 +47,8 @@ def create_profiler(args):
 
   trace_handler = _make_trace_handler(args)
 
-  prof_args.update(activities=activities, schedule=schedule,
+  prof_args.update(activities=activities,
+                   schedule=schedule,
                    on_trace_ready=trace_handler)
 
   return torch.profiler.profile(**prof_args)
