@@ -204,7 +204,8 @@ class Trainer:
                   model_path=None,
                   tb_writer=None,
                   num_workers=0,
-                  should_stop=None):
+                  should_stop=None,
+                  step_fn=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
     train_step = getattr(scheduler, 'train_step', None) if scheduler else None
@@ -234,6 +235,9 @@ class Trainer:
         if vloss is not None:
           val_losses.append(vloss)
         tval = self._train_time.start()
+
+      if step_fn is not None:
+        step_fn(sd)
 
       stopped = callable(should_stop) and should_stop()
       if stopped:
