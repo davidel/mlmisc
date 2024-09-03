@@ -1,4 +1,5 @@
 import importlib
+import math
 import os
 import random
 import subprocess
@@ -9,6 +10,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.utils as pyu
 import torch
+import torch.nn as nn
 import torch.utils.tensorboard
 
 from . import auto_module as am
@@ -159,6 +161,14 @@ def tail_permute(t):
 
 def split_dims(shape, npop):
   return shape[: -npop], *shape[-npop: ]
+
+
+def linear_tensor(*shape, dtype=None, device=None):
+  t = torch.empty(*shape, dtype=dtype, device=device)
+
+  nn.init.kaiming_uniform_(t, a=math.sqrt(5))
+
+  return t
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
