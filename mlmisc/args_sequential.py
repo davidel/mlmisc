@@ -12,6 +12,8 @@ class ArgsSequential(nn.Sequential):
       # Sequential directly from the passed keyword arguments without explicitly
       # instantiating an OrderedDict.
       super().__init__(collections.OrderedDict(kwargs))
+    elif len(args) == 1 and isinstance(args[0], (list, tuple)):
+      super().__init__(*args[0], **kwargs)
     else:
       super().__init__(*args, **kwargs)
 
