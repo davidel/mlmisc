@@ -163,10 +163,10 @@ def split_dims(shape, npop):
   return shape[: -npop], *shape[-npop: ]
 
 
-def kuni_tensor(*shape, dtype=None, device=None):
+def kuni_tensor(*shape, dtype=None, device=None, a=None):
   t = torch.empty(*shape, dtype=dtype, device=device)
 
-  nn.init.kaiming_uniform_(t, a=math.sqrt(5))
+  nn.init.kaiming_uniform_(t, a=math.sqrt(5) if a is None else a)
 
   return t
 
