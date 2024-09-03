@@ -20,7 +20,7 @@ class ShardAttention(nn.Module):
 
     super().__init__()
     self.num_heads = num_heads
-    self.weight = nn.Parameter(ut.linear_tensor(num_heads * embed_size, embed_size))
+    self.weight = nn.Parameter(ut.kuni_tensor(num_heads * embed_size, embed_size))
     self.post = lu.create(post or nn.Identity)
     self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
