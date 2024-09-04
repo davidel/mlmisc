@@ -2,6 +2,7 @@ import importlib
 import math
 import os
 import random
+import re
 import subprocess
 import sys
 
@@ -150,6 +151,30 @@ def count_params(net):
     params += torch.numel(p)
 
   return params
+
+
+def freeze_params(net, freeze=None, thaw=None):
+  freeze = freeze or ()
+  thaw = thaw or (r'.*')
+  for name, param in net.named_parameters():
+    requires_grad = None
+    for rx in freeze:
+      if re.match(rx, name):
+        requires_grad = False
+        break
+    if requires_grad is None:
+      for rx in thaw:
+        if re.match(rx, name):
+          requires_grad = True
+          break
+
+    if requires_grad is not None:
+      alog.debug(f'{"Thawing" if requires_grad else "Freezing"} parameter "{name}"')
+      param.requires_grad = requires_grad
+    else:
+      alog.debug(f'Parameter "{name}" left untouched (requires_grad={param.requires_grad})')
+
+  return net
 
 
 def tail_permute(t):
