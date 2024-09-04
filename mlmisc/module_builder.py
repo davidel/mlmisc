@@ -22,6 +22,7 @@ class ModuleBuilder(nn.Module):
     self.config = []
 
   def add(self, net, input_fn=None, output_fn=None, net_args=()):
+    # The shape contains no batch dimension!
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.config.append(NetConfig(input_fn=input_fn,
@@ -30,20 +31,20 @@ class ModuleBuilder(nn.Module):
 
     return len(self.layers) - 1
 
-  def linear(self, odim, args={}, **kwargs):
-    return self.add(nn.Linear(self.shape[-1], odim, **kwargs), **args)
+  def linear(self, nout, args={}, **kwargs):
+    return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **args)
 
-  def conv2d(self, odim, args={}, **kwargs):
-    return self.add(nn.Conv2d(self.shape[-3], odim, **kwargs), **args)
+  def conv2d(self, nout, args={}, **kwargs):
+    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **args)
 
-  def deconv2d(self, odim, args={}, **kwargs):
-    return self.add(nn.ConvTranspose2d(self.shape[-3], odim, **kwargs), **args)
+  def deconv2d(self, nout, args={}, **kwargs):
+    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **args)
 
   def batchnorm2d(self, args={}, **kwargs):
     return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args)
 
   def batchnorm1d(self, args={}, **kwargs):
-    return self.add(nn.BatchNorm1d(self.shape[-1], **kwargs), **args)
+    return self.add(nn.BatchNorm1d(self.shape[0], **kwargs), **args)
 
   def layernorm(self, ndims, args={}, **kwargs):
     return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args)
