@@ -43,7 +43,7 @@ class ModuleBuilder(nn.Module):
     return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args)
 
   def batchnorm1d(self, args={}, **kwargs):
-    return self.add(nn.BatchNorm1d(self.shape[-2], **kwargs), **args)
+    return self.add(nn.BatchNorm1d(self.shape[-1], **kwargs), **args)
 
   def layernorm(self, ndims, args={}, **kwargs):
     return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args)
