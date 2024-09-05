@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from . import args_parallel ap
+from . import args_parallel as ap
 
 
 class Conv2dMixer(nn.Module):
