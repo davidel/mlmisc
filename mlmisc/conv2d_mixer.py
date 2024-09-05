@@ -1,15 +1,18 @@
 import torch
 import torch.nn as nn
 
+from . import args_parallel ap
+
 
 class Conv2dMixer(nn.Module):
 
   def __init__(self, in_channels, convs_spec):
     super().__init__()
-    self.convs = nn.ModuleList()
+    convs = []
     for chans, ksize in convs_spec:
-      self.convs.append(nn.Conv2d(in_channels, chans, kernel_size=ksize, padding='same'))
+      convs.append(nn.Conv2d(in_channels, chans, kernel_size=ksize, padding='same'))
+    self.convs = ap.ArgsParallel(convs, dim=1)
 
   def forward(self, x):
-    return torch.cat([net(x) for net in self.convs], dim=1)
+    return self.convs(x)
 
