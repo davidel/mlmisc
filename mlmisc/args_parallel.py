@@ -17,5 +17,5 @@ class ArgsParallel(nn.Module):
   def forward(self, *args, **kwargs):
     parts = [net(*args, **kwargs) for net in self.nets.values()]
 
-    return torch.cat(parts dim=self.cat_dim) if dim=self.cat_dim is not None else parts
+    return torch.cat(parts, dim=self.cat_dim) if dim=self.cat_dim is not None else parts
 
