@@ -11,7 +11,7 @@ class Conv2dMixer(nn.Module):
     convs = []
     for chans, ksize in convs_spec:
       convs.append(nn.Conv2d(in_channels, chans, kernel_size=ksize, padding='same'))
-    self.convs = ap.ArgsParallel(convs, dim=1)
+    self.convs = ap.ArgsParallel(convs, cat_dim=1)
 
   def forward(self, x):
     return self.convs(x)
