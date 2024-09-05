@@ -10,7 +10,7 @@ class ArgsParallel(nn.Module):
     self.nets = nn.ModuleDict()
     net_list = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
     for i, net in enumerate(net_list):
-      self.nets[f'({i})'] = net
+      self.nets[f'{i}'] = net
     for name, net in kwargs.items():
       self.nets[name] = net
 
