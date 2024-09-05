@@ -51,7 +51,7 @@ class ModuleBuilder(nn.Module):
 
   def forward(self, *args, **kwargs):
     y, results = args, []
-    for i, (net, cfg) in enumerate(zip(self.layers, self.config)):
+    for net, cfg in zip(self.layers, self.config):
       net_kwargs = dict()
       if cfg.input_fn is None:
         xx = y
