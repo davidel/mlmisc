@@ -1,3 +1,4 @@
+import functools
 import importlib
 import math
 import os
@@ -194,6 +195,10 @@ def kuni_tensor(*shape, dtype=None, device=None, a=None):
   nn.init.kaiming_uniform_(t, a=math.sqrt(5) if a is None else a)
 
   return t
+
+
+def add(*args):
+  return functools.reduce(torch.Tensor.add_, args, torch.zeros_like(args[0]))
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
