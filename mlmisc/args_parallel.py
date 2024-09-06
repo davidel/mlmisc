@@ -12,7 +12,7 @@ Pair = collections.namedtuple('Pair', 'arg, module')
 # as usual. In case both need to be passed, a Pair(arg=NEWARG, module=NNMODULE)
 # can be used.
 def extract_args(kwargs, *names):
-  args, missing = [], object()
+  args = []
   for name in names:
     arg = kwargs.get(name)
     if isinstance(arg, nn.Module):
@@ -21,10 +21,7 @@ def extract_args(kwargs, *names):
       kwargs[name] = arg.module
       arg = arg.arg
     else:
-      if arg is missing:
-        arg = None
-      else:
-        kwargs.pop(name)
+      kwargs.pop(name, None)
 
     args.append(arg)
 
