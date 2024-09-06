@@ -1,40 +1,12 @@
-import collections
-
 import torch
 import torch.nn as nn
 
 
-Pair = collections.namedtuple('Pair', 'arg, module')
-
-# Used in APIs where, for historical reasons, there is a generic kwargs argument
-# list, and where new named arguments need to be passed.
-# If either an nn.Module or the new argument needs to be passed, there are passed
-# as usual. In case both need to be passed, a Pair(arg=NEWARG, module=NNMODULE)
-# can be used.
-def extract_args(kwargs, *names):
-  args = []
-  for name in names:
-    arg = kwargs.get(name)
-    if isinstance(arg, nn.Module):
-      arg = None
-    elif isinstance(arg, Pair):
-      kwargs[name] = arg.module
-      arg = arg.arg
-    else:
-      kwargs.pop(name, None)
-
-    args.append(arg)
-
-  return args[0] if len(args) == 1 else args
-
-
 class ArgsParallel(nn.Module):
 
-  def __init__(self, *args, **kwargs):
-    cat_dim = extract_args(kwargs, 'cat_dim')
-
+  def __init__(self, *args, cat_dim_=None, **kwargs):
     super().__init__()
-    self.cat_dim = cat_dim
+    self.cat_dim = cat_dim_
     self.nets = nn.ModuleDict()
     net_list = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
     for i, net in enumerate(net_list):

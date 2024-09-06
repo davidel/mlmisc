@@ -16,7 +16,7 @@ class Conv2dMixer(nn.Module):
 
     super().__init__()
     self.act = lu.create(act)
-    self.convs = ap.ArgsParallel(convs, cat_dim=1)
+    self.convs = ap.ArgsParallel(convs, cat_dim_=1)
     self.conv_proj = nn.Conv2d(total_channels, out_channels, kernel_size=1)
 
   def forward(self, x):
