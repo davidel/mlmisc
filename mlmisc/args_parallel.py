@@ -14,14 +14,17 @@ Pair = collections.namedtuple('Pair', 'arg, module')
 def extract_args(kwargs, *names):
   args, missing = [], object()
   for name in names:
-    arg = kwargs.get(name, missing)
+    arg = kwargs.get(name)
     if isinstance(arg, nn.Module):
       arg = None
     elif isinstance(arg, Pair):
       kwargs[name] = arg.module
       arg = arg.arg
-    elif arg is not missing:
-      kwargs.pop(name)
+    else:
+      if arg is missing:
+        arg = None
+      else:
+        kwargs.pop(name)
 
     args.append(arg)
 
