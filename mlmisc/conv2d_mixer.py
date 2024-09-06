@@ -12,7 +12,7 @@ class Conv2dMixer(nn.Module):
     convs, total_channels = [], 0
     for chans, ksize in convs_spec:
       convs.append(nn.Conv2d(in_channels, chans, kernel_size=ksize, padding='same'))
-      total_channels += ksize
+      total_channels += chans
 
     super().__init__()
     self.act = lu.create(act)
