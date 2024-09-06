@@ -7,9 +7,9 @@ from . import utils as ut
 
 class Ensemble(ap.ArgsParallel):
 
-  def __init__(self, *args, top_n=None, **kwargs):
+  def __init__(self, *args, top_n_=None, **kwargs):
     super().__init__(*args, **kwargs)
-    self.top_n = top_n
+    self.top_n = top_n_
 
   def forward(self, *args, **kwargs):
     if self.training and self.top_n is not None:
