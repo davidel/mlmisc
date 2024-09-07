@@ -5,8 +5,16 @@ import torch.nn as nn
 
 
 def expand_modules(args, kwargs):
-  modules = collections.OrderedDict()
-  net_args = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
+  modules, net_args = collections.OrderedDict(), args
+  if len(args) == 1:
+    arg = args[0]
+    if isinstance(arg, (dict, collections.OrderedDict, nn.ModuleDict)):
+      for name, net in arg.items():
+        modules[name] = net
+      net_args = []
+    elif isinstance(arg, (list, tuple)):
+      net_args = arg
+
   for i, net in enumerate(net_args):
     modules[f'{i}'] = net
   for name, net in kwargs.items():
