@@ -7,7 +7,7 @@ import torch
 
 def main(args):
   alog.debug(f'Loading {args.input} checkpoint')
-  data = torch.load(args.input, weights_only=False)
+  data = torch.load(args.input, weights_only=False, map_location=args.map_location)
 
   repl = []
   for k in data.keys():
@@ -34,6 +34,7 @@ if __name__ == '__main__':
   parser.add_argument('--input', required=True)
   parser.add_argument('--replace', nargs='+')
   parser.add_argument('--output')
+  parser.add_argument('--map_location')
 
   args = parser.parse_args()
 
