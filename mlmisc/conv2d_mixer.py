@@ -7,11 +7,15 @@ from . import layer_utils as lu
 
 class Conv2dMixer(nn.Module):
 
-  def __init__(self, in_channels, out_channels, convs_spec, act=None):
+  def __init__(self, in_channels, out_channels, convs_spec,
+               act=None, bias=True):
     act = act or nn.Identity
     convs, total_channels = [], 0
     for chans, ksize in convs_spec:
-      convs.append(nn.Conv2d(in_channels, chans, kernel_size=ksize, padding='same'))
+      convs.append(nn.Conv2d(in_channels, chans,
+                             kernel_size=ksize,
+                             padding='same',
+                             bias=bias))
       total_channels += chans
 
     super().__init__()
