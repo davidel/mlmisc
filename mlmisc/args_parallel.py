@@ -1,21 +1,17 @@
 import torch
 import torch.nn as nn
 
+from . import args_base as ab
 
-class ArgsParallel(nn.Module):
+
+class ArgsParallel(ab.ArgsBase):
 
   def __init__(self, *args, cat_dim_=None, **kwargs):
-    super().__init__()
+    super().__init__(*args, **kwargs)
     self.cat_dim = cat_dim_
-    self.nets = nn.ModuleDict()
-    net_list = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
-    for i, net in enumerate(net_list):
-      self.nets[f'{i}'] = net
-    for name, net in kwargs.items():
-      self.nets[name] = net
 
   def forward(self, *args, **kwargs):
-    parts = [net(*args, **kwargs) for net in self.nets.values()]
+    parts = [net(*args, **kwargs) for net in self.values()]
 
     return torch.cat(parts, dim=self.cat_dim) if self.cat_dim is not None else parts
 
