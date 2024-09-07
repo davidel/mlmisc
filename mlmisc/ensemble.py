@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 
-from . import args_parallel as ap
+from . import args_base as ab
 from . import utils as ut
 
 
-class Ensemble(ap.ArgsParallel):
+class Ensemble(ab.ArgsBase):
 
   def __init__(self, *args, top_n_=None, **kwargs):
     super().__init__(*args, **kwargs)
@@ -13,16 +13,16 @@ class Ensemble(ap.ArgsParallel):
 
   def forward(self, *args, **kwargs):
     if self.training and self.top_n is not None:
-      rnd = torch.randn(len(self.nets))
+      rnd = torch.randn(len(self))
       weights, indices = torch.topk(rnd, self.top_n)
 
-      y, nets = 0, list(self.nets.values())
+      y, nets = 0, list(self.values())
       for i, w in zip(indices, weights):
         y = nets[i](*args, **kwargs) * w + y
 
       y = y / torch.sum(weights)
     else:
-      parts = [net(*args, **kwargs) for net in self.nets.values()]
+      parts = [net(*args, **kwargs) for net in self.values()]
       y = ut.add(*parts) / len(parts)
 
     return y
