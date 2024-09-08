@@ -8,7 +8,7 @@ from . import layer_utils as lu
 class Conv2dMixer(nn.Module):
 
   def __init__(self, in_channels, out_channels, convs_spec,
-               act=None, bias=True):
+               act=None, bias=True, proj_bias=True):
     act = act or nn.Identity
     convs, total_channels = [], 0
     for chans, ksize in convs_spec:
@@ -21,7 +21,9 @@ class Conv2dMixer(nn.Module):
     super().__init__()
     self.act = lu.create(act)
     self.convs = ap.ArgsParallel(convs, cat_dim_=1)
-    self.conv_proj = nn.Conv2d(total_channels, out_channels, kernel_size=1)
+    self.conv_proj = nn.Conv2d(total_channels, out_channels,
+                               kernel_size=1,
+                               bias=proj_bias)
 
   def forward(self, x):
     y = self.convs(x)
