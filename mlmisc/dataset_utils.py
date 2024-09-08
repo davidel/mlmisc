@@ -6,7 +6,7 @@ from . import utils as ut
 
 
 def get_class_weights(dataset):
-  target = np.empty(dtype=np.int32)
+  target = np.empty(len(dataset), dtype=np.int32)
   for i in range(len(dataset)):
     x, y = dataset[i]
     target[i] = ut.item(y)
