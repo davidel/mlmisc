@@ -55,7 +55,7 @@ def torch_load(path, **kwargs):
 
 def net_shape(net, shape, device=None, dtype=None):
   with torch.no_grad(), Training(net, False):
-    zin = torch.zeros((1,) + tuple(shape), dtype=dtype, device=device)
+    zin = torch.randn((1,) + tuple(shape), dtype=dtype, device=device)
     out = net(zin)
 
     return out.shape[1:]
