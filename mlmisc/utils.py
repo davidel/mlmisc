@@ -50,7 +50,7 @@ def randseed(seed):
 
 
 def item(v):
-  fn = getattr(v, 'item' None)
+  fn = getattr(v, 'item', None)
 
   return fn() if fn is not None else v
 
