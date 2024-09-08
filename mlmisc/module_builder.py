@@ -31,23 +31,23 @@ class ModuleBuilder(nn.Module):
 
     return len(self.layers) - 1
 
-  def linear(self, nout, args={}, **kwargs):
-    return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **args)
+  def linear(self, nout, args_={}, **kwargs):
+    return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **args_)
 
-  def conv2d(self, nout, args={}, **kwargs):
-    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **args)
+  def conv2d(self, nout, args_={}, **kwargs):
+    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **args_)
 
-  def deconv2d(self, nout, args={}, **kwargs):
-    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **args)
+  def deconv2d(self, nout, args_={}, **kwargs):
+    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **args_)
 
-  def batchnorm2d(self, args={}, **kwargs):
-    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args)
+  def batchnorm2d(self, args_={}, **kwargs):
+    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args_)
 
-  def batchnorm1d(self, args={}, **kwargs):
-    return self.add(nn.BatchNorm1d(self.shape[0], **kwargs), **args)
+  def batchnorm1d(self, args_={}, **kwargs):
+    return self.add(nn.BatchNorm1d(self.shape[0], **kwargs), **args_)
 
-  def layernorm(self, ndims, args={}, **kwargs):
-    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args)
+  def layernorm(self, ndims, args_={}, **kwargs):
+    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args_)
 
   def forward(self, *args, **kwargs):
     y, results = args, []
