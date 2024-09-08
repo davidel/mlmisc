@@ -2,12 +2,14 @@ import numpy as np
 import py_misc_utils.alog as alog
 import torch
 
+from . import utils as ut
+
 
 def get_class_weights(dataset):
   target = np.empty(dtype=np.int32)
   for i in range(len(dataset)):
     x, y = dataset[i]
-    target[i] mlut.item(y)
+    target[i] = ut.item(y)
 
   class_counts = np.unique(target, return_counts=True)[1]
   weight = class_counts / np.sum(class_counts)
