@@ -49,6 +49,12 @@ def randseed(seed):
   return rseed
 
 
+def item(v):
+  fn = getattr(v, 'item' None)
+
+  return fn() if fn is not None else v
+
+
 def torch_load(path, **kwargs):
   return torch.load(path, weights_only=False, **kwargs)
 
