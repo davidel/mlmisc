@@ -1,9 +1,122 @@
+import inspect
+import os
 import random
 
+import datasets as dsets
+import huggingface_hub as hfh
 import py_misc_utils.alog as alog
 import torch
+import torchvision
 
 from . import utils as ut
+
+
+def _create_torchvision_dataset(dsclass, **kwargs):
+  sig = inspect.signature(dsclass)
+  train = kwargs.get('train')
+  if train is not None and sig.parameters.get('train') is None:
+    kwargs.pop('train')
+    kwargs['split'] = 'train' if train else 'test'
+
+  download = kwargs.get('download')
+  if download is not None and sig.parameters.get('download') is None:
+    alog.info(f'Dropping download={download} argument')
+    kwargs.pop('download')
+
+  return dsclass(**kwargs)
+
+
+def _try_torchvision(name, root=None, transform=None, target_transform=None):
+  dsclass = getattr(torchvision.datasets, name, None)
+  if dsclass is not None:
+    ds = dict()
+    ds['train'] = _create_torchvision_dataset(dsclass,
+                                              root=root,
+                                              train=True,
+                                              transform=transform,
+                                              target_transform=target_transform,
+                                              download=True)
+    ds['test'] = _create_torchvision_dataset(dsclass,
+                                             root=root,
+                                             train=False,
+                                             transform=transform,
+                                             target_transform=target_transform)
+
+    return ds
+
+
+def _guess_select(x):
+  if isinstance(x, (list, tuple)):
+    return x[: 2]
+  if isinstance(x, dict):
+    return list(x.values())[: 2]
+
+  return x
+
+
+def _no_transform(x):
+  return x
+
+
+def dict_selector(keys):
+
+  def select_fn(x):
+    return [x[k] for k in keys]
+
+  return select_fn
+
+
+class HFDataset(torch.data.Dataset):
+
+  def __init__(self, data,
+               select_fn=None,
+               transform=None,
+               target_transform=None):
+    super().__init__()
+    self.data = data
+    self.select_fn = select_fn or _guess_select
+    self.transform = transform or _no_transform
+    self.target_transform = target_transform or _no_transform
+
+  def __len__(self):
+    return len(self.data)
+
+  def __getitem__(self, i):
+    x, y = self.select_fn(self.data[i])
+
+    return self.transform(x), self.target_transform(y)
+
+
+def create_dataset(name,
+                   root=None,
+                   select_fn=None,
+                   transform=None,
+                   target_transform=None):
+  root = root or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  if name.find('/') < 0:
+    ds = _try_torchvision(name,
+                          root=root,
+                          transform=transform,
+                          target_transform=target_transform)
+    if ds is not None:
+      return ds
+
+  if hfh.list_datasets(dataset_name=name):
+    hfds = dsets.load_dataset(name, cache_dir=root)
+
+    ds = dict()
+    ds['train'] = HFDataset(hfds['train'],
+                            select_fn=select_fn,
+                            transform=transform,
+                            target_transform=target_transform)
+    ds['test'] = HFDataset(hfds['test'],
+                           select_fn=select_fn,
+                           transform=transform,
+                           target_transform=target_transform)
+
+    return ds
+
+  alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
 
 
 def get_class_weights(data,
