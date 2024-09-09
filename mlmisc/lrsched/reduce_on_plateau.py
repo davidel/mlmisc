@@ -35,8 +35,8 @@ class ReduceOnPlateau:
       self.sched.step(np.mean(self.losses))
       self.batchno = 0
       self.losses = []
-      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".4e")}')
+      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".3e")}')
 
   def step(self, val_loss):
-    alog.debug(f'Scheduler step called with {val_loss:.4e} validation loss')
+    alog.debug(f'Scheduler step called with {val_loss:.4f} validation loss')
 
