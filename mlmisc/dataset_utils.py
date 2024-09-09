@@ -19,7 +19,7 @@ def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
 
   max_class = torch.max(cvalues).item()
   if max_class >= len(cvalues):
-    fweight = torch.zeros(max_class, dtype=weight.dtype)
+    fweight = torch.zeros(max_class + 1, dtype=weight.dtype)
     fweight[cvalues] = weight
     weight = fweight
 
