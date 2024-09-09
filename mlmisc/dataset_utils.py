@@ -66,7 +66,7 @@ def dict_selector(keys):
   return select_fn
 
 
-class HFDataset(torch.data.Dataset):
+class HFDataset(torch.utils.data.Dataset):
 
   def __init__(self, data,
                select_fn=None,
