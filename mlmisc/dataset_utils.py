@@ -4,11 +4,11 @@ import torch
 from . import utils as ut
 
 
-def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
+def get_class_weights(data, dtype=None, cdtype=None, output_filter=None):
   output_filter = output_filter or (lambda x: x[1])
-  target = torch.empty(len(dataset), dtype=cdtype or torch.int32)
-  for i in range(len(dataset)):
-    y = output_filter(dataset[i])
+  target = torch.empty(len(data), dtype=cdtype or torch.int32)
+  for i in range(len(data)):
+    y = output_filter(data[i])
     target[i] = ut.item(y)
 
   cvalues, class_counts = torch.unique(target, return_counts=True)
@@ -25,7 +25,7 @@ def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
       fweight[cvalues] = weight
       weight = fweight
 
-  alog.debug(f'Dataset class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
+  alog.debug(f'Data class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
 
   return weight
 
