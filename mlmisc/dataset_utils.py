@@ -12,7 +12,7 @@ def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
     target[i] = ut.item(y)
 
   cvalues, class_counts = torch.unique(target, return_counts=True)
-  weight = class_counts / torch.sum(class_counts)
+  weight = 1 / class_counts
 
   if dtype is not None:
     weight = weight.to(dtype)
