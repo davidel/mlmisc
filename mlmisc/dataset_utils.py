@@ -5,6 +5,7 @@ import random
 import datasets as dsets
 import huggingface_hub as hfh
 import py_misc_utils.alog as alog
+import py_misc_utils.utils as pyu
 import torch
 import torchvision
 
@@ -78,11 +79,28 @@ class HFDataset(torch.utils.data.Dataset):
     self.transform = transform or _no_transform
     self.target_transform = target_transform or _no_transform
 
+  def _get(self, i):
+    if isinstance(self.data, dict):
+      return {k: v[i] for k, v in self.data.items()}
+
+    return self.data[i]
+
   def __len__(self):
+    if isinstance(self.data, dict):
+      return min(len(v) for v in self.data.values())
+
     return len(self.data)
 
   def __getitem__(self, i):
-    x, y = self.select_fn(self.data[i])
+    idata = self._get(i)
+
+    if isinstance(i, slice):
+      return HFDataset(idata,
+                       select_fn=self.select_fn,
+                       transform=self.transform,
+                       target_transform=self.target_transform)
+
+    x, y = self.select_fn(idata)
 
     return self.transform(x), self.target_transform(y)
 
