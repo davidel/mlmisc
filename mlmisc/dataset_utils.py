@@ -107,7 +107,7 @@ def _no_transform(x):
   return x
 
 
-def dict_selector(keys):
+def keys_selector(keys):
 
   def select_fn(x):
     return [x[k] for k in keys]
