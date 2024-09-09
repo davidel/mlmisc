@@ -13,13 +13,13 @@ def get_class_weights(data,
                       max_samples=None):
   # By default assume target is the second entry in the dataset return tuple.
   output_filter = output_filter or (lambda x: x[1])
-  target = torch.empty(len(data), dtype=cdtype or torch.int32)
 
   indices = list(range(len(data)))
   if max_samples is not None and len(indices) > max_samples:
     random.shuffle(indices)
     indices = sorted(indices[: max_samples])
 
+  target = torch.empty(len(indices), dtype=cdtype or torch.int32)
   for i in indices:
     y = output_filter(data[i])
     target[i] = ut.item(y)
