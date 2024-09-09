@@ -134,11 +134,7 @@ def create_dataset(name,
   split_pct = split_pct or 0.9
 
   if name.find('/') < 0:
-    ds = _try_torchvision(name,
-                          root=root,
-                          transform=transform,
-                          target_transform=target_transform,
-                          split_pct)
+    ds = _try_torchvision(name, root, transform, target_transform, split_pct)
     if ds is not None:
       return ds
 
