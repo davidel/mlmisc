@@ -12,62 +12,7 @@ import torchvision
 from . import utils as ut
 
 
-def _create_torchvision_dataset(dsclass, **kwargs):
-  sig = inspect.signature(dsclass)
-  train = kwargs.get('train')
-  if train is not None and sig.parameters.get('train') is None:
-    kwargs.pop('train')
-    kwargs['split'] = 'train' if train else 'test'
-
-  download = kwargs.get('download')
-  if download is not None and sig.parameters.get('download') is None:
-    alog.info(f'Dropping download={download} argument')
-    kwargs.pop('download')
-
-  return dsclass(**kwargs)
-
-
-def _try_torchvision(name,root, transform, target_transform):
-  dsclass = getattr(torchvision.datasets, name, None)
-  if dsclass is not None:
-    ds = dict()
-    ds['train'] = _create_torchvision_dataset(dsclass,
-                                              root=root,
-                                              train=True,
-                                              transform=transform.get('train'),
-                                              target_transform=target_transform.get('train'),
-                                              download=True)
-    ds['test'] = _create_torchvision_dataset(dsclass,
-                                             root=root,
-                                             train=False,
-                                             transform=transform.get('test'),
-                                             target_transform=target_transform.get('test'))
-
-    return ds
-
-
-def _guess_select(x):
-  if isinstance(x, (list, tuple)):
-    return x[: 2]
-  if isinstance(x, dict):
-    return list(x.values())[: 2]
-
-  return x
-
-
-def _no_transform(x):
-  return x
-
-
-def dict_selector(keys):
-
-  def select_fn(x):
-    return [x[k] for k in keys]
-
-  return select_fn
-
-
-class HFDataset(torch.utils.data.Dataset):
+class Dataset(torch.utils.data.Dataset):
 
   def __init__(self, data,
                select_fn=None,
@@ -95,14 +40,79 @@ class HFDataset(torch.utils.data.Dataset):
     idata = self._get(i)
 
     if isinstance(i, slice):
-      return HFDataset(idata,
-                       select_fn=self.select_fn,
-                       transform=self.transform,
-                       target_transform=self.target_transform)
+      return Dataset(idata,
+                     select_fn=self.select_fn,
+                     transform=self.transform,
+                     target_transform=self.target_transform)
 
     x, y = self.select_fn(idata)
 
     return self.transform(x), self.target_transform(y)
+
+
+def _try_torchvision(name, root, transform, target_transform, split_pct):
+  dsclass = getattr(torchvision.datasets, name, None)
+  if dsclass is not None:
+    sig = inspect.signature(dsclass)
+    kwargs = dict(download=True) if sig.parameters.get('download') is not None else dict()
+
+    ds = dict()
+    if sig.parameters.get('train') is not None:
+      ds['train'] = dsclass(root=root,
+                            train=True,
+                            transform=transform.get('train'),
+                            target_transform=target_transform.get('train'),
+                            **kwargs)
+      ds['test'] = dsclass(root=root,
+                           train=False,
+                           transform=transform.get('test'),
+                           target_transform=target_transform.get('test'),
+                           **kwargs)
+    elif sig.parameters.get('split') is not None:
+      ds['train'] = dsclass(root=root,
+                            split='train',
+                            transform=transform.get('train'),
+                            target_transform=target_transform.get('train'),
+                            **kwargs)
+      ds['test'] = dsclass(root=root,
+                           split='test',
+                           transform=transform.get('test'),
+                           target_transform=target_transform.get('test'),
+                           **kwargs)
+    else:
+      full_ds = dsclass(root=root, **kwargs)
+
+      ntrain = int(split_pct * len(full_ds))
+
+      ds['train'] = Dataset(full_ds[: ntrain],
+                            transform=transform.get('train'),
+                            target_transform=target_transform.get('train'))
+      ds['test'] = Dataset(full_ds[ntrain: ],
+                           transform=transform.get('test'),
+                           target_transform=target_transform.get('test'))
+
+    return ds
+
+
+def _guess_select(x):
+  if isinstance(x, (list, tuple)):
+    return x[: 2]
+  if isinstance(x, dict):
+    return list(x.values())[: 2]
+
+  return x
+
+
+def _no_transform(x):
+  return x
+
+
+def dict_selector(keys):
+
+  def select_fn(x):
+    return [x[k] for k in keys]
+
+  return select_fn
 
 
 def _norm_transforms(transform):
@@ -116,16 +126,19 @@ def create_dataset(name,
                    root=None,
                    select_fn=None,
                    transform=None,
-                   target_transform=None):
+                   target_transform=None,
+                   split_pct=None):
   root = root or os.path.join(os.getenv('HOME', '.'), 'datasets')
   transform = _norm_transforms(transform)
   target_transform = _norm_transforms(target_transform)
+  split_pct = split_pct or 0.9
 
   if name.find('/') < 0:
     ds = _try_torchvision(name,
                           root=root,
                           transform=transform,
-                          target_transform=target_transform)
+                          target_transform=target_transform,
+                          split_pct)
     if ds is not None:
       return ds
 
@@ -133,14 +146,14 @@ def create_dataset(name,
     hfds = dsets.load_dataset(name, cache_dir=root)
 
     ds = dict()
-    ds['train'] = HFDataset(hfds['train'],
-                            select_fn=select_fn,
-                            transform=transform.get('train'),
-                            target_transform=target_transform.get('train'))
-    ds['test'] = HFDataset(hfds['test'],
-                           select_fn=select_fn,
-                           transform=transform.get('test'),
-                           target_transform=target_transform.get('test'))
+    ds['train'] = Dataset(hfds['train'],
+                          select_fn=select_fn,
+                          transform=transform.get('train'),
+                          target_transform=target_transform.get('train'))
+    ds['test'] = Dataset(hfds['test'],
+                         select_fn=select_fn,
+                         transform=transform.get('test'),
+                         target_transform=target_transform.get('test'))
 
     return ds
 
