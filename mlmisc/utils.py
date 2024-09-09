@@ -55,6 +55,17 @@ def item(v):
   return fn() if fn is not None else v
 
 
+def is_integer(t):
+  if isinstance(t, int):
+    return True
+  if isinstance(t, torch.Tensor):
+    return not (t.is_floating_point() or t.is_complex())
+  if isinstance(t, np.ndarray):
+    return np.issubdtype(t.dtype, np.integer)
+
+  return False
+
+
 def torch_load(path, **kwargs):
   return torch.load(path, weights_only=False, **kwargs)
 

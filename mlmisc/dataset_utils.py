@@ -17,11 +17,12 @@ def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
   if dtype is not None:
     weight = weight.to(dtype)
 
-  max_class = torch.max(cvalues).item()
-  if max_class >= len(cvalues):
-    fweight = torch.zeros(max_class + 1, dtype=weight.dtype)
-    fweight[cvalues] = weight
-    weight = fweight
+  if ut.is_integer(cvalues):
+    max_class = torch.max(cvalues).item()
+    if max_class >= len(cvalues):
+      fweight = torch.zeros(max_class + 1, dtype=weight.dtype)
+      fweight[cvalues] = weight
+      weight = fweight
 
   alog.debug(f'Dataset class weight: { {c: f"{n * 100:.2f}%" for c, n in enumerate(weight)} }')
 
