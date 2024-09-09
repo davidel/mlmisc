@@ -25,7 +25,7 @@ def get_class_weights(dataset, dtype=None, cdtype=None, output_filter=None):
       fweight[cvalues] = weight
       weight = fweight
 
-  alog.debug(f'Dataset class weight: { {c: f"{n:.2e}%" for c, n in enumerate(weight)} }')
+  alog.debug(f'Dataset class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
 
   return weight
 
