@@ -26,21 +26,21 @@ def _create_torchvision_dataset(dsclass, **kwargs):
   return dsclass(**kwargs)
 
 
-def _try_torchvision(name, root=None, transform=None, target_transform=None):
+def _try_torchvision(name,root, transform, target_transform):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
     ds = dict()
     ds['train'] = _create_torchvision_dataset(dsclass,
                                               root=root,
                                               train=True,
-                                              transform=transform,
-                                              target_transform=target_transform,
+                                              transform=transform.get('train'),
+                                              target_transform=target_transform.get('train'),
                                               download=True)
     ds['test'] = _create_torchvision_dataset(dsclass,
                                              root=root,
                                              train=False,
-                                             transform=transform,
-                                             target_transform=target_transform)
+                                             transform=transform.get('test'),
+                                             target_transform=target_transform.get('test'))
 
     return ds
 
@@ -87,12 +87,22 @@ class HFDataset(torch.data.Dataset):
     return self.transform(x), self.target_transform(y)
 
 
+def _norm_transforms(transform):
+  if isinstance(transform, dict):
+    return transform
+
+  return dict(train=transform, test=transform)
+
+
 def create_dataset(name,
                    root=None,
                    select_fn=None,
                    transform=None,
                    target_transform=None):
   root = root or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  transform = _norm_transforms(transform)
+  target_transform = _norm_transforms(target_transform)
+
   if name.find('/') < 0:
     ds = _try_torchvision(name,
                           root=root,
@@ -107,12 +117,12 @@ def create_dataset(name,
     ds = dict()
     ds['train'] = HFDataset(hfds['train'],
                             select_fn=select_fn,
-                            transform=transform,
-                            target_transform=target_transform)
+                            transform=transform.get('train'),
+                            target_transform=target_transform.get('train'))
     ds['test'] = HFDataset(hfds['test'],
                            select_fn=select_fn,
-                           transform=transform,
-                           target_transform=target_transform)
+                           transform=transform.get('test'),
+                           target_transform=target_transform.get('test'))
 
     return ds
 
