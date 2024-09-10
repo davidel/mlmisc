@@ -32,7 +32,7 @@ class Dataset(torch.utils.data.Dataset):
 
   def __len__(self):
     if isinstance(self.data, dict):
-      return min(len(v) for v in self.data.values())
+      return min(len(v) if hasattr(v, '__len__') else 1 for v in self.data.values())
 
     return len(self.data)
 
