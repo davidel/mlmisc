@@ -24,8 +24,11 @@ class GitRepo:
 
     return git_cmd
 
+  def _run(self, *cmd):
+    subprocess.run(cmd, capture_output=True, check=True)
+
   def _cmd(self, *cmd):
-    subprocess.run(self._git(*cmd), capture_output=True, check=True)
+    self._run(*self._git(*cmd))
 
   def _outcmd(self, *cmd):
     return subprocess.check_output(self._git(*cmd))
@@ -45,11 +48,13 @@ class GitRepo:
         do_clone = False
 
     if do_clone:
-      os.makedirs(self.path, exist_ok=True)
+      parent_path = os.path.dirname(self.path)
+      os.makedirs(parent_path, exist_ok=True)
       if shallow:
-        self._cmd('clone', '-q', '--depth', '1', repo)
+        self._run('git', '-C', parent_path, 'clone', '-q', '--depth', '1',
+                  repo, os.path.basename(self.path))
       else:
-        self._cmd('clone', '-q', repo)
+        self._run('git', '-C', parent_path, 'clone', '-q', repo, os.path.basename(self.path))
 
   def current_commit(self):
     return self._outcmd('rev-parse', 'HEAD')
