@@ -1,6 +1,5 @@
 import importlib
 import os
-import sys
 import urllib
 
 import py_misc_utils.alog as alog
@@ -30,7 +29,7 @@ def _add_python_paths(path):
     for de in sdir:
       if de.is_dir():
         if os.path.isfile(os.path.join(de.path, '__init__.py')):
-          pyu.maybe_add_path(sys.path, path)
+          pyu.add_sys_path(path)
         else:
           _add_python_paths(de.path)
 
