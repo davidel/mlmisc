@@ -46,6 +46,14 @@ def _load_module(rpath, module):
   return mod
 
 
+def _modules_root():
+  root = os.getenv('MODULES_ROOT', None)
+  if root is None:
+    root = os.path.join(os.getenv('HOME', '.'), 'module_repos')
+
+  return root
+
+
 class WebModule(nn.Module):
 
   def __init__(self, repo, module, ctor,
@@ -54,10 +62,11 @@ class WebModule(nn.Module):
                force_clone=False,
                mod_args=None,
                mod_kwargs=None):
-    root = root or os.getenv('MODULES_ROOT',
-                             os.path.join(os.getenv('HOME', '.'), 'module_repos'))
+    root = root or _modules_root()
     mod_args = mod_args or ()
     mod_kwargs = mod_kwargs or {}
+
+    alog.debug(f'Using Web Modules root "{root}"')
 
     rpath = _clone_repo(repo, root, force_clone, commit)
 
