@@ -37,7 +37,7 @@ def _add_python_paths(path):
 def _load_module(rpath, module):
   mpath = os.path.join(rpath, module)
   if os.path.isfile(mpath):
-    mod = pyu.load_module(mpath, add_sys_path=True)
+    mod = pyu.load_module(mpath, add_syspath=True)
   else:
     _add_python_paths(rpath)
     mod = importlib.import_module(module)
