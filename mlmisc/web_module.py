@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 
 
-def _clone_repo(repo, root, force_clone):
+def _clone_repo(repo, root, force_clone, commit):
   pr = urllib.parse.urlparse(repo)
   upath = pr.path[1: ] if pr.path.startswith('/') else pr.path
 
@@ -21,7 +21,12 @@ def _clone_repo(repo, root, force_clone):
     shutil.rmtree(rpath)
   if not os.path.isdir(rpath):
     alog.debug(f'Cloning repo: {repo}')
-    subprocess.check_call(['git', 'clone', '-q', '--depth', '1', repo, rpath])
+    if commit is not None:
+      subprocess.check_call(['git', 'clone', '-q', repo, rpath])
+      alog.debug(f'Checking out commit: {commit}')
+      subprocess.check_call(['git', '-C', rpath, 'checkout', '-q', commit])
+    else:
+      subprocess.check_call(['git', 'clone', '-q', '--depth', '1', repo, rpath])
 
   return rpath
 
@@ -51,6 +56,7 @@ class WebModule(nn.Module):
 
   def __init__(self, repo, module, ctor,
                root=None,
+               commit=None,
                force_clone=False,
                mod_args=None,
                mod_kwargs=None):
@@ -59,7 +65,7 @@ class WebModule(nn.Module):
     mod_args = mod_args or ()
     mod_kwargs = mod_kwargs or {}
 
-    rpath = _clone_repo(repo, root, force_clone)
+    rpath = _clone_repo(repo, root, force_clone, commit)
 
     mod = _load_module(rpath, module)
 
