@@ -47,9 +47,9 @@ class GitRepo:
 
     if do_clone:
       if shallow:
-        self._cmd('clone', '-q', '--depth', '1', repo, self.path)
+        self._cmd('clone', '-q', '--depth', '1', repo)
       else:
-        self._cmd('clone', '-q', repo, self.path)
+        self._cmd('clone', '-q', repo)
 
   def current_commit(self):
     return self._outcmd('rev-parse', 'HEAD')
