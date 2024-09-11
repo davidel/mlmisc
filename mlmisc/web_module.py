@@ -40,12 +40,12 @@ class GitRepo:
       if force or shallow != self.is_shallow():
         alog.info(f'Purging old GIT folder: {self.path}')
         shutil.rmtree(self.path)
-        os.mkdir(self.path)
       else:
         self.pull()
         do_clone = False
 
     if do_clone:
+      os.makedirs(self.path, exist_ok=True)
       if shallow:
         self._cmd('clone', '-q', '--depth', '1', repo)
       else:
