@@ -34,10 +34,9 @@ def generate_patches(x, size, strides):
     wpad = compute_pad(x.shape[-1], wsize, stride)
 
     xpad = nn.functional.pad(x, wpad + hpad)
+    xpatches = xpad.unfold(2, hsize, stride).unfold(3, wsize, stride)
+    xpatches = einops.rearrange(xpatches, 'b c nh nw sh sw -> b (nh nw) (c sh sw)')
 
-    xpatches = einops.rearrange(xpad, 'b c (nh sh) (nw sw) -> b (nh nw) (c sh sw)',
-                                sh=hsize,
-                                sw=wsize)
     patches.append(xpatches)
 
   return torch.cat(patches, dim=1)
