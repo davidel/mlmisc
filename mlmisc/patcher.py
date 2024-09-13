@@ -22,7 +22,7 @@ def compute_pad(size, wnd_size, stride, base):
 
   rem = eff_size % stride
   if rem > 0:
-    nsize = eff_size - rem + wnd_size
+    nsize = max(eff_size, eff_size - rem + wnd_size)
   else:
     nsize = max(eff_size, eff_size - stride + wnd_size)
 
