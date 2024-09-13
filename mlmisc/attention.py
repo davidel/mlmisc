@@ -22,10 +22,10 @@ class Attention(nn.Module):
 
     super().__init__()
     self.n_head = n_head
-    self.k_prj = nn.Linear(n_embd, n_embd, bias=False)
-    self.q_prj = nn.Linear(n_embd, n_embd, bias=False)
-    self.v_prj = nn.Linear(n_embd, n_embd, bias=False)
-    self.unifyheads = nn.Linear(n_embd, n_embd)
+    self.k_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
+    self.q_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
+    self.v_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
+    self.unifyheads = nn.Linear(n_embd * n_head, n_embd)
 
     self.attn_drop = nn.Dropout(attn_dropout)
     self.resid_drop = nn.Dropout(dropout)
