@@ -27,8 +27,8 @@ class Attention(nn.Module):
     self.attend = nn.Softmax(dim=-1)
     self.unifyheads = nn.Linear(n_embd * n_head, n_embd)
 
-    self.attn_drop = nn.Dropout(attn_dropout)
-    self.resid_drop = nn.Dropout(dropout)
+    self.attn_drop = nn.Dropout(attn_dropout, inplace=True)
+    self.resid_drop = nn.Dropout(dropout, inplace=True)
 
   def forward(self, k, q, v, mask=None):
     keys = einops.rearrange(self.k_prj(k), 'b t (h ch) -> b h t ch', h=self.n_head)
