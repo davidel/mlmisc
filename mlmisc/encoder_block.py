@@ -38,7 +38,7 @@ class EncoderBlock(nn.Module):
       ifc=nn.Linear(input_dim, dim_feedforward),
       act=lu.create(act),
       ofc=nn.Linear(dim_feedforward, input_dim),
-      odrop=nn.Dropout(dropout),
+      odrop=nn.Dropout(dropout, inplace=True),
     )
 
     self.norm1 = nn.LayerNorm(input_dim)
