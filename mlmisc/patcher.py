@@ -62,7 +62,7 @@ class Patcher(nn.Module):
 
   def __init__(self, patches):
     super().__init__()
-    self.bases = patches
+    self.patches = patches
 
   def forward(self, x):
     return generate_patches(x, self.patches)
