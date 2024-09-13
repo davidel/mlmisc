@@ -8,11 +8,14 @@ def compute_pad(size, wnd_size, stride):
   rem = size % stride
   if rem > 0:
     nsize = size - rem + wnd_size
-    pad = nsize - size
-    if pad > 0:
-      rpad = pad // 2
+  else:
+    nsize = max(size, size - stride + wnd_size)
 
-      return pad - rpad, rpad
+  pad = nsize - size
+  if pad > 0:
+    rpad = pad // 2
+
+    return pad - rpad, rpad
 
   return 0, 0
 
