@@ -4,8 +4,6 @@ import einops
 import torch
 import torch.nn as nn
 
-import py_misc_utils.assert_checks as tas
-
 
 class Attention(nn.Module):
 
@@ -14,10 +12,6 @@ class Attention(nn.Module):
                dropout=None):
     attn_dropout = attn_dropout or 0.0
     dropout = dropout or 0.0
-
-    tas.check_eq(n_embd % n_head, 0,
-                 msg=f'Embedding dimension ({n_embd}) must be multiple ' \
-                 f'of the number of heads ({n_head})')
 
     super().__init__()
     self.n_head = n_head
