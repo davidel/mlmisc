@@ -3,7 +3,6 @@ import math
 import einops
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 import py_misc_utils.assert_checks as tas
 
@@ -25,6 +24,7 @@ class Attention(nn.Module):
     self.k_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
     self.q_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
     self.v_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
+    self.attend = nn.Softmax(dim=-1)
     self.unifyheads = nn.Linear(n_embd * n_head, n_embd)
 
     self.attn_drop = nn.Dropout(attn_dropout)
@@ -39,7 +39,7 @@ class Attention(nn.Module):
     att = queries @ einops.rearrange(keys, 'b h t ch -> b h ch t')
     if mask is not None:
       att = att.masked_fill(mask, float('-inf'))
-    att = F.softmax(att / math.sqrt(queries.shape[-1]), dim=-1)
+    att = self.attend(att / math.sqrt(queries.shape[-1]))
     att = self.attn_drop(att)
 
     # (B, H, T, T) @ (B, H, T, CH) => (B, H, T, CH)
