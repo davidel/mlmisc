@@ -10,7 +10,7 @@ class Ensemble(ab.ArgsBase):
   def __init__(self, *args, top_n_=None, **kwargs):
     super().__init__(*args, **kwargs)
     self.top_n = top_n_
-    self.weight = nn.Parameter(torch.full((len(self),), 1 / len(self)))
+    self.register_buffer('weight', nn.Parameter(torch.full((len(self),), 1 / len(self))))
 
   def forward(self, *args, **kwargs):
     if self.training and self.top_n is not None:
