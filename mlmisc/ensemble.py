@@ -14,7 +14,7 @@ class Ensemble(ab.ArgsBase):
   def forward(self, *args, **kwargs):
     ry = self.router_net(*args, **kwargs)
 
-    parts = [net(*args, **kwargs) * w for net in zip(self.values(), ry)]
+    parts = [net(*args, **kwargs) * w for net, w in zip(self.values(), ry)]
     y = ut.add(*parts) / len(parts)
 
     return y
