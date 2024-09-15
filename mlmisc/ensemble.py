@@ -16,7 +16,12 @@ class Ensemble(ab.ArgsBase):
   def forward(self, *args, **kwargs):
     ry = self.router_net(*args, **kwargs)
 
-    parts = [net(*args, **kwargs) * torch.unsqueeze(ry[:, i], 1) for i, net in enumerate(self.nets)]
+    parts = []
+    for i, net in enumerate(self.nets):
+      nw = torch.index_select(ry, -1, torch.tensor(i))
+      ny = net(*args, **kwargs)
+      parts.append(ny * nw)
+
     y = ut.add(*parts) / len(parts)
 
     return y
