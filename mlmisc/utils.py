@@ -215,7 +215,9 @@ def kuni_tensor(*shape, dtype=None, device=None, a=None):
 
 
 def add(*args):
-  return functools.reduce(torch.Tensor.add_, args, torch.zeros_like(args[0]))
+  xargs = pyu.expand_args(args)
+
+  return functools.reduce(torch.Tensor.add_, xargs, torch.zeros_like(xargs[0]))
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
