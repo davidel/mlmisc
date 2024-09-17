@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-from . import args_parallel as ap
 from . import utils as ut
 
 
@@ -9,12 +8,12 @@ class Ensemble(nn.Module):
 
   def __init__(self, nets, loss_fn=None, categorical=None):
     super().__init__()
-    self.nets = ap.ArgsParallel(nets)
+    self.nets = nn.ModuleList(nets)
     self.loss_fn = loss_fn
     self.categorical = categorical
 
   def forward(self, *args, targets=None, **kwargs):
-    parts = self.nets(*args, **kwargs)
+    parts = [net(*args, **kwargs) for net in self.nets]
 
     if self.categorical == 'voting':
       y = torch.zeros_like(parts[0])
