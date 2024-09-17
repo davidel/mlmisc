@@ -6,12 +6,21 @@ import py_misc_utils.alog as alog
 import torch
 
 
-def main(args):
+def load_data(path, map_location):
   alog.debug(f'Loading {args.input} checkpoint')
   data = mlut.torch_load(args.input, map_location=args.map_location)
 
-  # Handle ut.save_data() packages ...
-  model_data = data.get('model', data)
+  # Handle mlut.save_data() packages ...
+  return data, data.get('model', data)
+
+
+def analyze(args):
+  _, from_data = load_data(args.from_path, args.map_location)
+  _, to_data = load_data(args.to_path, args.map_location)
+
+
+def replace(args):
+  data, model_data = load_data(args.input, args.map_location)
 
   repl = []
   for k in model_data.keys():
@@ -34,13 +43,22 @@ def main(args):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser('Change parameter names from PyTorch checkpoints')
-  parser.add_argument('--input', required=True)
-  parser.add_argument('--replace', nargs='+')
-  parser.add_argument('--output')
+  parser = argparse.ArgumentParser('Manipulate parameter names from PyTorch checkpoints')
   parser.add_argument('--map_location')
 
-  args = parser.parse_args()
+  subparsers = parser.add_subparsers(help='Command help')
 
-  main(args)
+  replace_parser = subparsers.add_parser('replace', help='Replaces model parameter names')
+  replace_parser.add_argument('--input', required=True)
+  replace_parser.add_argument('--replace', nargs='+')
+  replace_parser.add_argument('--output')
+  replace_parser.set_defaults(cmd_fn=replace)
+
+  analyze_parser = subparsers.add_parser('analyze', help='Analyzes model parameter names')
+  analyze_parser.add_argument('--from_path', required=True)
+  analyze_parser.add_argument('--to_path', required=True)
+  analyze_parser.set_defaults(cmd_fn=analyze)
+
+  args = parser.parse_args()
+  args.cmd_fn(args)
 
