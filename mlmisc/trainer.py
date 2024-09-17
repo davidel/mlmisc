@@ -149,7 +149,7 @@ class Trainer:
                           dict(value_stats=alog.DEBUG))
 
   def _save_checkpoint(self, tctx):
-    checkpoint = tctx.checkpoint or ('optimizer', 'scheduler')
+    checkpoint = tctx.checkpoint or ('optimizer', 'scheduler', 'scaler')
     cargs = dict()
     for name in checkpoint:
       data = getattr(tctx, name, None)
@@ -174,18 +174,34 @@ class Trainer:
       if tctx.device is not None:
         x, y = x.to(tctx.device), y.to(tctx.device)
 
-      _, loss = tctx.model(x, targets=y)
+      if tctx.scaler is not None:
+        with torch.autocast(device_type=device,
+                            dtype=tctx.amp_dtype or torch.float16):
+          _, loss = tctx.model(x, targets=y)
+      else:
+        _, loss = tctx.model(x, targets=y)
 
       bloss = loss if tctx.accum_steps == 1 else loss / tctx.accum_steps
 
-      bloss.backward()
+      if tctx.scaler is not None:
+        tctx.scaler.scale(bloss).backward()
+      else:
+        bloss.backward()
 
       self._num_samples += tctx.batch_size
       if (i + 1) % tctx.accum_steps == 0:
-        if tctx.grad_clip is not None and tctx.grad_clip > 0:
-          nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
+        if tctx.scaler is not None:
+          if tctx.grad_clip is not None and tctx.grad_clip > 0:
+            tctx.scaler.unscale_(tctx.optimizer)
+            nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
 
-        tctx.optimizer.step()
+          tctx.scaler.step(tctx.optimizer)
+          tctx.scaler.update()
+        else:
+          if tctx.grad_clip is not None and tctx.grad_clip > 0:
+            nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
+
+          tctx.optimizer.step()
 
         yield pyu.make_object(stepno=i, loss=loss, num_batches=num_batches)
 
@@ -205,7 +221,9 @@ class Trainer:
                   tb_writer=None,
                   num_workers=0,
                   should_stop=None,
-                  step_fn=None):
+                  step_fn=None,
+                  scaler=None,
+                  amp_dtype=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
     train_step = getattr(scheduler, 'train_step', None) if scheduler else None

@@ -55,6 +55,10 @@ def item(v):
   return fn() if fn is not None else v
 
 
+def torch_dtype(dtype):
+  return getattr(torch, dtype) if isinstance(dtype, str) else dtype
+
+
 def is_integer(t):
   if isinstance(t, int):
     return True
