@@ -17,7 +17,7 @@ def _save_state(state):
   bio = io.BytesIO()
   pickle.dump(state, bio)
 
-  return bio.get_value()
+  return bio.getvalue()
 
 
 def _load_state(data):
