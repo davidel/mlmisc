@@ -177,7 +177,7 @@ def count_params(net):
 
 def freeze_params(net, freeze=None, thaw=None):
   freeze = freeze or ()
-  thaw = thaw or (r'.*',)
+  thaw = thaw or ()
   for name, param in net.named_parameters():
     requires_grad = None
     for rx in freeze:
