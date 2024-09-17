@@ -175,7 +175,7 @@ class Trainer:
         x, y = x.to(tctx.device), y.to(tctx.device)
 
       if tctx.scaler is not None:
-        with torch.autocast(device_type=device,
+        with torch.autocast(device_type=tctx.device,
                             dtype=tctx.amp_dtype or torch.float16):
           _, loss = tctx.model(x, targets=y)
       else:
