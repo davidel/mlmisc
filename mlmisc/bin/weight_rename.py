@@ -9,8 +9,11 @@ def main(args):
   alog.debug(f'Loading {args.input} checkpoint')
   data = torch.load(args.input, weights_only=False, map_location=args.map_location)
 
+  # Handle ut.save_data() packages ...
+  model_data = data.get('model', data)
+
   repl = []
-  for k in data.keys():
+  for k in model_data.keys():
     for r in args.replace:
       mx, rx = r.split(',')
 
@@ -20,8 +23,8 @@ def main(args):
 
   for k, nk in repl:
     alog.info(f'Renaming "{k}" to "{nk}"')
-    data[nk] = data[k]
-    data.pop(k)
+    model_data[nk] = model_data[k]
+    model_data.pop(k)
 
   if repl:
     wpath = args.input + '.replace' if args.output is None else args.output
