@@ -46,7 +46,8 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser('Manipulate parameter names from PyTorch checkpoints')
   parser.add_argument('--map_location')
 
-  subparsers = parser.add_subparsers(help='Command help')
+  subparsers = parser.add_subparsers(required=True,
+                                     help='Command help')
 
   replace_parser = subparsers.add_parser('replace', help='Replaces model parameter names')
   replace_parser.add_argument('--input', required=True)

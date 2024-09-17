@@ -1,4 +1,6 @@
 import functools
+import io
+import pickle
 
 import torch
 import torch.nn as nn
@@ -11,9 +13,25 @@ _STATE = '__AM_ARGS__'
 _MODARGS = '_create_args'
 
 
+def _save_state(state):
+  bio = io.BytesIO()
+  pickle.dump(state, bio)
+
+  return bio.get_value()
+
+
+def _load_state(data):
+  if isinstance(data, dict):
+    return data
+
+  bio = io.BytesIO(data)
+
+  return pickle.load(bio)
+
+
 def _wrapped_state_dict(mod, *args, **kwargs):
   state = mod._saved_state_dict(*args, **kwargs)
-  state[_STATE] = module_args(mod)
+  state[_STATE] = _save_state(module_args(mod))
 
   return state
 
@@ -57,7 +75,7 @@ def load(source, map_location=None, strict=True):
   else:
     state = torch.load(source, map_location=map_location, weights_only=False)
 
-  create_args = state.pop(_STATE)
+  create_args = _load_state(state.pop(_STATE))
 
   mod = _generate_wrapped(create_args)
   mod.load_state_dict(state, strict=strict)
