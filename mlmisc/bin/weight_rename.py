@@ -1,13 +1,14 @@
 import argparse
 import re
 
+import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
 import torch
 
 
 def main(args):
   alog.debug(f'Loading {args.input} checkpoint')
-  data = torch.load(args.input, weights_only=False, map_location=args.map_location)
+  data = mlut.torch_load(args.input, map_location=args.map_location)
 
   # Handle ut.save_data() packages ...
   model_data = data.get('model', data)
@@ -33,7 +34,7 @@ def main(args):
 
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser('Change parameter names from Pytorch checkpoints')
+  parser = argparse.ArgumentParser('Change parameter names from PyTorch checkpoints')
   parser.add_argument('--input', required=True)
   parser.add_argument('--replace', nargs='+')
   parser.add_argument('--output')
