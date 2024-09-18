@@ -25,21 +25,28 @@ class Attention(nn.Module):
     self.resid_drop = nn.Dropout(dropout, inplace=True)
 
   def forward(self, k, q, v, mask=None):
-    keys = einops.rearrange(self.k_prj(k), 'b t (h ch) -> b h t ch', h=self.n_head)
-    queries = einops.rearrange(self.q_prj(q), 'b t (h ch) -> b h t ch', h=self.n_head)
-    values = einops.rearrange(self.v_prj(v), 'b t (h ch) -> b h t ch', h=self.n_head)
+    # (B, T, C) -> (B, T, H * C)
+    keys = self.k_prj(k)
+    # (B, T, C) -> (B, T, H * C)
+    queries = self.q_prj(q)
+    # (B, T, C) -> (B, T, H * C)
+    values = self.v_prj(v)
 
-    # (B, H, T, CH) @ (B, H, CH, T) => (B, H, T, T)
-    att = queries @ einops.rearrange(keys, 'b h t ch -> b h ch t')
+    keys = einops.rearrange(keys, 'b t (h c) -> b h t c', h=self.n_head)
+    queries = einops.rearrange(queries, 'b t (h c) -> b h t c', h=self.n_head)
+    values = einops.rearrange(values, 'b t (h c) -> b h t c', h=self.n_head)
+
+    # (B, H, T, C) @ (B, H, C, T) => (B, H, T, T)
+    att = queries @ einops.rearrange(keys, 'b h t c -> b h c t')
     if mask is not None:
       att = att.masked_fill(mask, float('-inf'))
     att = self.attend(att / math.sqrt(queries.shape[-1]))
     att = self.attn_drop(att)
 
-    # (B, H, T, T) @ (B, H, T, CH) => (B, H, T, CH)
+    # (B, H, T, T) @ (B, H, T, C) => (B, H, T, C)
     out = att @ values
 
-    out = einops.rearrange(out, 'b h t ch -> b t (h ch)')
+    out = einops.rearrange(out, 'b h t c -> b t (h c)')
     # (B, T, H * C) @ (H * C, C) => (B, T, C)
     out = self.unifyheads(out)
     out = self.resid_drop(out)
