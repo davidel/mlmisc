@@ -77,15 +77,11 @@ def verify_patch_specs(patch_specs):
 
 
 def create_convs(patch_specs, in_channels):
-  convs = []
-  for ps in patch_specs:
-    out_channels = ps.hsize * ps.wsize
-    convs.append(nn.Conv2d(in_channels, out_channels,
-                           kernel_size=(ps.hsize, ps.wsize),
-                           stride=(ps.hsize, ps.wsize),
-                           padding='valid'))
-
-  return convs
+  return [nn.Conv2d(in_channels, ps.hsize * ps.wsize,
+                    kernel_size=(ps.hsize, ps.wsize),
+                    stride=(ps.hsize, ps.wsize),
+                    padding='valid')
+          ps in patch_specs]
 
 
 def generate_conv(x, patch_specs, convs):
