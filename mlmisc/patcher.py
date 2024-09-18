@@ -38,11 +38,17 @@ def compute_pad(size, wnd_size, stride, base):
   return lpad, 0
 
 
-def generate_patches(x, patch_specs):
+def norm_shape(x):
   if x.ndim == 3:
-    x = torch.unsqueeze(x, 0)
-  elif x.ndim > 4:
-    x = x.reshape(-1, *x.shape[-3: ])
+    return torch.unsqueeze(x, 0)
+  if x.ndim > 4:
+    return x.reshape(-1, *x.shape[-3: ])
+
+  return x
+
+
+def generate_unfold(x, patch_specs):
+  x = norm_shape(x)
 
   patches = []
   for ps in patch_specs:
@@ -58,12 +64,55 @@ def generate_patches(x, patch_specs):
   return torch.cat(patches, dim=1)
 
 
+def create_convs(patch_specs, in_channels):
+  convs = []
+  for ps in patch_specs:
+    out_channels = ps.hsize * ps.wsize
+    convs.append(nn.Conv2d(in_channels, out_channels,
+                           kernel_size=(ps.hsize, ps.wsize),
+                           stride=(ps.hsize, ps.wsize),
+                           padding='valid'))
+
+  return convs
+
+
+def generate_conv(x, patch_specs, convs):
+  x = norm_shape(x)
+
+  patches = []
+  for ps, conv in zip(patch_specs, convs):
+    hpad = compute_pad(x.shape[-2], ps.hsize, ps.hstride, ps.hbase)
+    wpad = compute_pad(x.shape[-1], ps.wsize, ps.wstride, ps.wbase)
+
+    xpad = nn.functional.pad(x, wpad + hpad)
+    xpatches = conv(xpad)
+    xpatches = einops.rearrange(xpatches, 'b c h w -> b (h w) c')
+
+    patches.append(xpatches)
+
+  return torch.cat(patches, dim=1)
+
+
 class Patcher(nn.Module):
 
-  def __init__(self, patches):
+  def __init__(self, patches, mode=None, in_channels=None):
+    mode = mode or 'conv'
+
+    tas.check(mode in ('conv', 'unfold'), msg=f'Unknown pather mode: {mode}')
+    tas.check(mode != 'conv' or in_channels is not None,
+              msg=f'The in_channels argument must be specified in conv mode')
+
     super().__init__()
     self.patches = patches
+    self.mode = mode
+    if mode == 'conv':
+      self.convs = nn.ModuleList(create_convs(patches, in_channels))
 
   def forward(self, x):
-    return generate_patches(x, self.patches)
+    if self.mode == 'unfold':
+      y = generate_unfold(x, self.patches)
+    else:
+      y = generate_conv(x, self.patches, self.convs)
+
+    return y
 
