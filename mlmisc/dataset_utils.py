@@ -50,11 +50,14 @@ class Dataset(torch.utils.data.Dataset):
     return self.transform(x), self.target_transform(y)
 
 
-def _try_torchvision(name, root, transform, target_transform, split_pct):
+def _try_torchvision(name, root, transform, target_transform, split_pct,
+                     dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
     sig = inspect.signature(dsclass)
-    kwargs = dict(download=True) if sig.parameters.get('download') is not None else dict()
+    kwargs = dataset_kwargs.copy()
+    if sig.parameters.get('download') is not None:
+      kwargs.update(download=True)
 
     ds = dict()
     if sig.parameters.get('train') is not None:
@@ -127,19 +130,21 @@ def create_dataset(name,
                    select_fn=None,
                    transform=None,
                    target_transform=None,
-                   split_pct=None):
+                   split_pct=None,
+                   dataset_kwargs=None):
   root = root or os.path.join(os.getenv('HOME', '.'), 'datasets')
   transform = _norm_transforms(transform)
   target_transform = _norm_transforms(target_transform)
   split_pct = split_pct or 0.9
+  dataset_kwargs = dataset_kwargs or {}
 
   if name.find('/') < 0:
     ds = _try_torchvision(name, root, transform, target_transform, split_pct)
     if ds is not None:
       return ds
 
-  if hfh.list_datasets(dataset_name=name):
-    hfds = dsets.load_dataset(name, cache_dir=root)
+  if name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
+    hfds = dsets.load_dataset(name, cache_dir=root, **dataset_kwargs)
 
     ds = dict()
     ds['train'] = Dataset(hfds['train'],
