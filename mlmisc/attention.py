@@ -40,7 +40,7 @@ class Attention(nn.Module):
     out = att @ values
 
     out = einops.rearrange(out, 'b h t ch -> b t (h ch)')
-    # (B, T, C) @ (C, C) => (B, T, C)
+    # (B, T, H * C) @ (H * C, C) => (B, T, C)
     out = self.unifyheads(out)
     out = self.resid_drop(out)
 
