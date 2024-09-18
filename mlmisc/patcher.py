@@ -93,23 +93,28 @@ def generate_conv(x, patch_specs, convs):
   return torch.cat(patches, dim=1)
 
 
+CONV = 'conv'
+UNFOLD = 'unfold'
+ALL_MODES = (CONV, UNFOLD)
+
 class Patcher(nn.Module):
 
   def __init__(self, patches, mode=None, in_channels=None):
-    mode = mode or 'conv'
+    mode = mode or CONV
 
-    tas.check(mode in ('conv', 'unfold'), msg=f'Unknown pather mode: {mode}')
-    tas.check(mode != 'conv' or in_channels is not None,
+    tas.check(mode in ALL_MODES,
+              msg=f'Unknown patcher mode (should be one of {ALL_MODES}): {mode}')
+    tas.check(mode != CONV or in_channels is not None,
               msg=f'The in_channels argument must be specified in conv mode')
 
     super().__init__()
     self.patches = patches
     self.mode = mode
-    if mode == 'conv':
+    if mode == CONV:
       self.convs = nn.ModuleList(create_convs(patches, in_channels))
 
   def forward(self, x):
-    if self.mode == 'unfold':
+    if self.mode == UNFOLD:
       y = generate_unfold(x, self.patches)
     else:
       y = generate_conv(x, self.patches, self.convs)
