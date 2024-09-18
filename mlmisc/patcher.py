@@ -64,6 +64,18 @@ def generate_unfold(x, patch_specs):
   return torch.cat(patches, dim=1)
 
 
+def verify_patch_specs(patch_specs):
+  patch_size = None
+  for ps in patch_specs:
+    size = ps.hsize * ps.wsize
+    if patch_size is None:
+      patch_size = size
+    else:
+      tas.check_eq(patch_size, size,
+                   msg=f'All patches must have the same size (in terms of the ' \
+                   f'HxW product): {patch_specs[0]} vs {ps}')
+
+
 def create_convs(patch_specs, in_channels):
   convs = []
   for ps in patch_specs:
@@ -102,6 +114,7 @@ class Patcher(nn.Module):
   def __init__(self, patch_specs, mode=None, in_channels=None):
     mode = mode or CONV
 
+    verify_patch_specs(patch_specs)
     tas.check(mode in ALL_MODES,
               msg=f'Unknown patcher mode (should be one of {ALL_MODES}): {mode}')
     tas.check(mode != CONV or in_channels is not None,
