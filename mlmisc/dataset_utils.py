@@ -56,7 +56,7 @@ def _try_torchvision(name, root, transform, target_transform, split_pct,
   if dsclass is not None:
     sig = inspect.signature(dsclass)
     kwargs = dataset_kwargs.copy()
-    if sig.parameters.get('download') is not None:
+    if sig.parameters.get('download') is not None and 'download' not in kwargs:
       kwargs.update(download=True)
 
     ds = dict()
