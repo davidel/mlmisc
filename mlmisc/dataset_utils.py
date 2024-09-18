@@ -72,13 +72,13 @@ def _try_torchvision(name, root, transform, target_transform, split_pct,
                            target_transform=target_transform.get('test'),
                            **kwargs)
     elif sig.parameters.get('split') is not None:
+      test_split = kwargs.pop('test_split', 'test')
+
       ds['train'] = dsclass(root=root,
                             split='train',
                             transform=transform.get('train'),
                             target_transform=target_transform.get('train'),
                             **kwargs)
-
-      test_split = kwargs.pop('test_split', 'test')
       ds['test'] = dsclass(root=root,
                            split=test_split,
                            transform=transform.get('test'),
