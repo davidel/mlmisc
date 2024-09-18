@@ -99,7 +99,7 @@ ALL_MODES = (CONV, UNFOLD)
 
 class Patcher(nn.Module):
 
-  def __init__(self, patches, mode=None, in_channels=None):
+  def __init__(self, patch_specs, mode=None, in_channels=None):
     mode = mode or CONV
 
     tas.check(mode in ALL_MODES,
@@ -108,16 +108,16 @@ class Patcher(nn.Module):
               msg=f'The in_channels argument must be specified in conv mode')
 
     super().__init__()
-    self.patches = patches
+    self.patch_specs = patch_specs
     self.mode = mode
     if mode == CONV:
-      self.convs = nn.ModuleList(create_convs(patches, in_channels))
+      self.convs = nn.ModuleList(create_convs(patch_specs, in_channels))
 
   def forward(self, x):
     if self.mode == UNFOLD:
-      y = generate_unfold(x, self.patches)
+      y = generate_unfold(x, self.patch_specs)
     else:
-      y = generate_conv(x, self.patches, self.convs)
+      y = generate_conv(x, self.patch_specs, self.convs)
 
     return y
 
