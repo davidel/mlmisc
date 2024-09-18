@@ -139,7 +139,8 @@ def create_dataset(name,
   dataset_kwargs = dataset_kwargs or {}
 
   if name.find('/') < 0:
-    ds = _try_torchvision(name, root, transform, target_transform, split_pct)
+    ds = _try_torchvision(name, root, transform, target_transform, split_pct,
+                          dataset_kwargs)
     if ds is not None:
       return ds
 
