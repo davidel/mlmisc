@@ -1,5 +1,4 @@
 import operator
-import sys
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -24,7 +23,7 @@ def create_optimizer(params, config, **kwargs):
 
   alog.debug(f'Creating {optim_name} optimizer with: {kwargs}')
 
-  optim_class = operator.attrgetter(optim_name)(sys.modules[__name__])
+  optim_class = operator.attrgetter(optim_name)(pyu.current_module())
 
   return optim_class(params, *optim_args, **kwargs)
 
@@ -35,7 +34,7 @@ def create_lr_scheduler(optimizer, config, **kwargs):
 
   alog.debug(f'Creating {sched_name} LR scheduler with: {kwargs}')
 
-  sched_class = operator.attrgetter(sched_name)(sys.modules[__name__])
+  sched_class = operator.attrgetter(sched_name)(pyu.current_module())
 
   return sched_class(optimizer, *sched_args, **kwargs)
 
