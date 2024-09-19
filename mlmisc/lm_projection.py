@@ -1,3 +1,4 @@
+import einops
 import torch
 import torch.nn as nn
 
@@ -29,19 +30,11 @@ class Projection(nn.Module):
     self.act2 = lu.create(act2)
 
   def forward(self, x):
-    b, t, c = x.shape
-
-    # (B, T, C) => (B, T, CH, CK)
-    y = x.view(b, t, self.num_heads, -1)
-    # (B, T, CH, CK) => (B, CH, T, CK)
-    y = torch.permute(y, (0, 2, 1, 3))
-    # (B, CH, T, CK) => (B, CH, T * CK)
-    y = y.reshape(b, self.num_heads, -1)
-    # (B, CH, T * CK) @ (T * CK, Q) => (B, CH, Q)
+    y = einops.rearrange(x, 'b t (h c) -> b h (t c)', h=self.num_heads)
+    # (B, H, T * C) @ (T * C, Q) => (B, H, Q)
     y = self.act1(self.prj1(y))
-    # (B, CH, Q) => (B, CH * Q)
-    y = y.view(b, -1)
-    # (B, CH * Q) @ (CH * Q, V) => (B, V)
+    y = einops.rearrange(y, 'b h q -> b (h q)')
+    # (B, H * Q) @ (H * Q, V) => (B, V)
     y = self.act2(self.prj2(y))
 
     return y
