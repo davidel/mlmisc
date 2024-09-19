@@ -9,9 +9,15 @@ import torch.nn as nn
 import torch.optim as optim
 
 
+def _config_split(config):
+  parts = pyu.resplit(config, ':')
+  mod_config = pyu.parse_dict(parts[1]) if len(parts) == 2 else dict()
+
+  return parts[0], mod_config
+
+
 def create_optimizer(params, config, **kwargs):
-  optim_name, optim_config = pyu.resplit(config, ':')
-  optim_config = pyu.parse_dict(optim_config)
+  optim_name, optim_config = _config_split(config)
   kwargs.update(optim_config)
 
   alog.debug(f'Creating {optim_name} optimizer with: {kwargs}')
@@ -22,8 +28,7 @@ def create_optimizer(params, config, **kwargs):
 
 
 def create_lr_scheduler(optimizer, config, **kwargs):
-  sched_name, sched_config = pyu.resplit(config, ':')
-  sched_config = pyu.parse_dict(sched_config)
+  sched_name, sched_config = _config_split(config)
   kwargs.update(sched_config)
 
   alog.debug(f'Creating {sched_name} LR scheduler with: {kwargs}')
