@@ -28,6 +28,12 @@ class ReduceOnPlateau:
     self.sched.load_state_dict(state.pop('sched'))
     self.__dict__.update(state)
 
+  def get_last_lr(self):
+    return self.sched.get_last_lr()
+
+  def print_lr(self, *args, **kwargs):
+    return self.sched.print_lr(*args, **kwargs)
+
   def train_step(self, batch_loss):
     self.losses.append(batch_loss)
     self.batchno += 1
