@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from . import reduce_on_plateau as rop
+
 
 def _config_split(config):
   parts = pyu.resplit(config, ':')
