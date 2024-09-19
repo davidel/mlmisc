@@ -53,6 +53,7 @@ class LrScheduler:
         return epoch_step(loss)
       else:
         self.scheduler.step()
+        alog.debug(f'Scheduler step: lr={pyu.format(self.scheduler.get_last_lr(), ".3e")}')
 
 
 class Trainer:
