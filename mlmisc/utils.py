@@ -199,13 +199,6 @@ def freeze_params(net, freeze=None, thaw=None):
   return net
 
 
-def tail_permute(t):
-  perm = list(range(t.ndim))
-  perm[-1], perm[-2] = perm[-2], perm[-1]
-
-  return torch.permute(t, tuple(perm))
-
-
 def split_dims(shape, npop):
   return shape[: -npop], *shape[-npop: ]
 
