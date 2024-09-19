@@ -95,6 +95,7 @@ class Trainer:
     for name, obj in kwargs.items():
       ostate = state.get(name)
       if ostate is not None:
+        alog.debug(f'Loading "{name}" state')
         obj.load_state_dict(ostate)
         loaded.append(name)
 
