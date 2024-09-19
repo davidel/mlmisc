@@ -283,8 +283,8 @@ class Trainer:
 
     optimizer.step()
 
-    if val_losses and not stopped:
-      wrapped_scheduler.epoch_step(np.mean(val_losses))
+    if not stopped:
+      wrapped_scheduler.epoch_step(np.mean(val_losses) if val_losses else None)
 
     self._train_time.track()
 
