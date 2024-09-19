@@ -4,6 +4,8 @@ import torch.nn as nn
 from . import utils as ut
 
 
+VOTING = 'voting'
+
 class Ensemble(nn.Module):
 
   def __init__(self, nets, loss_fn=None, categorical=None):
@@ -15,7 +17,7 @@ class Ensemble(nn.Module):
   def forward(self, *args, targets=None, **kwargs):
     parts = [net(*args, **kwargs) for net in self.nets]
 
-    if self.categorical == 'voting':
+    if self.categorical == VOTING:
       y = torch.zeros_like(parts[0])
       for p in parts:
         tops = torch.argmax(p, dim=-1)
