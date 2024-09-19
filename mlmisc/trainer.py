@@ -35,6 +35,26 @@ class TimeTracker:
     return self.total.total_seconds()
 
 
+class LrScheduler:
+
+  def __init__(self, scheduler):
+    self.scheduler = scheduler
+
+  def train_step(self, loss):
+    if self.scheduler is not None:
+      train_step = getattr(self.scheduler, 'train_step', None)
+      if train_step is not None:
+        return train_step(loss)
+
+  def epoch_step(self, loss):
+    if self.scheduler is not None:
+      epoch_step = getattr(self.scheduler, 'epoch_step', None)
+      if epoch_step is not None:
+        return epoch_step(loss)
+      else:
+        self.scheduler.step()
+
+
 class Trainer:
 
   def __init__(self):
@@ -226,7 +246,7 @@ class Trainer:
                   amp_dtype=None):
     tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
 
-    train_step = getattr(scheduler, 'train_step', None) if scheduler else None
+    wrapped_scheduler = LrScheduler(scheduler)
 
     tstep, tval, tsave = [self._train_time.start()] * 3
     train_losses, val_losses, last_stepno = array.array('f'), array.array('f'), -1
@@ -238,8 +258,7 @@ class Trainer:
                              (now - tstep) / (sd.stepno - last_stepno), tctx)
         tstep, last_stepno = now, sd.stepno
 
-      if callable(train_step):
-        train_step(sd.loss.item())
+      wrapped_scheduler.train_step(sd.loss.item())
 
       if model_path is not None and now > tsave + model_chkptstep:
         self._train_time.track()
@@ -264,8 +283,8 @@ class Trainer:
 
     optimizer.step()
 
-    if scheduler is not None and val_losses and not stopped:
-      scheduler.step(np.mean(val_losses))
+    if val_losses and not stopped:
+      wrapped_scheduler.epoch_step(np.mean(val_losses))
 
     self._train_time.track()
 

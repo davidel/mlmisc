@@ -37,6 +37,9 @@ class ReduceOnPlateau:
       self.losses = []
       alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".3e")}')
 
-  def step(self, val_loss):
+  def epoch_step(self, val_loss):
     alog.debug(f'Scheduler step called with {val_loss:.4f} validation loss')
+
+  def step(self):
+    pass
 

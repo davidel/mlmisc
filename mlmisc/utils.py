@@ -288,13 +288,7 @@ def get_iou(abox, bbox):
 
 def import_model(module_name=None, package=None, path=None, model_args=None):
   if path is not None:
-    if module_name is None:
-      module_name = os.path.basename(path).split('.', 1)[0]
-
-    spec = importlib.util.spec_from_file_location(module_name, path)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = mod
-    spec.loader.exec_module(mod)
+    mod = pyu.load_module(path, modname=module_name)
   else:
     mod = importlib.import_module(module_name, package=package)
 
