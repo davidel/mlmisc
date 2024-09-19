@@ -40,6 +40,12 @@ class ModuleBuilder(nn.Module):
   def deconv2d(self, nout, args_={}, **kwargs):
     return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **args_)
 
+  def conv3d(self, nout, args_={}, **kwargs):
+    return self.add(nn.Conv3d(self.shape[-4], nout, **kwargs), **args_)
+
+  def deconv3d(self, nout, args_={}, **kwargs):
+    return self.add(nn.ConvTranspose3d(self.shape[-4], nout, **kwargs), **args_)
+
   def batchnorm2d(self, args_={}, **kwargs):
     return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args_)
 
