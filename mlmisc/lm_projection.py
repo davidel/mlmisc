@@ -9,7 +9,7 @@ from . import layer_utils as lu
 
 class Projection(nn.Module):
 
-  def __init__(self, context_size, embed_size, num_heads, vocab_size,
+  def __init__(self, context_size, embed_size, num_heads, num_classes,
                fc_bias=True,
                act1=None,
                act2=None):
@@ -18,7 +18,7 @@ class Projection(nn.Module):
                  f'embedding size ({embed_size})')
 
     embed_k = embed_size // num_heads
-    prj_q = int(vocab_size // num_heads)
+    prj_q = int(num_classes // num_heads)
     act1 = act1 or nn.Identity
     act2 = act2 or nn.Identity
 
@@ -26,7 +26,7 @@ class Projection(nn.Module):
     self.num_heads = num_heads
     self.prj1 = nn.Linear(context_size * embed_k, prj_q, bias=fc_bias)
     self.act1 = lu.create(act1)
-    self.prj2 = nn.Linear(num_heads * prj_q, vocab_size, bias=fc_bias)
+    self.prj2 = nn.Linear(num_heads * prj_q, num_classes, bias=fc_bias)
     self.act2 = lu.create(act2)
 
   def forward(self, x):
