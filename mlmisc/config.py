@@ -21,7 +21,7 @@ def create_optimizer(params, config, **kwargs):
   optim_name, (optim_config, optim_args) = _config_split(config)
   kwargs.update(optim_config)
 
-  alog.debug(f'Creating {optim_name} optimizer with: {kwargs}')
+  alog.debug(f'Creating {optim_name} optimizer with: {optim_args} {kwargs}')
 
   optim_class = operator.attrgetter(optim_name)(pyu.current_module())
 
@@ -32,7 +32,7 @@ def create_lr_scheduler(optimizer, config, **kwargs):
   sched_name, (sched_config, sched_args) = _config_split(config)
   kwargs.update(sched_config)
 
-  alog.debug(f'Creating {sched_name} LR scheduler with: {kwargs}')
+  alog.debug(f'Creating {sched_name} LR scheduler with: {sched_args} {kwargs}')
 
   sched_class = operator.attrgetter(sched_name)(pyu.current_module())
 
