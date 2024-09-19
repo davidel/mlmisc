@@ -46,8 +46,8 @@ class EncoderBlock(nn.Module):
 
   def forward(self, x, mask=None):
     if self.norm_mode == PRE_NORM:
-      x = self.norm1(x)
-      x = x + self.attn(x, x, x, mask=mask)
+      xx = self.norm1(x)
+      x = x + self.attn(xx, xx, xx, mask=mask)
       x = x + self.linear_net(self.norm2(x))
     else:
       x = self.norm1(x + self.attn(x, x, x, mask=mask))
