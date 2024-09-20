@@ -28,7 +28,7 @@ class ModuleBuilder(nn.Module):
 
     return {name: value for name, value in zip(self.ADD_ARGS, args)}
 
-  def add(self, net, input_fn=None, output_fn=None, net_args=()):
+  def add(self, net, input_fn=None, output_fn=None, net_args=None):
     # The shape contains no batch dimension!
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
@@ -84,7 +84,7 @@ class ModuleBuilder(nn.Module):
 
       xx = pyu.as_sequence(xx)
 
-      for k in cfg.net_args:
+      for k in cfg.net_args or ():
         net_kwargs[k] = kwargs.get(k)
 
       res = net(*xx, **net_kwargs)
