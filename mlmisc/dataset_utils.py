@@ -4,7 +4,9 @@ import random
 
 import datasets as dsets
 import huggingface_hub as hfh
+import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
+import py_misc_utils.assert_checks as tas
 import py_misc_utils.utils as pyu
 import torch
 import torchvision
@@ -200,4 +202,29 @@ def get_class_weights(data,
   alog.debug(f'Data class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
 
   return weight
+
+
+def show_images(dataset, n, path=None):
+  for i, iid in enumerate(random.sample(range(len(dataset)), k=n)):
+    img, label = dataset[iid]
+
+    tas.check_eq(img.ndim, 3,
+                 msg=f'Incorrect shape for image (should be (C, H, W)): {tuple(img.shape)}')
+
+    shimg = torch.permute(img, (1, 2, 0))
+    alog.debug(f'Image: shape={tuple(shimg.shape)} label={label}')
+
+    plt.title(f'Label = {label}')
+    plt.imshow(shimg, interpolation='bicubic')
+
+    if path is None:
+      plt.show()
+    else:
+      if n > 1:
+        fpath, ext = os.path.splitext(path)
+        fpath = f'{fpath}.{i}{ext}'
+      else:
+        fpath = path
+
+      plt.savefig(fpath)
 
