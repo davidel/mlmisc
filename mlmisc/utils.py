@@ -217,6 +217,17 @@ def add(*args):
   return functools.reduce(torch.Tensor.add_, xargs, torch.zeros_like(xargs[0]))
 
 
+def compute_loss(loss, y, targets):
+  if targets is not None:
+    if getattr(loss, 'training', True) or not is_integer(targets):
+      return loss(y, targets)
+
+    _, predicted = torch.max(y, 1)
+    correct = (predicted == targets).sum()
+
+    return 1.0 - correct / y.shape[0]
+
+
 def create_graph(x, path=None, params=None, model=None, format='svg'):
   import torchviz
 
