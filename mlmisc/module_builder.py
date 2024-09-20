@@ -15,11 +15,18 @@ NetConfig = collections.namedtuple(
 
 class ModuleBuilder(nn.Module):
 
+  ADD_ARGS = ('input_fn', 'output_fn', 'net_args')
+
   def __init__(self, shape):
     super().__init__()
     self.shape = tuple(shape)
     self.layers = nn.ModuleList()
     self.config = []
+
+  def _pop_add_args(self, kwargs):
+    args = pyu.pop_kwargs(kwargs, self.ADD_ARGS)
+
+    return {name: value for name, value in zip(self.ADD_ARGS, args)}
 
   def add(self, net, input_fn=None, output_fn=None, net_args=()):
     # The shape contains no batch dimension!
@@ -31,29 +38,37 @@ class ModuleBuilder(nn.Module):
 
     return len(self.layers) - 1
 
-  def linear(self, nout, args_={}, **kwargs):
-    return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **args_)
+  def linear(self, nout, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **aargs)
 
-  def conv2d(self, nout, args_={}, **kwargs):
-    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **args_)
+  def conv2d(self, nout, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **aargs)
 
-  def deconv2d(self, nout, args_={}, **kwargs):
-    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **args_)
+  def deconv2d(self, nout, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **aargs)
 
-  def conv3d(self, nout, args_={}, **kwargs):
-    return self.add(nn.Conv3d(self.shape[-4], nout, **kwargs), **args_)
+  def conv3d(self, nout, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.Conv3d(self.shape[-4], nout, **kwargs), **aargs)
 
-  def deconv3d(self, nout, args_={}, **kwargs):
-    return self.add(nn.ConvTranspose3d(self.shape[-4], nout, **kwargs), **args_)
+  def deconv3d(self, nout, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.ConvTranspose3d(self.shape[-4], nout, **kwargs), **aargs)
 
-  def batchnorm2d(self, args_={}, **kwargs):
-    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **args_)
+  def batchnorm2d(self, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.BatchNorm2d(self.shape[-3], **kwargs), **aargs)
 
-  def batchnorm1d(self, args_={}, **kwargs):
-    return self.add(nn.BatchNorm1d(self.shape[0], **kwargs), **args_)
+  def batchnorm1d(self, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.BatchNorm1d(self.shape[0], **kwargs), **aargs)
 
-  def layernorm(self, ndims, args_={}, **kwargs):
-    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **args_)
+  def layernorm(self, ndims, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **aargs)
 
   def forward(self, *args, **kwargs):
     y, results = args, []

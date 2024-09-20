@@ -1,3 +1,4 @@
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -6,10 +7,12 @@ from . import args_base as ab
 
 class ArgsParallel(ab.ArgsBase):
 
-  def __init__(self, *args, cat_dim_=None, stack_dim_=None, **kwargs):
+  def __init__(self, *args, **kwargs):
+    cat_dim, stack_dim = pyu.pop_kwargs(kwargs, ('cat_dim', 'stack_dim'))
+
     super().__init__(*args, **kwargs)
-    self.cat_dim = cat_dim_
-    self.stack_dim = stack_dim_
+    self.cat_dim = cat_dim
+    self.stack_dim = stack_dim
 
   def forward(self, *args, **kwargs):
     parts = [net(*args, **kwargs) for net in self.values()]
