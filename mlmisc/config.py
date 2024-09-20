@@ -2,6 +2,7 @@ import operator
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -23,7 +24,7 @@ def create_optimizer(params, config, **kwargs):
 
   alog.debug(f'Creating {optim_name} optimizer with: {optim_args} {kwargs}')
 
-  optim_class = operator.attrgetter(optim_name)(pyu.current_module())
+  optim_class = operator.attrgetter(optim_name)(pyiu.current_module())
 
   return optim_class(params, *optim_args, **kwargs)
 
@@ -34,7 +35,7 @@ def create_lr_scheduler(optimizer, config, **kwargs):
 
   alog.debug(f'Creating {sched_name} LR scheduler with: {sched_args} {kwargs}')
 
-  sched_class = operator.attrgetter(sched_name)(pyu.current_module())
+  sched_class = operator.attrgetter(sched_name)(pyiu.current_module())
 
   return sched_class(optimizer, *sched_args, **kwargs)
 
