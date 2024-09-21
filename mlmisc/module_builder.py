@@ -32,7 +32,7 @@ class ModuleBuilder(nn.Module):
           input_fn=None,
           output_fn=None,
           net_args=None,
-          use_result=False):
+          use_result=None):
     # The shape contains no batch dimension!
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
@@ -41,7 +41,7 @@ class ModuleBuilder(nn.Module):
                                  net_args=net_args,
                                  use_result=use_result))
 
-    return (len(self.layers) - 1) if use_result else None
+    return (len(self.layers) - 1) if use_result is True else None
 
   def linear(self, nout, **kwargs):
     aargs = self._pop_add_args(kwargs)
@@ -94,7 +94,7 @@ class ModuleBuilder(nn.Module):
 
       res = net(*xx, **net_kwargs)
 
-      results.append(res if cfg.use_result else None)
+      results.append(res if cfg.use_result is True else None)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
 
     return y
