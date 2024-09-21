@@ -9,13 +9,13 @@ from . import utils as ut
 
 NetConfig = collections.namedtuple(
   'NetConfig',
-  'input_fn, output_fn, net_args'
+  'input_fn, output_fn, net_args, use_result'
 )
 
 
 class ModuleBuilder(nn.Module):
 
-  ADD_ARGS = ('input_fn', 'output_fn', 'net_args')
+  ADD_ARGS = ('input_fn', 'output_fn', 'net_args', 'use_result')
 
   def __init__(self, shape):
     super().__init__()
@@ -28,15 +28,20 @@ class ModuleBuilder(nn.Module):
 
     return {name: value for name, value in zip(self.ADD_ARGS, args)}
 
-  def add(self, net, input_fn=None, output_fn=None, net_args=None):
+  def add(self, net,
+          input_fn=None,
+          output_fn=None,
+          net_args=None,
+          use_result=False):
     # The shape contains no batch dimension!
     self.shape = ut.net_shape(net, self.shape)
     self.layers.append(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
-                                 net_args=net_args))
+                                 net_args=net_args,
+                                 use_result=use_result))
 
-    return len(self.layers) - 1
+    return (len(self.layers) - 1) if use_result else None
 
   def linear(self, nout, **kwargs):
     aargs = self._pop_add_args(kwargs)
@@ -89,7 +94,7 @@ class ModuleBuilder(nn.Module):
 
       res = net(*xx, **net_kwargs)
 
-      results.append(res)
+      results.append(res if cfg.use_result else None)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
 
     return y
