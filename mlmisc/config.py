@@ -27,7 +27,7 @@ def create_object(name, config, *args, **kwargs):
 
   obj_class = operator.attrgetter(obj_name)(pyiu.current_module())
 
-  return obj_class(params, *(args + obj_args), **kwargs)
+  return obj_class(*(args + obj_args), **kwargs)
 
 
 def create_optimizer(params, config, **kwargs):
