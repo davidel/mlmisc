@@ -297,11 +297,10 @@ def get_iou(abox, bbox):
   return ia / (aa + ab - ia)
 
 
-def import_model(module_name=None, package=None, path=None, model_args=None):
-  if path is not None:
-    mod = pyu.load_module(path, modname=module_name)
-  else:
-    mod = importlib.import_module(module_name, package=package)
+def import_model(modname=None, package=None, path=None, model_args=None):
+  name_or_path = path or modname
 
-  return mod.create_model(model_args)
+  module = pyu.import_module(name_or_path, modname=modname, package=package)
+
+  return module.create_model(model_args)
 

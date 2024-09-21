@@ -79,7 +79,7 @@ def _create_dataset(args):
 
 
 def _create_model(args, trainer, dataset):
-  module = pyu.load_module(args.model_path, modname='train_module')
+  module = pyu.import_module(args.model_path, modname='train_module')
 
   if os.path.exists(args.checkpoint_path):
     model, state = trainer.load_model(args.checkpoint_path,
