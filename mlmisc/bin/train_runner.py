@@ -44,12 +44,10 @@ def _create_dataset(args):
   train_trans, test_trans = nn.Identity(), nn.Identity()
   if args.dataset_transform:
     with open(args.dataset_transform, mode='r') as dtf:
-      tcode = dtf.read()
+      code = dtf.read()
 
-    gbls = globals().copy()
-    exec(tcode, gbls)
-    train_trans = gbls.get('TRAIN_TRANS', train_trans)
-    test_trans = gbls.get('TEST_TRANS', test_trans)
+    train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'),
+                                          env=globals().copy())
 
   alog.info(f'Train Image Augmentation:\n{train_trans}')
   alog.info(f'Test Image Augmentation:\n{test_trans}')
