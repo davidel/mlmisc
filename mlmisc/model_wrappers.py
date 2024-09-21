@@ -21,10 +21,10 @@ from . import web_module as wmod
 
 class TorchVision(nn.Module):
 
-  def __init__(self, name, loss, **kwargs):
+  def __init__(self, name, loss, *args, **kwargs):
     super().__init__()
     self.loss = conf.create_loss(loss)
-    self.mod = torchvision.models.get_model(name, **kwargs)
+    self.mod = torchvision.models.get_model(name, *args, **kwargs)
 
   def forward(self, x, targets=None):
     y = self.mod(x)
@@ -35,14 +35,14 @@ class TorchVision(nn.Module):
 class Web(nn.Module):
 
   def __init__(self, repo, module, ctor, loss, *args,
-               root=None,
+               cache_dir=None,
                commit=None,
                force_clone=None,
                **kwargs):
     super().__init__()
     self.loss = conf.create_loss(loss)
     self.mod = wmod.WebModule(repo, module, ctor,
-                              root=root,
+                              cache_dir=cache_dir,
                               commit=commit,
                               force_clone=force_clone,
                               mod_args=args,
@@ -54,12 +54,11 @@ class Web(nn.Module):
     return y, ut.compute_loss(self.loss, y, targets)
 
 
-class HugginFace(nn.Module):
+class HugginFaceImgTune(nn.Module):
 
-  def __init__(self, model_name, model_class, num_classes,
+  def __init__(self, model_name, model_class, loss, num_classes,
                output_collate=None,
-               cache_dir=None,
-               weight=None):
+               cache_dir=None):
     mclass = getattr(trs, model_class)
     model = mclass.from_pretrained(
       model_name,
@@ -79,7 +78,7 @@ class HugginFace(nn.Module):
     hidden_size = max(64 * num_classes, 4 * model.config.hidden_size)
 
     super().__init__()
-    self.loss = nn.CrossEntropyLoss(weight=weight)
+    self.loss = conf.create_loss(loss)
     self.output_collate = output_collate
     self.ctx = pyu.make_object(model=model, image_processor=image_processor)
     self.head = mbld.ModuleBuilder((self.ctx.model.config.hidden_size,))

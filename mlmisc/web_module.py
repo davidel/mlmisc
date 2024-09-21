@@ -45,30 +45,30 @@ def _load_module(rpath, module):
   return mod
 
 
-def _modules_root():
-  root = os.getenv('MODULES_ROOT', None)
-  if root is None:
-    root = os.path.join(os.getenv('HOME', '.'), 'module_repos')
+def _modules_cachedir():
+  cache_dir = os.getenv('MODULES_CACHEDIR', None)
+  if cache_dir is None:
+    cache_dir = os.path.join(os.getenv('HOME', '.'), 'module_repos')
 
-  return root
+  return cache_dir
 
 
 class WebModule(nn.Module):
 
   def __init__(self, repo, module, ctor,
-               root=None,
+               cache_dir=None,
                commit=None,
                force_clone=None,
                mod_args=None,
                mod_kwargs=None):
-    root = root or _modules_root()
+    cache_dir = cache_dir or _modules_cachedir()
     force_clone = force_clone or False
     mod_args = mod_args or ()
     mod_kwargs = mod_kwargs or {}
 
-    alog.debug(f'Using Web Modules root "{root}"')
+    alog.debug(f'Using Web Modules cache folder "{cache_dir}"')
 
-    rpath = _clone_repo(repo, root, force_clone, commit)
+    rpath = _clone_repo(repo, cache_dir, force_clone, commit)
 
     mod = _load_module(rpath, module)
 
