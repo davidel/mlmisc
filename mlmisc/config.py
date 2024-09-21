@@ -23,7 +23,7 @@ def create_object(name, config, *args, **kwargs):
 
   kwargs.update(obj_config)
 
-  alog.debug(f'Creating {obj_name} {name} with: {obj_args} {kwargs}')
+  alog.debug(f'Creating {obj_name} {name} with: ({len(args)} API args) {obj_args} {kwargs}')
 
   obj_class = operator.attrgetter(obj_name)(pyiu.current_module())
 

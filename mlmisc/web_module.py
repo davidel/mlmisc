@@ -58,10 +58,11 @@ class WebModule(nn.Module):
   def __init__(self, repo, module, ctor,
                root=None,
                commit=None,
-               force_clone=False,
+               force_clone=None,
                mod_args=None,
                mod_kwargs=None):
     root = root or _modules_root()
+    force_clone = force_clone or False
     mod_args = mod_args or ()
     mod_kwargs = mod_kwargs or {}
 
