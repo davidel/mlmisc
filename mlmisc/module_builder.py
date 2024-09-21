@@ -1,5 +1,4 @@
 import collections
-import gc
 
 import py_misc_utils.utils as pyu
 import torch
@@ -77,7 +76,6 @@ class ModuleBuilder(nn.Module):
     return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **aargs)
 
   def forward(self, *args, **kwargs):
-    i = 0
     y, results = args, []
     for net, cfg in zip(self.layers, self.config):
       net_kwargs = dict()
@@ -98,9 +96,6 @@ class ModuleBuilder(nn.Module):
 
       results.append(res if cfg.use_result else None)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
-
-      if (i + 1) % 5 == 0:
-        gc.collect()
 
     return y
 
