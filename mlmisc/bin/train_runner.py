@@ -78,6 +78,20 @@ def _create_dataset(args):
   return train_dataset, test_dataset
 
 
+def _replace_args(model_args, model_kwargs, config):
+  args, kwargs = [], dict()
+  for arg in model_args:
+    if isinstance(arg, str) and arg.startswith('$') and arg[1:] in config:
+      arg = config[arg[1:]]
+    args.append(arg)
+  for name, arg in model_kwargs.items():
+    if isinstance(arg, str) and arg.startswith('$') and arg[1:] in config:
+      arg = config[arg[1:]]
+    kwargs[name] = arg
+
+  return args, kwargs
+
+
 def _create_model(args, trainer, dataset):
   module = pyu.import_module(args.model_path, modname='train_module')
 
@@ -101,12 +115,7 @@ def _create_model(args, trainer, dataset):
     y_shape = tuple(getattr(y, 'shape', ()))
     config = dict(dataset=dataset, x_shape=x_shape, y_shape=y_shape)
 
-    for i, arg in enumerate(model_args):
-      if isinstance(arg, str) and arg.startswith('$') and arg[1:] in config:
-        model_args[i] = config[arg[1:]]
-    for name, arg in model_kwargs.items():
-      if isinstance(arg, str) and arg.startswith('$') and arg[1:] in config:
-        model_kwargs[name] = config[arg[1:]]
+    model_args, model_kwargs = _replace_args(model_args, model_kwargs, config)
 
     model_ctor = operator.attrgetter(model_function)(module)
 
