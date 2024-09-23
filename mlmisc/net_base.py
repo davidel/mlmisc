@@ -15,7 +15,7 @@ class NetBase(nn.Module):
   def to(self, *args, **kwargs):
     if args and isinstance(args[0], (str, torch.device)):
       device = torch.device(args[0])
-    else if 'device' in kwargs:
+    elif 'device' in kwargs:
       device = torch.device(kwargs['device'])
     else:
       device = self.device
