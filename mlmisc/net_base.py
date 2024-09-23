@@ -46,10 +46,11 @@ class NetBase(nn.Module):
     if net_load_state_dict is not None:
       net_state = state.get(STATE_KEY)
 
-      net_load_state_dict(net_state)
+      if net_state is not None:
+        net_load_state_dict(net_state)
 
-      if not net_state:
-        state.pop(STATE_KEY)
+        if not net_state:
+          state.pop(STATE_KEY)
 
     return super().load_state_dict(state, *args, **kwargs)
 
