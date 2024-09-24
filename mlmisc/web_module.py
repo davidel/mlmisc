@@ -5,6 +5,7 @@ import urllib
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.git_repo as pygr
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -29,7 +30,7 @@ def _add_python_paths(path):
     for de in sdir:
       if de.is_dir():
         if os.path.isfile(os.path.join(de.path, '__init__.py')):
-          pyu.add_sys_path(path)
+          pymu.add_sys_path(path)
         else:
           _add_python_paths(de.path)
 
@@ -37,7 +38,7 @@ def _add_python_paths(path):
 def _load_module(rpath, module):
   mpath = os.path.join(rpath, module)
   if os.path.isfile(mpath):
-    mod = pyu.load_module(mpath, add_syspath=True)
+    mod = pymu.load_module(mpath, add_syspath=True)
   else:
     _add_python_paths(rpath)
     mod = importlib.import_module(module)

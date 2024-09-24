@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -300,7 +301,7 @@ def get_iou(abox, bbox):
 def import_model(modname=None, package=None, path=None, model_args=None):
   name_or_path = path or modname
 
-  module = pyu.import_module(name_or_path, modname=modname, package=package)
+  module = pymu.import_module(name_or_path, modname=modname, package=package)
 
   return module.create_model(model_args)
 

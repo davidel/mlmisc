@@ -18,6 +18,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 
 
@@ -91,7 +92,7 @@ def _replace_args(model_args, model_kwargs, config):
 
 
 def _create_model(args, trainer, dataset):
-  module = pyu.import_module(args.model_path, modname='train_module')
+  module = pymu.import_module(args.model_path, modname='train_module')
 
   if os.path.exists(args.checkpoint_path):
     model, state = trainer.load_model(args.checkpoint_path,
