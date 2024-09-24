@@ -18,7 +18,7 @@ from . import utils as ut
 ConvSpec = collections.namedtuple(
   'ConvSpec',
   'features, kernel_size, stride, padding, maxpool, avgpool, norm, act',
-  defaults=(1, 'same', None, None, True, 'relu'),
+  defaults=(1, 'valid', None, None, True, 'relu'),
 )
 
 
