@@ -53,3 +53,9 @@ class Attention(nn.Module):
 
     return out
 
+
+class SelfAttention(Attention):
+
+  def forward(self, x, **kwargs):
+    return super().forward(x, x, x, **kwargs)
+
