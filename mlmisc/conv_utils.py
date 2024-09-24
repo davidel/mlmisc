@@ -152,7 +152,7 @@ def create_random_stack(max_output,
 
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
 
-      features = int(in_features * max(1.0, random.normalvariate(mu=float(stride), sigma=0.5)))
+      features = int(in_features * max(1.0, random.normalvariate(mu=float(stride), sigma=0.25)))
       features = pyu.round_up(features, round_features)
 
     convs.append(ConvSpec(features=features,
