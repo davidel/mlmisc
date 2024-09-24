@@ -34,7 +34,6 @@ class ConvViT(vb.ViTBase):
     )
 
     super().__init__(ut.net_shape(patcher, shape), embed_size, num_heads, num_classes, num_layers,
-                     patch_specs=patch_specs,
                      attn_dropout=attn_dropout,
                      dropout=dropout,
                      norm_mode=norm_mode,
