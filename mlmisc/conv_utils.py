@@ -1,5 +1,6 @@
 import collections
 import random
+import yaml
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -43,6 +44,30 @@ def build_conv_stack(convs, net=None, shape=None, act=None):
     apply_conv_spec(net, cs, act=act)
 
   return net
+
+
+CONVS_KEY = 'convs'
+
+def load_conv_specs(path):
+  cfg = pyu.load_config(cfg_file=path)
+  alog.debug(f'Conv Specs Config:\n{yaml.dump(cfg, default_flow_style=False)}')
+
+  conv_specs = []
+  for cgroup in cfg[CONVS_KEY]:
+    convs = tuple(ConvSpec(**cspec) for cspec in cgroup)
+    conv_specs.append(convs)
+
+  return conv_specs
+
+
+def save_conv_specs(conv_specs, path):
+  specs = []
+  for convs in conv_specs:
+    specs.append([cs._asdict() for cs in convs])
+
+  cfg = {CONVS_KEY: specs}
+  with open(path, mode='w') as sfd:
+    yaml.dump(cfg, sfd, default_flow_style=False)
 
 
 def _load_params(kwargs, name, default_values, default_weights):
