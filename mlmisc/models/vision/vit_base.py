@@ -32,6 +32,8 @@ class ViTBase(nn.Module):
 
     n_tiles, patch_size = shape
 
+    alog.debug(f'ViT using {n_tiles} tiles of size {patch_size}')
+
     super().__init__()
     self.result_tiles = result_tiles
     self.loss = nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
