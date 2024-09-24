@@ -21,7 +21,7 @@ class Attention(nn.Module):
     self.attend = nn.Softmax(dim=-1)
     self.unifyheads = nn.Linear(n_embd * n_head, n_embd)
 
-    self.attn_drop = nn.Dropout(attn_dropout, inplace=True)
+    self.attn_drop = nn.Dropout(attn_dropout)
     self.resid_drop = nn.Dropout(dropout)
 
   def forward(self, k, q, v, mask=None):
