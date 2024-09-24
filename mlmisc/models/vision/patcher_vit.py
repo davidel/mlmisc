@@ -9,33 +9,38 @@ import torch.nn as nn
 from ... import args_sequential as aseq
 from ... import encoder_block as eb
 from ... import layer_utils as lu
+from ... import patcher as pch
 from ... import utils as ut
 
 
-class ViTO(nn.Module):
+class PatcherViT(nn.Module):
 
   def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
-               htile_size=None,
-               wtile_size=None,
+               patch_specs=None,
                attn_dropout=None,
                dropout=None,
+               norm_mode=None,
+               patch_mode=None,
                result_tiles=None,
                act=None):
-    if htile_size is None or htile_size <= 0:
-      htile_size = shape[1] // pynu.nearest_divisor(shape[1], 16)
-    if wtile_size is None or wtile_size <= 0:
-      wtile_size = shape[2] // pynu.nearest_divisor(shape[2], 16)
+    patcher_config = []
+    if patch_specs:
+      for pcfg in patch_specs.split(':'):
+        patch_args = pyu.parse_dict(pcfg)
+        patcher_config.append(pch.Patch(**patch_args))
+    else:
+      hsize = shape[1] // pynu.nearest_divisor(shape[1], 16)
+      wsize = shape[2] // pynu.nearest_divisor(shape[2], 16)
+      alog.info(f'Using ({hsize}, {wsize}) patch sizes')
 
-    alog.info(f'Using ({htile_size}, {wtile_size}) patch sizes')
+      patcher_config.append(pch.Patch(hsize=hsize, wsize=wsize, hstride=hsize, wstride=wsize))
+      patcher_config.append(pch.Patch(hsize=hsize, wsize=wsize, hstride=hsize, wstride=wsize,
+                                      hbase=hsize // 2, wbase=wsize // 2))
 
-    tas.check_eq(shape[1] % htile_size, 0,
-                 msg=f'H images dimension {shape[1]} must be divisible by {htile_size}')
-    tas.check_eq(shape[2] % wtile_size, 0,
-                 msg=f'W images dimension {shape[2]} must be divisible by {wtile_size}')
-
-    n_htiles, n_wtiles = shape[1] // htile_size, shape[2] // wtile_size
-    n_tiles = n_htiles * n_wtiles
-    patch_size = shape[0] * wtile_size * htile_size
+    patcher = pch.Patcher(patcher_config,
+                          mode=patch_mode,
+                          in_channels=shape[0])
+    n_tiles, patch_size = ut.net_shape(patcher, shape)
 
     attn_dropout = attn_dropout or 0.1
     dropout = dropout or 0.1
@@ -43,9 +48,9 @@ class ViTO(nn.Module):
     act = act or 'gelu'
 
     super().__init__()
-    self.htile_size, self.wtile_size = htile_size, wtile_size
     self.result_tiles = result_tiles
     self.loss = nn.CrossEntropyLoss()
+    self.patcher = patcher
     self.embedding = nn.Linear(patch_size, embed_size)
     self.pos_embedding = nn.Parameter(torch.zeros(1, n_tiles + result_tiles, embed_size))
     self.pweight = nn.Parameter(torch.zeros(result_tiles, embed_size))
@@ -53,22 +58,19 @@ class ViTO(nn.Module):
       [eb.EncoderBlock(embed_size, num_heads,
                        attn_dropout=attn_dropout,
                        dropout=dropout,
+                       norm_mode=norm_mode,
                        act=act)
        for _ in range(num_layers)])
 
     self.prj = aseq.ArgsSequential(
-      lu.create(act),
-      nn.Linear(result_tiles * embed_size, embed_size, bias=False),
-      nn.LayerNorm(embed_size),
+      nn.LayerNorm(embed_size * result_tiles),
+      nn.Linear(embed_size * result_tiles, embed_size, bias=False),
       lu.create(act),
       nn.Linear(embed_size, num_classes),
     )
 
   def forward(self, x, targets=None):
-    y = einops.rearrange(x, 'b c (nh hts) (nw wts) -> b (nh nw) (c hts wts)',
-                         hts=self.htile_size,
-                         wts=self.wtile_size)
-
+    y = self.patcher(x)
     # (B, NH * NW, C * HS * WS) => (B, NH * NW, E)
     y = self.embedding(y)
     pw = einops.repeat(self.pweight, 'rt e -> b rt e', b=x.shape[0])
