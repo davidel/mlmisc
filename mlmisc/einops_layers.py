@@ -14,6 +14,9 @@ class Rearrange(nn.Module):
   def forward(self, x):
     return einops.rearrange(x, self.recipe, **self.kwargs)
 
+  def extra_repr(self):
+    return f'recipe={self.recipe}, kwargs={self.kwargs}'
+
 
 class Repeat(nn.Module):
 
@@ -24,6 +27,9 @@ class Repeat(nn.Module):
 
   def forward(self, x):
     return einops.repeat(x, self.recipe, **self.kwargs)
+
+  def extra_repr(self):
+    return f'recipe={self.recipe}, kwargs={self.kwargs}'
 
 
 class Reduce(nn.Module):
@@ -36,4 +42,7 @@ class Reduce(nn.Module):
 
   def forward(self, x):
     return einops.reduce(x, self.recipe, self.reduction, **self.kwargs)
+
+  def extra_repr(self):
+    return f'recipe={self.recipe}, reduction={self.reduction}, kwargs={self.kwargs}'
 
