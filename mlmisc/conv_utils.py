@@ -80,13 +80,13 @@ def create_random_stack(max_output,
     kwargs,
     'kernel',
     (2, 3, 4, 5, 6, 7, 8, 9),
-    (1, 5, 1, 5, 1, 4, 1, 2)
+    (1, 7, 1, 5, 1, 3, 1, 2)
   )
   stride_values, stride_weights = _load_params(
     kwargs,
     'stride',
     (1, 2, 3, 4),
-    (6, 4, 1, 1)
+    (7, 5, 1, 1)
   )
   padding_values, padding_weights = _load_params(
     kwargs,
