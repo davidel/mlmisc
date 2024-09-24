@@ -201,3 +201,23 @@ def create_random_stack(max_output,
 
   return net, tuple(convs)
 
+
+_CSMAP = {
+  'f': 'features',
+  'k': 'kernel_size',
+  's': 'stride',
+  'p': 'padding',
+  'x': 'maxpool',
+  'v': 'avgpool',
+  'n': 'norm',
+  'a': 'act',
+}
+
+def convs_from_string(config):
+  convs = []
+  for conv in pyu.resplit(config, ':'):
+    cs = {_CSMAP.get(k, k): v for k, v in pyu.parse_dict(conv).items()}
+    convs.append(ConvSpec(**cs))
+
+  return convs
+

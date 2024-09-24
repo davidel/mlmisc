@@ -1,19 +1,21 @@
+import einops.layers.torch as einpt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
-from ... import patcher as pch
+from ... import args_sequential as aseq
+from ... import conv_utils as cu
 from ... import utils as ut
 
 from . import vit_base as vb
 
 
-class PatcherViT(vb.ViTBase):
+class ConvViT(vb.ViTBase):
 
   def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
-               patch_specs=None,
+               convs=None,
                attn_dropout=None,
                dropout=None,
                norm_mode=None,
@@ -22,24 +24,14 @@ class PatcherViT(vb.ViTBase):
                act=None,
                weight=None,
                label_smoothing=None):
-    patcher_config = []
-    if patch_specs:
-      for pcfg in patch_specs.split(':'):
-        patch_args = pyu.parse_dict(pcfg)
-        patcher_config.append(pch.Patch(**patch_args))
-    else:
-      hsize = shape[1] // pynu.nearest_divisor(shape[1], 16)
-      wsize = shape[2] // pynu.nearest_divisor(shape[2], 16)
-      alog.info(f'Using ({hsize}, {wsize}) patch sizes')
+    if isinstance(convs, str):
+      convs = cu.convs_from_string(convs)
 
-      patcher_config.append(pch.Patch(hsize=hsize, wsize=wsize, hstride=hsize, wstride=wsize))
-      patcher_config.append(pch.Patch(hsize=hsize, wsize=wsize, hstride=hsize, wstride=wsize,
-                                      hbase=hsize // 2, wbase=wsize // 2))
-
-    patcher = pch.Patcher(patcher_config,
-                          mode=patch_mode,
-                          in_channels=shape[0])
-    n_tiles, patch_size = ut.net_shape(patcher, shape)
+    cstack = cu.build_conv_stack(convs, shape=shape)
+    patcher = mlas.ArgsSequential(
+      cstack,
+      einpt.Rearrange('b c h w -> b (h w) c'),
+    )
 
     super().__init__(ut.net_shape(patcher, shape), embed_size, num_heads, num_classes, num_layers,
                      patch_specs=patch_specs,
