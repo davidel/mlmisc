@@ -28,7 +28,7 @@ class ConvViT(vb.ViTBase):
       convs = cu.convs_from_string(convs)
 
     cstack = cu.build_conv_stack(convs, shape=shape)
-    patcher = mlas.ArgsSequential(
+    patcher = aseq.ArgsSequential(
       cstack,
       einpt.Rearrange('b c h w -> b (h w) c'),
     )
