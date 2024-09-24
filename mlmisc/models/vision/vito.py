@@ -26,6 +26,8 @@ class VITO(nn.Module):
     if wtile_size is None or wtile_size <= 0:
       wtile_size = shape[2] // pynu.nearest_divisor(shape[2], 16)
 
+    alog.info(f'Using ({htile_size}, {wtile_size}) patch sizes')
+
     tas.check_eq(shape[1] % htile_size, 0,
                  msg=f'H images dimension {shape[1]} must be divisible by {htile_size}')
     tas.check_eq(shape[2] % wtile_size, 0,
