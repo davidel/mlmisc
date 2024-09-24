@@ -68,10 +68,12 @@ def create_random_stack(max_output,
                         net=None,
                         shape=None,
                         round_features=None,
+                        fsigma=None,
                         act=None,
                         tail=None,
                         **kwargs):
   round_features = round_features or 16
+  fsigma = fsigma or 0.2
   net = net or mb.ModuleBuilder(shape)
 
   kernel_values, kernel_weights = _load_params(
@@ -152,7 +154,8 @@ def create_random_stack(max_output,
 
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
 
-      features = int(in_features * max(1.0, random.normalvariate(mu=float(stride), sigma=0.25)))
+      features = int(in_features * max(1.0, random.normalvariate(mu=float(stride),
+                                                                 sigma=fsigma)))
       features = pyu.round_up(features, round_features)
 
     convs.append(ConvSpec(features=features,
