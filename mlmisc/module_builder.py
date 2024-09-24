@@ -28,6 +28,12 @@ class ModuleBuilder(nn.Module):
 
     return {name: value for name, value in zip(self.ADD_ARGS, args)}
 
+  def __len__(self):
+    return len(self.layers)
+
+  def last_id(self):
+    return len(self.layers) - 1
+
   def add(self, net,
           input_fn=None,
           output_fn=None,
