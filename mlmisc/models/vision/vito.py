@@ -50,7 +50,8 @@ class VITO(nn.Module):
     self.blocks = aseq.ArgsSequential(
       [eb.EncoderBlock(embed_size, num_heads,
                        attn_dropout=attn_dropout,
-                       dropout=dropout)
+                       dropout=dropout,
+                       act=act)
        for _ in range(num_layers)])
 
     self.prj = aseq.ArgsSequential(
