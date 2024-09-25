@@ -35,7 +35,12 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
 
     net.batchnorm2d()
     stride = 2 if h * w >= 4 * num_patches else 1
-    net.conv2d(min(c + cstep, embed_size),
+
+    if c == embed_size and stride == 1:
+      break
+
+    channels = min(pyu.round_up(c + cstep, 8), embed_size)
+    net.conv2d(channels,
                kernel_size=2 * stride + 1,
                stride=stride,
                padding='valid')
