@@ -60,7 +60,7 @@ def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
                           (num_classes * num_classes_amp * final_fc_amp))
   stride = max(1, int(shrink_factor))
   channels = stride**2 * num_classes * num_classes_amp * final_fc_amp / np.prod(net.shape[1:])
-  channels = pyu.round_up(channels, 16)
+  channels = pyu.round_up(int(channels), 16)
 
   net.conv2d(channels, kernel_size=2 * stride + 1, stride=stride, padding='valid')
   net.add(lu.create(act))
