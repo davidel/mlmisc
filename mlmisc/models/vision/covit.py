@@ -25,7 +25,7 @@ def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
   conv_steps = 4
   min_wnd_size = 2 * embed_size
   attn_heads = 2
-  num_classes_amp, final_fc_amp = 16, 4
+  num_classes_amp = 16
 
   net = mb.ModuleBuilder(shape)
   cstep = (embed_size - net.shape[0]) // conv_steps + 1
@@ -56,13 +56,7 @@ def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
     lid = net.add(eil.Rearrange('b (h w) c -> b c h w', h=h, w=w))
     lids.append(lid)
 
-  shrink_factor = np.sqrt(np.prod(net.shape) /
-                          (num_classes * num_classes_amp * final_fc_amp))
-  stride = max(1, int(shrink_factor))
-  channels = stride**2 * num_classes * num_classes_amp * final_fc_amp / np.prod(net.shape[1:])
-  channels = pyu.round_up(int(channels), 16)
-
-  net.conv2d(channels, kernel_size=2 * stride + 1, stride=stride, padding='valid')
+  net.conv2d(net.shape[0], kernel_size=5, stride=2, padding='valid')
   net.add(lu.create(act))
   net.add(nn.Flatten())
   net.linear(num_classes * num_classes_amp)
