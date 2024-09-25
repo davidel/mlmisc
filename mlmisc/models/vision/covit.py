@@ -34,7 +34,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     c, h, w = net.shape
 
     net.batchnorm2d()
-    stride = 2 if h * w > min_wnd_size else 1
+    stride = 2 if h * w >= 4 * num_patches else 1
     net.conv2d(min(c + cstep, embed_size),
                kernel_size=2 * stride + 1,
                stride=stride,
