@@ -15,8 +15,6 @@ NetConfig = collections.namedtuple(
 
 class ModuleBuilder(nn.Module):
 
-  ADD_ARGS = ('input_fn', 'output_fn', 'net_args')
-
   def __init__(self, shape):
     super().__init__()
     self.shape = tuple(shape)
@@ -24,9 +22,9 @@ class ModuleBuilder(nn.Module):
     self.config = []
 
   def _pop_add_args(self, kwargs):
-    args = pyu.pop_kwargs(kwargs, self.ADD_ARGS)
+    args = pyu.pop_kwargs(kwargs, NetConfig._fields)
 
-    return {name: value for name, value in zip(self.ADD_ARGS, args)}
+    return {name: value for name, value in zip(NetConfig._fields, args)}
 
   def __len__(self):
     return len(self.layers)
