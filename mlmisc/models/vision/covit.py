@@ -1,3 +1,4 @@
+import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.utils as pyu
 import torch
@@ -21,7 +22,10 @@ def inputfn(lids, back=2):
 
 
 def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
-  conv_steps, min_wnd_size, attn_heads = 4, 2 * embed_size, 2
+  conv_steps = 4
+  min_wnd_size = 2 * embed_size
+  attn_heads = 2
+  fc_amp_factor = 32
 
   net = mb.ModuleBuilder(shape)
   cstep = (embed_size - net.shape[0]) // conv_steps + 1
@@ -52,10 +56,13 @@ def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
     lid = net.add(eil.Rearrange('b (h w) c -> b c h w', h=h, w=w))
     lids.append(lid)
 
-  net.conv2d(net.shape[0], kernel_size=7, stride=2, padding='valid')
+  shrink_factor = np.sqrt(np.prod(net.shape) / (num_classes * fc_amp_factor**2))
+  stride = max(1, int(shrink_factor))
+
+  net.conv2d(net.shape[0], kernel_size=2 * stride + 1, stride=stride, padding='valid')
   net.add(lu.create(act))
   net.add(nn.Flatten())
-  net.linear(num_classes * 32)
+  net.linear(num_classes * fc_amp_factor)
   net.add(lu.create(act))
   net.linear(num_classes)
 
