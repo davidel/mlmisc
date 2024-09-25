@@ -21,8 +21,9 @@ def inputfn(lids, back=2):
   return input_fn
 
 
-def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
-  conv_steps = 4
+def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
+                  act, dropout):
+  conv_steps = max(1, int(np.log2(np.prod(shape[1:]) / num_patches)))
   min_wnd_size = 2 * embed_size
   attn_heads = 2
   num_classes_amp = 16
@@ -68,7 +69,7 @@ def create_layers(shape, num_layers, embed_size, num_classes, act, dropout):
 
 class CoViT(nn.Module):
 
-  def __init__(self, shape, num_classes, num_layers, embed_size,
+  def __init__(self, shape, num_classes, num_layers, embed_size, num_patches,
                dropout=None,
                act=None,
                weight=None,
@@ -77,7 +78,8 @@ class CoViT(nn.Module):
     act = act or 'relu'
     label_smoothing = label_smoothing or 0.0
 
-    net = create_layers(shape, num_layers, embed_size, num_classes, act, dropout)
+    net = create_layers(shape, num_layers, embed_size, num_patches, num_classes,
+                        act, dropout)
 
     super().__init__()
     self.loss = nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
