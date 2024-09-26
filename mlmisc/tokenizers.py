@@ -53,6 +53,8 @@ def enum_chunks(path, chunk_size=None):
       if epos >= 0:
         rem = data[epos + 1: ]
         data = data[: epos + 1]
+      else:
+        rem = b''
 
       yield data
 
