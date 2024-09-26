@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from . import utils as ut
+
 
 class CatLoss(nn.Module):
 
@@ -10,7 +12,8 @@ class CatLoss(nn.Module):
 
   def forward(self, y, targets):
     if targets is not None:
-      if getattr(self.loss, 'training', True):
+      # If training or the targets are not integers, call the loss directly.
+      if getattr(self.loss, 'training', True) or not ut.is_integer(targets):
         return self.loss(y, targets)
 
       # If not training the "loss" is meant as the categorization error.
@@ -28,7 +31,7 @@ class SeqLoss(nn.Module):
 
   def forward(self, y, targets):
     if targets is not None:
-      # Flattens batch and sequence dimensions together.
+      # Flatten batch and sequence dimensions together.
       y = y.view(-1, y.shape[-1])
 
       return self.loss(y, targets.flatten())
