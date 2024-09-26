@@ -7,19 +7,19 @@ import torch.nn as nn
 
 class Attention(nn.Module):
 
-  def __init__(self, n_embd, n_head,
+  def __init__(self, embed_size, num_heads,
                attn_dropout=None,
                dropout=None):
     attn_dropout = attn_dropout or 0.0
     dropout = dropout or 0.0
 
     super().__init__()
-    self.n_head = n_head
-    self.k_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
-    self.q_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
-    self.v_prj = nn.Linear(n_embd, n_embd * n_head, bias=False)
+    self.num_heads = num_heads
+    self.k_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
+    self.q_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
+    self.v_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
     self.attend = nn.Softmax(dim=-1)
-    self.unifyheads = nn.Linear(n_embd * n_head, n_embd)
+    self.unifyheads = nn.Linear(embed_size * num_heads, embed_size)
 
     self.attn_drop = nn.Dropout(attn_dropout)
     self.resid_drop = nn.Dropout(dropout)
@@ -32,9 +32,9 @@ class Attention(nn.Module):
     # (B, T, C) -> (B, T, H * C)
     values = self.v_prj(v)
 
-    keys = einops.rearrange(keys, 'b t (h c) -> b h t c', h=self.n_head)
-    queries = einops.rearrange(queries, 'b t (h c) -> b h t c', h=self.n_head)
-    values = einops.rearrange(values, 'b t (h c) -> b h t c', h=self.n_head)
+    keys = einops.rearrange(keys, 'b t (h c) -> b h t c', h=self.num_heads)
+    queries = einops.rearrange(queries, 'b t (h c) -> b h t c', h=self.num_heads)
+    values = einops.rearrange(values, 'b t (h c) -> b h t c', h=self.num_heads)
 
     # (B, H, T, C) @ (B, H, C, T) => (B, H, T, T)
     att = queries @ einops.rearrange(keys, 'b h t c -> b h c t')
@@ -52,6 +52,12 @@ class Attention(nn.Module):
     out = self.resid_drop(out)
 
     return out
+
+  def extra_repr(self):
+    return pyu.stri(dict(num_heads=self.num_heads,
+                         embed_size=self.unifyheads.out_features,
+                         attn_dropout=self.attn_drop.p,
+                         dropout=self.resid_drop.p))
 
 
 class SelfAttention(Attention):

@@ -42,3 +42,7 @@ class ShardAttention(nn.Module):
 
     return self.post(self.post_feed(x, y))
 
+  def extra_repr(self):
+    return pyu.stri(dict(num_heads=self.num_heads,
+                         embed_size=self.weight.shape[-1]))
+
