@@ -41,13 +41,13 @@ def create_tokenizer(path, max_vocab_size,
 
 
 def enum_chunks(path, chunk_size=None):
-  chunk_size = chunk_size or 50 * 1024 * 1024
-  with open(path, mode='rb') as f:
-    pos, rem = 0, b''
+  chunk_size = chunk_size or 32 * 1024 * 1024
+  with open(path, mode='rb') as fd:
+    rem = b''
     while True:
-      alog.debug0(f'Reading from {f.tell()}')
+      alog.debug0(f'Reading from {path} at offset {fd.tell()}')
 
-      rdata = f.read(chunk_size)
+      rdata = fd.read(chunk_size)
       data = rem + rdata
       epos = data.rfind(b'\n')
       if epos >= 0:
