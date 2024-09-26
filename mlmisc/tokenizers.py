@@ -2,10 +2,9 @@ import array
 import io
 import os
 
+import py_misc_utils.alog as alog
 import sentencepiece as spm
 import torch
-
-from py_misc_utils import alog
 
 
 def create_tokenizer(path, max_vocab_size,

@@ -61,7 +61,7 @@ def _create_dataset(args):
   dataset_kwargs = pyu.parse_dict(args.dataset_kwargs or '')
 
   dsets = mldu.create_dataset(args.dataset,
-                              root=args.cache_dir,
+                              cache_dir=args.cache_dir,
                               select_fn=select_fn,
                               transform=dict(train=train_trans, test=test_trans),
                               dataset_kwargs=dataset_kwargs)

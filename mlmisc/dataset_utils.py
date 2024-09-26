@@ -52,7 +52,7 @@ class Dataset(torch.utils.data.Dataset):
     return self.transform(x), self.target_transform(y)
 
 
-def _try_torchvision(name, root, transform, target_transform, split_pct,
+def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
                      dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
@@ -63,12 +63,12 @@ def _try_torchvision(name, root, transform, target_transform, split_pct,
 
     ds = dict()
     if sig.parameters.get('train') is not None:
-      ds['train'] = dsclass(root=root,
+      ds['train'] = dsclass(root=cache_dir,
                             train=True,
                             transform=transform.get('train'),
                             target_transform=target_transform.get('train'),
                             **kwargs)
-      ds['test'] = dsclass(root=root,
+      ds['test'] = dsclass(root=cache_dir,
                            train=False,
                            transform=transform.get('test'),
                            target_transform=target_transform.get('test'),
@@ -77,18 +77,18 @@ def _try_torchvision(name, root, transform, target_transform, split_pct,
       train_split = kwargs.pop('train_split', 'train')
       test_split = kwargs.pop('test_split', 'test')
 
-      ds['train'] = dsclass(root=root,
+      ds['train'] = dsclass(root=cache_dir,
                             split=train_split,
                             transform=transform.get('train'),
                             target_transform=target_transform.get('train'),
                             **kwargs)
-      ds['test'] = dsclass(root=root,
+      ds['test'] = dsclass(root=cache_dir,
                            split=test_split,
                            transform=transform.get('test'),
                            target_transform=target_transform.get('test'),
                            **kwargs)
     else:
-      full_ds = dsclass(root=root, **kwargs)
+      full_ds = dsclass(root=cache_dir, **kwargs)
 
       ntrain = int(split_pct * len(full_ds))
 
@@ -131,26 +131,26 @@ def _norm_transforms(transform):
 
 
 def create_dataset(name,
-                   root=None,
+                   cache_dir=None,
                    select_fn=None,
                    transform=None,
                    target_transform=None,
                    split_pct=None,
                    dataset_kwargs=None):
-  root = root or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
   transform = _norm_transforms(transform)
   target_transform = _norm_transforms(target_transform)
   split_pct = split_pct or 0.9
   dataset_kwargs = dataset_kwargs or {}
 
   if name.find('/') < 0:
-    ds = _try_torchvision(name, root, transform, target_transform, split_pct,
+    ds = _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
                           dataset_kwargs)
     if ds is not None:
       return ds
 
   if name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
-    hfds = dsets.load_dataset(name, cache_dir=root, **dataset_kwargs)
+    hfds = dsets.load_dataset(name, cache_dir=cache_dir, **dataset_kwargs)
 
     ds = dict()
     ds['train'] = Dataset(hfds['train'],
