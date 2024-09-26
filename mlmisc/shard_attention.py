@@ -1,11 +1,9 @@
 import math
 
 import einops
+import py_misc_utils.assert_checks as tas
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-
-import py_misc_utils.assert_checks as tas
 
 from . import layer_utils as lu
 from . import utils as ut
@@ -21,6 +19,7 @@ class ShardAttention(nn.Module):
     super().__init__()
     self.num_heads = num_heads
     self.weight = nn.Parameter(ut.kuni_tensor(num_heads * embed_size, embed_size))
+    self.attend = nn.Softmax(dim=-1)
     self.post = lu.create(post or nn.Identity)
     self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
@@ -32,7 +31,7 @@ class ShardAttention(nn.Module):
 
     if mask is not None:
       y = y.masked_fill(mask, float('-inf'))
-    y = F.softmax(y / math.sqrt(y.shape[1]), dim=-1)
+    y = self.attend(y / math.sqrt(y.shape[1]))
 
     xx = einops.repeat(x, 'b t c -> b ch t c', ch=self.num_heads)
     # (B, CH, T, T) @ (B, CH, T, C) => (B, CH, T, C)
