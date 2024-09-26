@@ -13,6 +13,7 @@ class CatLoss(nn.Module):
       if getattr(self.loss, 'training', True):
         return self.loss(y, targets)
 
+      # If not training the "loss" is meant as the categorization error.
       _, predicted = torch.max(y, dim=1)
       correct = (predicted == targets).sum()
 
@@ -27,7 +28,7 @@ class SeqLoss(nn.Module):
 
   def forward(self, y, targets):
     if targets is not None:
-      # Flatten batch and sequence dimension together.
+      # Flattens batch and sequence dimensions together.
       y = y.view(-1, y.shape[-1])
 
       return self.loss(y, targets.flatten())
