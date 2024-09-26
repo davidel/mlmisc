@@ -24,20 +24,20 @@ class ShardAttention(nn.Module):
     self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
 
   def forward(self, x, mask=None):
-    y = einops.rearrange(x, 'b t (ch ck) -> b ch t ck', ch=self.num_heads)
-    yt = einops.rearrange(y, 'b ch t ck -> b ch ck t')
-    # (B, CH, T, CK) @ (B, CH, CK, T) => (B, CH, T, T)
+    y = einops.rearrange(x, 'b t (nh hs) -> b nh t hs', nh=self.num_heads)
+    yt = einops.rearrange(y, 'b nh t hs -> b nh hs t')
+    # (B, NH, T, HS) @ (B, NH, HS, T) => (B, NH, T, T)
     y = torch.einsum('bhtk,bhks->bhts', y, yt)
 
     if mask is not None:
       y = y.masked_fill(mask, float('-inf'))
     y = self.attend(y / math.sqrt(y.shape[1]))
 
-    xx = einops.repeat(x, 'b t c -> b ch t c', ch=self.num_heads)
-    # (B, CH, T, T) @ (B, CH, T, C) => (B, CH, T, C)
+    xx = einops.repeat(x, 'b t c -> b nh t c', nh=self.num_heads)
+    # (B, NH, T, T) @ (B, NH, T, C) => (B, NH, T, C)
     y = torch.einsum('bhts,bhsk->bhtk', y, xx)
-    y = einops.rearrange(y, 'b ch t c -> b t (ch c)')
-    # (B, T, CH * C) @ (CH * C, C) => (B, T, C)
+    y = einops.rearrange(y, 'b nh t c -> b t (nh c)')
+    # (B, T, NH * C) @ (NH * C, C) => (B, T, C)
     y = y @ self.weight
 
     return self.post(self.post_feed(x, y))
