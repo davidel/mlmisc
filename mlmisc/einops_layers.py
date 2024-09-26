@@ -1,4 +1,5 @@
 import einops
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -15,7 +16,7 @@ class Rearrange(nn.Module):
     return einops.rearrange(x, self.recipe, **self.kwargs)
 
   def extra_repr(self):
-    return f'recipe="{self.recipe}", kwargs={self.kwargs}'
+    return pyu.stri(dict(recipe=self.recipe, kwargs=self.kwargs))
 
 
 class Repeat(nn.Module):
@@ -29,7 +30,7 @@ class Repeat(nn.Module):
     return einops.repeat(x, self.recipe, **self.kwargs)
 
   def extra_repr(self):
-    return f'recipe="{self.recipe}", kwargs={self.kwargs}'
+    return pyu.stri(dict(recipe=self.recipe, kwargs=self.kwargs))
 
 
 class Reduce(nn.Module):
@@ -44,5 +45,7 @@ class Reduce(nn.Module):
     return einops.reduce(x, self.recipe, self.reduction, **self.kwargs)
 
   def extra_repr(self):
-    return f'recipe="{self.recipe}", reduction="{self.reduction}", kwargs={self.kwargs}'
+    return pyu.stri(dict(recipe=self.recipe,
+                         reduction=self.reduction,
+                         kwargs=self.kwargs))
 
