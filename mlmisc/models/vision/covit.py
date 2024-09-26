@@ -7,6 +7,7 @@ import torch.nn as nn
 from ... import attention as atn
 from ... import einops_layers as eil
 from ... import layer_utils as lu
+from ... import loss_wrappers as lsw
 from ... import module_builder as mb
 from ... import utils as ut
 
@@ -84,11 +85,13 @@ class CoViT(nn.Module):
                         act, dropout)
 
     super().__init__()
-    self.loss = nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
+    self.loss = lsw.CatLoss(
+      nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
+    )
     self.net = net
 
   def forward(self, x, targets=None):
     y = self.net(x)
 
-    return y, ut.compute_loss(self.loss, y, targets)
+    return y, self.loss(y, targets)
 

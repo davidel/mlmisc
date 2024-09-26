@@ -14,6 +14,7 @@ import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 
 from . import config as conf
+from . import loss_wrappers as lsw
 from . import module_builder as mbld
 from . import utils as ut
 from . import web_module as wmod
@@ -23,13 +24,13 @@ class TorchVision(nn.Module):
 
   def __init__(self, name, loss, *args, **kwargs):
     super().__init__()
-    self.loss = conf.create_loss(loss)
+    self.loss = lsw.CatLoss(conf.create_loss(loss))
     self.mod = torchvision.models.get_model(name, *args, **kwargs)
 
   def forward(self, x, targets=None):
     y = self.mod(x)
 
-    return y, ut.compute_loss(self.loss, y, targets)
+    return y, self.loss(y, targets)
 
 
 class Web(nn.Module):
@@ -40,7 +41,7 @@ class Web(nn.Module):
                force_clone=None,
                **kwargs):
     super().__init__()
-    self.loss = conf.create_loss(loss)
+    self.loss = lsw.CatLoss(conf.create_loss(loss))
     self.mod = wmod.WebModule(repo, module, ctor,
                               cache_dir=cache_dir,
                               commit=commit,
@@ -51,7 +52,7 @@ class Web(nn.Module):
   def forward(self, x, targets=None):
     y = self.mod(x)
 
-    return y, ut.compute_loss(self.loss, y, targets)
+    return y, self.loss(y, targets)
 
 
 class HugginFaceImgTune(nn.Module):
@@ -78,7 +79,7 @@ class HugginFaceImgTune(nn.Module):
     hidden_size = max(64 * num_classes, 4 * model.config.hidden_size)
 
     super().__init__()
-    self.loss = conf.create_loss(loss)
+    self.loss = lsw.CatLoss(conf.create_loss(loss))
     self.output_collate = output_collate
     self.ctx = pyu.make_object(model=model, image_processor=image_processor)
     self.head = mbld.ModuleBuilder((self.ctx.model.config.hidden_size,))
@@ -109,5 +110,5 @@ class HugginFaceImgTune(nn.Module):
 
     y = self.head(y)
 
-    return y, ut.compute_loss(self.loss, y, targets)
+    return y, self.loss(y, targets)
 

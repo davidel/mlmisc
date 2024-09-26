@@ -6,6 +6,7 @@ import torch.nn as nn
 from ... import conv_utils as cu
 from ... import ensemble as es
 from ... import layer_utils as lu
+from ... import loss_wrappers as lsw
 from ... import net_base as nb
 from ... import utils as ut
 
@@ -26,7 +27,7 @@ def _tail(num_classes, act, dropout):
 
 def _compute_loss(loss):
   def compute(y, targets):
-    return ut.compute_loss(loss, y, targets)
+    return loss(y, targets)
 
   return compute
 
@@ -84,8 +85,9 @@ class CNNEnsemble(nb.NetBase):
     self.conv_specs = tuple(conv_specs)
     self.act = act
     self.dropout = dropout
-    self.loss = nn.CrossEntropyLoss(weight=weight,
-                                    label_smoothing=label_smoothing)
+    self.loss = lsw.CatLoss(
+      nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
+    )
     self.nets = es.Ensemble(nets,
                             loss_fn=_compute_loss(self.loss),
                             categorical=es.VOTING)

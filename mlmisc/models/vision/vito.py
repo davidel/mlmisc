@@ -9,6 +9,7 @@ import torch.nn as nn
 from ... import args_sequential as aseq
 from ... import encoder_block as eb
 from ... import layer_utils as lu
+from ... import loss_wrappers as lsw
 from ... import utils as ut
 
 
@@ -45,7 +46,7 @@ class ViTO(nn.Module):
     super().__init__()
     self.htile_size, self.wtile_size = htile_size, wtile_size
     self.result_tiles = result_tiles
-    self.loss = nn.CrossEntropyLoss()
+    self.loss = lsw.CatLoss(nn.CrossEntropyLoss())
     self.embedding = nn.Linear(patch_size, embed_size)
     self.pos_embedding = nn.Parameter(torch.zeros(1, n_tiles + result_tiles, embed_size))
     self.pweight = nn.Parameter(torch.zeros(result_tiles, embed_size))
@@ -83,5 +84,5 @@ class ViTO(nn.Module):
     # (B, RT * E) => (B, NC)
     y = self.prj(y)
 
-    return y, ut.compute_loss(self.loss, y, targets)
+    return y, self.loss(y, targets)
 
