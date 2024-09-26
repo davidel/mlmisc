@@ -12,8 +12,8 @@ def create_tokenizer(path, max_vocab_size,
                      model_type=None,
                      **kwargs):
   if proto_path is not None and os.path.isfile(proto_path):
-    with open(proto_path, mode='rb') as f:
-      proto_data = f.read()
+    with open(proto_path, mode='rb') as fd:
+      proto_data = fd.read()
 
     toknz = spm.SentencePieceProcessor(model_proto=proto_data)
     if toknz.vocab_size() == max_vocab_size:
@@ -32,8 +32,8 @@ def create_tokenizer(path, max_vocab_size,
   proto_data = spstg.getvalue()
 
   if proto_path is not None:
-    with open(proto_path, mode='wb') as f:
-      f.write(proto_data)
+    with open(proto_path, mode='wb') as fd:
+      fd.write(proto_data)
 
   toknz = spm.SentencePieceProcessor(model_proto=proto_data)
 
