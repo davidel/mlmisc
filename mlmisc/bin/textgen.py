@@ -44,9 +44,10 @@ def _load_tokenizer(args):
 
 def _generate(args, model, tokenizer):
   iseq = tokenizer.encode(args.input_sequence)
+  iseq_tensor = torch.tensor(iseq, dtype=torch.long, device=args.device)
 
   gids = sequ.generate(lambda x: model(x)[0],
-                       iseq,
+                       iseq_tensor,
                        args.context_size,
                        args.num_steps,
                        args.pad_mode,
