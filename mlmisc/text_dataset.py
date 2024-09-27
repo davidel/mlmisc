@@ -2,6 +2,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.http_cache as pyhc
 import py_misc_utils.utils as pyu
 import torch
 
@@ -11,32 +12,35 @@ from . import tokenizers as tkz
 from . import utils as ut
 
 
-def create(datafile, context_size, max_vocab_size,
+def create(content_path, context_size, max_vocab_size,
            cache_dir=None,
            is_sequence=None,
            split_pct=None,
            **kwargs):
-  cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), '.cache')
   is_sequence = True if is_sequence is None else is_sequence
   split_pct = 0.9 if split_pct is None else split_pct
 
-  ds_name = os.path.splitext(os.path.basename(datafile))[0]
-  ds_dir = os.path.join(cache_dir, ds_name)
-  os.makedirs(ds_dir, exist_ok=True)
+  datasets_dir = os.path.join(cache_dir, 'datasets')
 
-  proto_path = os.path.join(ds_dir, 'tokenizer.proto')
+  with pyhc.LocalFile(content_path, cache_dir=cache_dir) as datafile:
+    ds_name = os.path.splitext(os.path.basename(datafile))[0]
+    ds_dir = os.path.join(datasets_dir, ds_name)
+    os.makedirs(ds_dir, exist_ok=True)
 
-  tokenizer = tkz.create_tokenizer(datafile, max_vocab_size,
-                                   proto_path=proto_path,
-                                   remove_extra_whitespaces=False,
-                                   user_defined_symbols=['\n', '\r'])
+    proto_path = os.path.join(ds_dir, 'tokenizer.proto')
 
-  tokens_path = os.path.join(ds_dir, 'tokens.pt')
-  if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
-    tokens = ut.torch_load(tokens_path)
-  else:
-    tokens = tkz.tokenize_data(datafile, tokenizer)
-    torch.save(tokens, tokens_path)
+    tokenizer = tkz.create_tokenizer(datafile, max_vocab_size,
+                                     proto_path=proto_path,
+                                     remove_extra_whitespaces=False,
+                                     user_defined_symbols=['\n', '\r'])
+
+    tokens_path = os.path.join(ds_dir, 'tokens.pt')
+    if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
+      tokens = ut.torch_load(tokens_path)
+    else:
+      tokens = tkz.tokenize_data(datafile, tokenizer)
+      torch.save(tokens, tokens_path)
 
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]
