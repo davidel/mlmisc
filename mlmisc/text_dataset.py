@@ -43,11 +43,15 @@ def create(datafile, context_size, max_vocab_size,
   test_data = tokens[train_limit: ]
 
   if is_sequence:
-    train_dataset = nsd.NextSequenceDataset(train_data, context_size)
-    test_dataset = nsd.NextSequenceDataset(test_data, context_size)
+    train_dataset = nsd.NextSequenceDataset(train_data, context_size,
+                                            tokenizer=tokenizer)
+    test_dataset = nsd.NextSequenceDataset(test_data, context_size,
+                                           tokenizer=tokenizer)
   else:
-    train_dataset = ntd.NextTokenDataset(train_data, context_size)
-    test_dataset = ntd.NextTokenDataset(test_data, context_size)
+    train_dataset = ntd.NextTokenDataset(train_data, context_size,
+                                         tokenizer=tokenizer)
+    test_dataset = ntd.NextTokenDataset(test_data, context_size,
+                                        tokenizer=tokenizer)
 
   return dict(train=train_dataset, test=test_dataset)
 

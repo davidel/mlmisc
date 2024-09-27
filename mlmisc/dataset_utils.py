@@ -20,12 +20,19 @@ class Dataset(torch.utils.data.Dataset):
   def __init__(self, data,
                select_fn=None,
                transform=None,
-               target_transform=None):
+               target_transform=None,
+               **kwargs):
     super().__init__()
     self.data = data
     self.select_fn = select_fn or _guess_select
     self.transform = transform or _no_transform
     self.target_transform = target_transform or _no_transform
+    self.kwargs = kwargs
+
+  def extra_arg(self, name):
+    xarg = getattr(self.data, 'extra_arg', None)
+
+    return self.kwargs.get(name) if xarg is None else xarg(name)
 
   def _get(self, i):
     if isinstance(self.data, dict):

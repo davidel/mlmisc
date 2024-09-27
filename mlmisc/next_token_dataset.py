@@ -6,13 +6,19 @@ from . import dataset_utils as dsu
 
 class NextTokenDataset(torch.utils.data.Dataset):
 
-  def __init__(self, data, context_size, pad=None):
+  def __init__(self, data, context_size, pad=None, **kwargs):
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     super().__init__()
     self.data = data
     self.context_size = context_size - pad_size
     self.pad = pad
+    self.kwargs = kwargs
+
+  def extra_arg(self, name):
+    xarg = getattr(self.data, 'extra_arg', None)
+
+    return self.kwargs.get(name) if xarg is None else xarg(name)
 
   def __len__(self):
     return max(len(self.data) - self.context_size, 0)
