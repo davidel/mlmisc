@@ -23,7 +23,9 @@ def create(content_path, context_size, max_vocab_size,
 
   datasets_dir = os.path.join(cache_dir, 'datasets')
 
-  with pyhc.LocalFile(content_path, cache_dir=cache_dir) as datafile:
+  with pyhc.LocalFile(content_path,
+                      cache_dir=cache_dir,
+                      uncompress=True) as datafile:
     ds_name = os.path.splitext(os.path.basename(datafile))[0]
     ds_dir = os.path.join(datasets_dir, ds_name)
     os.makedirs(ds_dir, exist_ok=True)
