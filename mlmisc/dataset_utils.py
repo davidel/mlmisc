@@ -39,14 +39,10 @@ class Dataset(torch.utils.data.Dataset):
     return len(self.data)
 
   def __getitem__(self, i):
-    idata = self._get(i)
-
     if isinstance(i, slice):
-      return Dataset(idata,
-                     select_fn=self.select_fn,
-                     transform=self.transform,
-                     target_transform=self.target_transform)
+      return sub_dataset(self, i)
 
+    idata = self._get(i)
     x, y = self.select_fn(idata)
 
     return self.transform(x), self.target_transform(y)
@@ -128,6 +124,12 @@ def _norm_transforms(transform):
     return transform
 
   return dict(train=transform, test=transform)
+
+
+def sub_dataset(ds, dslice):
+  indices = torch.arange(*dslice.indices(len(ds)))
+
+  return torch.utils.data.Subset(ds, indices)
 
 
 def create_dataset(name,

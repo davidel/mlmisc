@@ -51,11 +51,17 @@ def enum_chunks(path, chunk_size=None):
 
       rdata = fd.read(chunk_size)
       data = rem + rdata
-      epos = data.rfind(b'\n')
+      if (epos := data.rfind(b'\n')) < 0:
+        epos = data.rfind(b' ')
       if epos >= 0:
         rem = data[epos + 1: ]
         data = data[: epos + 1]
       else:
+        # We did not find an EOL (or alternatively a space) within the read buffer.
+        # If the buffer is big enough, this should mean we are at the end of the
+        # data, otherwise we end up feeding a truncated word in.
+        # This should not happen though, given a big enough buffer and data being
+        # actually text!
         rem = b''
 
       yield data

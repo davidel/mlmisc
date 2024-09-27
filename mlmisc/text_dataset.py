@@ -14,7 +14,8 @@ from . import utils as ut
 def create(datafile, context_size, max_vocab_size,
            cache_dir=None,
            is_sequence=None,
-           split_pct=None):
+           split_pct=None,
+           **kwargs):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
   is_sequence = True if is_sequence is None else is_sequence
   split_pct = 0.9 if split_pct is None else split_pct

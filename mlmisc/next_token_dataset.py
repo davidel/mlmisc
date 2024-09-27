@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 
+from . import dataset_utils as dsu
+
 
 class NextTokenDataset(torch.utils.data.Dataset):
 
@@ -16,6 +18,9 @@ class NextTokenDataset(torch.utils.data.Dataset):
     return max(len(self.data) - self.context_size, 0)
 
   def __getitem__(self, i):
+    if isinstance(i, slice):
+      return dsu.sub_dataset(self, i)
+
     offset = i + self.context_size
     x, y = self.data[i: offset], self.data[offset: offset + 1]
 
