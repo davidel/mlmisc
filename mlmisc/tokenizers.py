@@ -83,5 +83,5 @@ def tokenize_data(path, toknz, chunk_size=None, dtype=None):
     enc = toknz.encode(chunk)
     tokens.extend(enc)
 
-  return torch.tensor(tokens, dtype=dtype or torch.long)
+  return torch.tensor(tokens, dtype=dtype or torch.int)
 
