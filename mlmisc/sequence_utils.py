@@ -3,19 +3,21 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import py_misc_utils.alog as alog
+import py_misc_utils.utils as pyu
 
 from . import layer_utils as lu
 
 
 def build_vocab_head(embed_size, vocab_size, activation=None):
   activation = activation or nn.GELU
+  mid_size = pyu.round_up((embed_size + vocab_size) // 2, embed_size)
 
   return nn.Sequential(
     lu.create(activation),
-    nn.Linear(embed_size, embed_size, bias=False),
-    nn.LayerNorm(embed_size),
+    nn.Linear(embed_size, mid_size, bias=False),
+    nn.LayerNorm(mid_size),
     lu.create(activation),
-    nn.Linear(embed_size, vocab_size, bias=False),
+    nn.Linear(mid_size, vocab_size, bias=False),
   )
 
 
