@@ -6,13 +6,17 @@ from . import dataset_utils as dsu
 
 class NextSequenceDataset(torch.utils.data.Dataset):
 
-  def __init__(self, data, context_size, pad=None, **kwargs):
+  def __init__(self, data, context_size,
+               pad=None,
+               ydtype=None,
+               **kwargs):
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     super().__init__()
     self.data = data
     self.context_size = context_size - pad_size
     self.pad = pad
+    self.ydtype = ydtype
     self.kwargs = kwargs
 
   def extra_arg(self, name):
@@ -32,6 +36,8 @@ class NextSequenceDataset(torch.utils.data.Dataset):
 
     if self.pad is not None:
       x = F.pad(x, self.pad['pad'], value=self.pad['value'])
+    if self.ydtype is not None:
+      y = y.to(dtype=self.ydtype)
 
     return x, y
 

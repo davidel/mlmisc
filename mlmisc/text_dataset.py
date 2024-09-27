@@ -41,7 +41,7 @@ def create(content_path, context_size, max_vocab_size,
     if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
       tokens = ut.torch_load(tokens_path)
     else:
-      tokens = tkz.tokenize_data(datafile, tokenizer)
+      tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
       torch.save(tokens, tokens_path)
 
   train_limit = int(len(tokens) * split_pct)
@@ -50,13 +50,17 @@ def create(content_path, context_size, max_vocab_size,
 
   if is_sequence:
     train_dataset = nsd.NextSequenceDataset(train_data, context_size,
+                                            ydtype=torch.long.
                                             tokenizer=tokenizer)
     test_dataset = nsd.NextSequenceDataset(test_data, context_size,
+                                           ydtype=torch.long.
                                            tokenizer=tokenizer)
   else:
     train_dataset = ntd.NextTokenDataset(train_data, context_size,
+                                         ydtype=torch.long.
                                          tokenizer=tokenizer)
     test_dataset = ntd.NextTokenDataset(test_data, context_size,
+                                        ydtype=torch.long.
                                         tokenizer=tokenizer)
 
   return dict(train=train_dataset, test=test_dataset)

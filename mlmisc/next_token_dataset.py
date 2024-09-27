@@ -6,7 +6,10 @@ from . import dataset_utils as dsu
 
 class NextTokenDataset(torch.utils.data.Dataset):
 
-  def __init__(self, data, context_size, pad=None, **kwargs):
+  def __init__(self, data, context_size,
+               pad=None,
+               ydtype=None,
+               **kwargs):
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     super().__init__()
@@ -32,6 +35,8 @@ class NextTokenDataset(torch.utils.data.Dataset):
 
     if self.pad is not None:
       x = F.pad(x, self.pad['pad'], value=self.pad['value'])
+    if self.ydtype is not None:
+      y = y.to(dtype=self.ydtype)
 
     return x, y
 
