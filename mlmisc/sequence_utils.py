@@ -3,14 +3,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import py_misc_utils.alog as alog
-import py_misc_utils.utils as pyu
 
 from . import layer_utils as lu
 
 
-def build_vocab_head(embed_size, vocab_size, activation=None):
+def build_vocab_head(embed_size, vocab_size,
+                     activation=None,
+                     mid_size_factor=None):
   activation = activation or nn.GELU
-  mid_size = pyu.round_up((embed_size + vocab_size) // 2, embed_size)
+  mid_size_factor = mid_size_factor or 2
+  mid_size = min(mid_size_factor * embed_size, vocab_size)
 
   return nn.Sequential(
     lu.create(activation),
