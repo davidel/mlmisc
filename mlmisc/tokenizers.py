@@ -3,6 +3,7 @@ import io
 import os
 
 import py_misc_utils.alog as alog
+import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.utils as pyu
 import sentencepiece as spm
 import torch
@@ -40,7 +41,7 @@ def create_tokenizer(path, max_vocab_size,
   proto_data = spstg.getvalue()
 
   if proto_path is not None:
-    with open(proto_path, mode='wb') as pfd:
+    with pyfow.FileOverwrite(proto_path, mode='wb') as pfd:
       pfd.write(proto_data)
 
   toknz = spm.SentencePieceProcessor(model_proto=proto_data)
