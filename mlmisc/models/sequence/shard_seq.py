@@ -23,7 +23,7 @@ class ShardSeq(sb.SequenceBase):
         lu.create(act),
       )
 
-    super().__init__(context_size, embed_size)
+    super().__init__(context_size, embed_size, vocab_size)
     self.blocks = aseq.ArgsSequential(
       [satn.ShardAttention(embed_size, num_heads,
                            post=post,
