@@ -7,6 +7,7 @@ import huggingface_hub as hfh
 import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torchvision
@@ -132,6 +133,24 @@ def sub_dataset(ds, dslice):
   return torch.utils.data.Subset(ds, indices)
 
 
+def _try_module(name, cache_dir, split_pct, dataset_kwargs):
+  parts = name.split(':', maxsplit=1)
+  if len(parts) == 2:
+    modpath, ctor_fn = parts
+    try:
+      module = pymu.import_module(modpath)
+    except ImportError:
+      return
+
+    ctor = getattr(module, ctor_fn)
+    kwargs = dataset_kwargs.copy()
+    kwargs.update(cache_dir=cache_dir, split_pct=split_pct)
+
+    ds = ctor(**kwargs)
+
+    return dict(train=ds[0], test=ds[1]) if isinstance(ds, (list, tuple)) else ds
+
+
 def create_dataset(name,
                    cache_dir=None,
                    select_fn=None,
@@ -144,6 +163,10 @@ def create_dataset(name,
   target_transform = _norm_transforms(target_transform)
   split_pct = split_pct or 0.9
   dataset_kwargs = dataset_kwargs or {}
+
+  ds = _try_module(name, cache_dir, split_pct, dataset_kwargs)
+  if ds is not None:
+    return ds
 
   if name.find('/') < 0:
     ds = _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
