@@ -11,7 +11,8 @@ def create_tokenizer(path, max_vocab_size,
                      proto_path=None,
                      model_type=None,
                      **kwargs):
-  if proto_path is not None and os.path.isfile(proto_path):
+  if (proto_path is not None and os.path.isfile(proto_path) and
+      pyu.is_newer_file(proto_path, path)):
     with open(proto_path, mode='rb') as fd:
       proto_data = fd.read()
 

@@ -31,7 +31,7 @@ def create(datafile, context_size, max_vocab_size,
                                    user_defined_symbols=['\n', '\r'])
 
   tokens_path = os.path.join(ds_dir, 'tokens.pt')
-  if os.path.isfile(tokens_path):
+  if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
     tokens = ut.torch_load(tokens_path)
   else:
     tokens = tkz.tokenize_data(datafile, tokenizer)
