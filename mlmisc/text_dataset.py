@@ -49,6 +49,8 @@ def create(content_path, context_size, max_vocab_size,
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit: ]
 
+  # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
+  # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
   target_transform = dsb.to_transform(dtype=torch.long)
   if is_sequence:
     train_dataset = nsd.NextSequenceDataset(train_data, context_size,
