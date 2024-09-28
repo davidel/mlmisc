@@ -122,8 +122,10 @@ def _try_module(name, cache_dir, split_pct, dataset_kwargs):
       return
 
     ctor = getattr(module, ctor_fn)
-    kwargs = dataset_kwargs.copy()
-    kwargs.update(cache_dir=cache_dir, split_pct=split_pct)
+
+    kwargs = pyu.dict_setmissing(dataset_kwargs,
+                                 cache_dir=cache_dir,
+                                 split_pct=split_pct))
 
     ds = ctor(**kwargs)
 
