@@ -125,7 +125,7 @@ def _try_module(name, cache_dir, split_pct, dataset_kwargs):
 
     kwargs = pyu.dict_setmissing(dataset_kwargs,
                                  cache_dir=cache_dir,
-                                 split_pct=split_pct))
+                                 split_pct=split_pct)
 
     ds = ctor(**kwargs)
 
