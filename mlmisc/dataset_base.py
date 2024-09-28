@@ -17,7 +17,7 @@ class Dataset(torch.utils.data.Dataset):
 
   def extra_arg(self, name):
     extra_arg = getattr(super(), 'extra_arg', None)
-    xarg = extra_arg(name) if if extra_arg is not None else None
+    xarg = extra_arg(name) if extra_arg is not None else None
 
     return self.kwargs.get(name) if xarg is None else xarg
 
