@@ -12,29 +12,29 @@ import py_misc_utils.utils as pyu
 import torch
 import torchvision
 
+from . import dataset_base as dsb
 from . import utils as ut
 
 
-class Dataset(torch.utils.data.Dataset):
+class Dataset(dsb.Dataset):
 
   def __init__(self, data,
                select_fn=None,
                transform=None,
                target_transform=None,
                **kwargs):
-    super().__init__()
+    super().__init__(select_fn=select_fn,
+                     transform=transform,
+                     target_transform=target_transform,
+                     **kwargs)
     self.data = data
-    self.select_fn = select_fn or _guess_select
-    self.transform = transform or _no_transform
-    self.target_transform = target_transform or _no_transform
-    self.kwargs = kwargs
 
   def extra_arg(self, name):
-    xarg = getattr(self.data, 'extra_arg', None)
+    extra_arg = getattr(self.data, 'extra_arg', None)
 
-    return self.kwargs.get(name) if xarg is None else xarg(name)
+    return extra_arg(name) if extra_arg is not None else None
 
-  def _get(self, i):
+  def get_sample(self, i):
     if isinstance(self.data, dict):
       return {k: v[i] for k, v in self.data.items()}
 
@@ -45,15 +45,6 @@ class Dataset(torch.utils.data.Dataset):
       return min(len(v) if hasattr(v, '__len__') else 1 for v in self.data.values())
 
     return len(self.data)
-
-  def __getitem__(self, i):
-    if isinstance(i, slice):
-      return sub_dataset(self, i)
-
-    idata = self._get(i)
-    x, y = self.select_fn(idata)
-
-    return self.transform(x), self.target_transform(y)
 
 
 def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
@@ -106,19 +97,6 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
     return ds
 
 
-def _guess_select(x):
-  if isinstance(x, (list, tuple)):
-    return x[: 2]
-  if isinstance(x, dict):
-    return list(x.values())[: 2]
-
-  return x
-
-
-def _no_transform(x):
-  return x
-
-
 def keys_selector(keys):
 
   def select_fn(x):
@@ -132,12 +110,6 @@ def _norm_transforms(transform):
     return transform
 
   return dict(train=transform, test=transform)
-
-
-def sub_dataset(ds, dslice):
-  indices = torch.arange(*dslice.indices(len(ds)))
-
-  return torch.utils.data.Subset(ds, indices)
 
 
 def _try_module(name, cache_dir, split_pct, dataset_kwargs):
@@ -166,6 +138,7 @@ def create_dataset(name,
                    split_pct=None,
                    dataset_kwargs=None):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  select_fn = select_fn or dsb.ident_select
   transform = _norm_transforms(transform)
   target_transform = _norm_transforms(target_transform)
   split_pct = split_pct or 0.9

@@ -6,6 +6,7 @@ import py_misc_utils.http_cache as pyhc
 import py_misc_utils.utils as pyu
 import torch
 
+from . import dataset_base as dsb
 from . import next_sequence_dataset as nsd
 from . import next_token_dataset as ntd
 from . import tokenizers as tkz
@@ -48,19 +49,20 @@ def create(content_path, context_size, max_vocab_size,
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit: ]
 
+  target_transform = dsb.to_transform(dtype=torch.long)
   if is_sequence:
     train_dataset = nsd.NextSequenceDataset(train_data, context_size,
-                                            ydtype=torch.long,
+                                            target_transform=target_transform,
                                             tokenizer=tokenizer)
     test_dataset = nsd.NextSequenceDataset(test_data, context_size,
-                                           ydtype=torch.long,
+                                           target_transform=target_transform,
                                            tokenizer=tokenizer)
   else:
     train_dataset = ntd.NextTokenDataset(train_data, context_size,
-                                         ydtype=torch.long,
+                                         target_transform=target_transform,
                                          tokenizer=tokenizer)
     test_dataset = ntd.NextTokenDataset(test_data, context_size,
-                                        ydtype=torch.long,
+                                        target_transform=target_transform,
                                         tokenizer=tokenizer)
 
   return dict(train=train_dataset, test=test_dataset)
