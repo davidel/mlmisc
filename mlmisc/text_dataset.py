@@ -45,6 +45,8 @@ def create(content_path, context_size, max_vocab_size,
       tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
       torch.save(tokens, tokens_path)
 
+    alog.info(f'Tokenizer proto file generated at "{proto_path}"')
+
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit: ]
