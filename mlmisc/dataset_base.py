@@ -1,3 +1,5 @@
+import array
+
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.utils as pyu
@@ -59,7 +61,7 @@ def guess_select(x):
 
 
 def sub_dataset(ds, dslice):
-  indices = torch.arange(*dslice.indices(len(ds)))
+  indices = array.array(pyu.array_code(len(ds)), range(*dslice.indices(len(ds))))
 
   return torch.utils.data.Subset(ds, indices)
 
