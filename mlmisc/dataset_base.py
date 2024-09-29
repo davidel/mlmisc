@@ -28,7 +28,7 @@ class Dataset(torch.utils.data.Dataset):
 
   def __getitem__(self, i):
     if isinstance(i, slice):
-      return sub_dataset(self, i)
+      return sliced_dataset(self, i)
 
     data = self.get_sample(i)
     x, y = self.select_fn(data)
@@ -60,7 +60,7 @@ def guess_select(x):
   return x
 
 
-def sub_dataset(ds, dslice):
+def sliced_dataset(ds, dslice):
   ds_size = len(ds)
   indices = array.array(pyu.array_code(ds_size), range(*dslice.indices(ds_size)))
 
