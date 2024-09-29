@@ -61,7 +61,8 @@ def guess_select(x):
 
 
 def sub_dataset(ds, dslice):
-  indices = array.array(pyu.array_code(len(ds)), range(*dslice.indices(len(ds))))
+  ds_size = len(ds)
+  indices = array.array(pyu.array_code(ds_size), range(*dslice.indices(ds_size)))
 
   return torch.utils.data.Subset(ds, indices)
 
