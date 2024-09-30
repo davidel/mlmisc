@@ -1,3 +1,4 @@
+import itertools
 import math
 
 import numpy as np
@@ -22,24 +23,30 @@ def calc_shape(n, c):
 
 
 def calc_best_shape(flat_size, base_c, min_dim):
-  shape, pad, c = None, None, base_c
-  while True:
+  shape, pad = None, None
+  for c in itertools.count(base_c):
     cshape, cpad = calc_shape(flat_size, c)
     if cshape[-1] < min_dim:
       break
     if shape is None or cpad < pad:
       shape, pad = cshape, cpad
-    c += 1
 
   return shape, pad
 
 
 def calc_conv_params(shape, out_features):
-  stride = max(1, int(math.sqrt(np.prod(shape) / out_features)))
-  kernel_size = min(shape[-1], 2 * stride + 1)
-  stride = min(stride, kernel_size)
-  out_wnd_size = int((shape[-1] - kernel_size) / stride + 1)
-  out_channels = round(out_features / out_wnd_size**2)
+  stride, kernel_size, out_channels, error = None, None, None, None
+  for cstride in itertools.count(1):
+    ckernel_size = 2 * cstride + 1
+    if ckernel_size >= shape[-1] // 2:
+      break
+
+    out_wnd_size = int((shape[-1] - ckernel_size) / cstride + 1)
+    cout_channels = round(out_features / out_wnd_size**2)
+    cerror = abs(out_features - cout_channels * out_wnd_size**2)
+    if error is None or cerror < error:
+      stride, kernel_size, out_channels = cstride, ckernel_size, cout_channels
+      error = cerror
 
   alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
              f'out_wnd_size={out_wnd_size} out_channels={out_channels}')
