@@ -48,10 +48,11 @@ def calc_conv_params(shape, out_features):
       stride, kernel_size, out_channels = cstride, ckernel_size, cout_channels
       error = cerror
 
-  alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
-             f'out_wnd_size={out_wnd_size} out_channels={out_channels}')
+  if error is not None:
+    alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
+               f'out_wnd_size={out_wnd_size} out_channels={out_channels}')
 
-  return kernel_size, stride, out_channels
+    return kernel_size, stride, out_channels
 
 
 def create_conv(in_channels, out_channels, kernel_size, stride,
@@ -82,11 +83,15 @@ class ConvLinear(nn.Module):
 
     shape, pad = calc_best_shape(in_features, base_channels, min_dim_size)
 
-    alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features} linear')
+    alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features}')
 
-    tas.check_is_not_none(shape, msg=f'ConvLinear not supported for input size {in_features}')
+    tas.check_is_not_none(shape, msg=f'ConvLinear not supported for {in_features} -> {out_features}')
 
-    kernel_size, stride, out_channels = calc_conv_params(shape, out_features)
+    conv_params = calc_conv_params(shape, out_features)
+
+    tas.check_is_not_none(conv_params,
+                          msg=f'ConvLinear not supported for {in_features} -> {out_features}')
+    kernel_size, stride, out_channels = conv_params
 
     convs = [create_conv(shape[0], out_channels, kernel_size, stride, dropout, act)
              for _ in range(num_convs)]
