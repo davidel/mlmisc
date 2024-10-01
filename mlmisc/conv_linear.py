@@ -55,12 +55,18 @@ def calc_conv_params(shape, out_features):
     return kernel_size, stride, channels
 
 
-def create_conv(in_channels, out_channels, kernel_size, stride,
+def create_conv(shape, out_channels, kernel_size, stride, out_features,
                 dropout, act):
-  layers = [
-    nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
-    eil.Rearrange('b c h w -> b (c h w)'),
-  ]
+  conv = nn.Conv2d(shape[0], out_channels,
+                   kernel_size=kernel_size,
+                   stride=stride,
+                   padding='valid')
+  flat_size = np.prod(ut.net_shape(conv, shape))
+
+  layers = [ conv, eil.Rearrange('b c h w -> b (c h w)') ]
+  if flat_size != out_features:
+    layer.append(nn.Linear(flat_size, out_features, bias=False))
+
   if dropout is not None:
     layers.append(nn.Dropout(dropout))
   if act is not None:
@@ -93,7 +99,7 @@ class ConvLinear(nn.Module):
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
     kernel_size, stride, out_channels = conv_params
 
-    convs = [create_conv(shape[0], out_channels, kernel_size, stride, dropout, act)
+    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features, dropout, act)
              for _ in range(num_convs)]
 
     super().__init__()
