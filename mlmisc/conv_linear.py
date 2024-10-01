@@ -22,7 +22,7 @@ def calc_shape(n, c):
 
 def calc_best_shape(flat_size, max_channels, min_dim):
   shape, pad = None, None
-  for c in round(1, max_channels + 1):
+  for c in range(1, max_channels + 1):
     cshape, cpad = calc_shape(flat_size, c)
     if cshape[-1] < min_dim and shape is not None:
       break
