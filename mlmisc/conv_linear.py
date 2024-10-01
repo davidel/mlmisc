@@ -66,8 +66,7 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
   if force:
-    cwndsize = conv_wndsize(shape[-1], kernel_size, stride)
-    flat_size = out_channels * wndsize**2
+    flat_size = out_channels * conv_wndsize(shape[-1], kernel_size, stride)**2
     if flat_size != out_features:
       layers.append(nn.Linear(flat_size, out_features, bias=False))
 
