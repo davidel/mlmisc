@@ -9,7 +9,6 @@ import torch
 import torch.nn as nn
 
 from . import args_sequential as aseq
-from . import args_parallel as apar
 from . import einops_layers as eil
 from . import layer_utils as lu
 from . import utils as ut
@@ -84,13 +83,11 @@ class ConvLinear(nn.Module):
   def __init__(self, in_features, out_features,
                base_channels=None,
                min_dim_size=None,
-               num_convs=None,
                dropout=None,
                act=None,
                force=None):
     base_channels = base_channels or 2
     min_dim_size = min_dim_size or 6
-    num_convs = num_convs or 8
     force = False if force is None else True
 
     shape, pad = calc_best_shape(in_features, base_channels, min_dim_size)
@@ -111,14 +108,15 @@ class ConvLinear(nn.Module):
 
     super().__init__()
     self.shape, self.pad = shape, pad
-    self.convs = apar.ArgsParallel(convs)
+    self.conv = create_conv(shape, out_channels, kernel_size, stride, out_features,
+                            force, dropout, act)
 
   def forward(self, x):
     lpad = self.pad // 2
     rpad = self.pad - lpad
     y = nn.functional.pad(x, (lpad, rpad))
     y = y.reshape(y.shape[0], *self.shape)
-    y = ut.add(self.convs(y))
+    y = self.conv(y)
 
     return y
 
