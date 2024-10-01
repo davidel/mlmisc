@@ -51,6 +51,9 @@ def calc_conv_params(shape, out_features, force):
 
   if params:
     if force:
+      # When "forcing" we are going to add a marshaling linear layer, so it is better
+      # to end up with an higher flattened size, and turn it down, instead of the
+      # contray. Hence we look for "error" >= 0, if any.
       params = sorted(params, key=lambda x: x[0])
       best_param = params[-1]
       for p in params:
