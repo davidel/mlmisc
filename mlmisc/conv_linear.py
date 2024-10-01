@@ -35,24 +35,24 @@ def calc_best_shape(flat_size, base_c, min_dim):
 
 
 def calc_conv_params(shape, out_features):
-  stride, kernel_size, out_channels, error = None, None, None, None
+  stride, kernel_size, channels, wndsize, error = None, None, None, None, None
   for cstride in itertools.count(1):
     ckernel_size = 2 * cstride + 1
     if ckernel_size >= shape[-1] // 2:
       break
 
-    out_wnd_size = int((shape[-1] - ckernel_size) / cstride + 1)
-    cout_channels = round(out_features / out_wnd_size**2)
-    cerror = abs(out_features - cout_channels * out_wnd_size**2)
+    cwndsize = int((shape[-1] - ckernel_size) / cstride + 1)
+    cchannels = round(out_features / cwndsize**2)
+    cerror = abs(out_features - cchannels * cwndsize**2)
     if error is None or cerror < error:
-      stride, kernel_size, out_channels = cstride, ckernel_size, cout_channels
+      stride, kernel_size, channels, wndsize = cstride, ckernel_size, cchannels, cwndsize
       error = cerror
 
   if error is not None:
     alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
-               f'out_wnd_size={out_wnd_size} out_channels={out_channels}')
+               f'out_wnd_size={wndsize} out_channels={channels}')
 
-    return kernel_size, stride, out_channels
+    return kernel_size, stride, channels
 
 
 def create_conv(in_channels, out_channels, kernel_size, stride,
@@ -104,7 +104,7 @@ class ConvLinear(nn.Module):
     lpad = self.pad // 2
     rpad = self.pad - lpad
     y = nn.functional.pad(x, (lpad, rpad))
-    y = y.reshape(x.shape[0], *self.shape)
+    y = y.reshape(y.shape[0], *self.shape)
     y = ut.add([conv(y) for conv in self.convs])
 
     return y
