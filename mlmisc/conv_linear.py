@@ -38,7 +38,7 @@ def calc_conv_params(shape, out_features):
   stride, kernel_size, channels, wndsize, error = None, None, None, None, None
   for cstride in itertools.count(1):
     ckernel_size = 2 * cstride + 1
-    if ckernel_size >= shape[-1] // 2:
+    if ckernel_size > shape[-1] // 2:
       break
 
     cwndsize = int((shape[-1] - ckernel_size) / cstride + 1)
