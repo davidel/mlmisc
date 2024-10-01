@@ -65,7 +65,7 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
 
   layers = [ conv, eil.Rearrange('b c h w -> b (c h w)') ]
   if flat_size != out_features:
-    layer.append(nn.Linear(flat_size, out_features, bias=False))
+    layers.append(nn.Linear(flat_size, out_features, bias=False))
 
   if dropout is not None:
     layers.append(nn.Dropout(dropout))
