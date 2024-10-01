@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 
 from . import args_sequential as aseq
+from . import args_parallel as apar
 from . import einops_layers as eil
 from . import layer_utils as lu
 from . import utils as ut
@@ -110,14 +111,14 @@ class ConvLinear(nn.Module):
 
     super().__init__()
     self.shape, self.pad = shape, pad
-    self.convs = nn.ModuleList(convs)
+    self.convs = apar.ArgsParallel(convs)
 
   def forward(self, x):
     lpad = self.pad // 2
     rpad = self.pad - lpad
     y = nn.functional.pad(x, (lpad, rpad))
     y = y.reshape(y.shape[0], *self.shape)
-    y = ut.add([conv(y) for conv in self.convs])
+    y = ut.add(self.convs(y))
 
     return y
 
