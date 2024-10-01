@@ -112,13 +112,14 @@ class ConvLinear(nn.Module):
     super().__init__()
     self.shape, self.pad = shape, pad
     self.convs = apar.ArgsParallel(convs)
+    self.conv_mult = nn.Parameter(torch.ones(len(convs)))
 
   def forward(self, x):
     lpad = self.pad // 2
     rpad = self.pad - lpad
     y = nn.functional.pad(x, (lpad, rpad))
     y = y.reshape(y.shape[0], *self.shape)
-    y = ut.add(self.convs(y))
+    y = ut.add(self.convs(y), mul=self.conv_mult)
 
     return y
 
