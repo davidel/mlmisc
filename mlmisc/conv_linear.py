@@ -49,21 +49,24 @@ def calc_conv_params(shape, out_features):
       error = cerror
 
   if error is not None:
+    conv = nn.Conv2d(shape[0], channels,
+                     kernel_size=kernel_size,
+                     stride=stride,
+                     padding='valid')
+    flat_size = np.prod(ut.net_shape(conv, shape))
+
     alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
-               f'out_wnd_size={wndsize} out_channels={channels}')
+               f'out_wnd_size={wndsize} out_channels={channels} flat_size={flat_size}')
 
-    return kernel_size, stride, channels
+    return kernel_size, stride, channels, flat_size
 
 
-def create_conv(shape, out_channels, kernel_size, stride, out_features,
+def create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
                 dropout, act):
-  conv = nn.Conv2d(shape[0], out_channels,
-                   kernel_size=kernel_size,
-                   stride=stride,
-                   padding='valid')
-  flat_size = np.prod(ut.net_shape(conv, shape))
-
-  layers = [ conv, eil.Rearrange('b c h w -> b (c h w)') ]
+  layers = [
+    nn.Conv2d(shape[0], out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
+    eil.Rearrange('b c h w -> b (c h w)'),
+  ]
   if flat_size != out_features:
     layers.append(nn.Linear(flat_size, out_features, bias=False))
 
@@ -97,9 +100,10 @@ class ConvLinear(nn.Module):
 
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
-    kernel_size, stride, out_channels = conv_params
+    kernel_size, stride, out_channels, flat_size = conv_params
 
-    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features, dropout, act)
+    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
+                         dropout, act)
              for _ in range(num_convs)]
 
     super().__init__()
