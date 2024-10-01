@@ -42,7 +42,7 @@ def calc_conv_params(shape, out_features):
       break
 
     cwndsize = int((shape[-1] - ckernel_size) / cstride + 1)
-    cchannels = round(out_features / cwndsize**2)
+    cchannels = max(1, round(out_features / cwndsize**2))
     cerror = abs(out_features - cchannels * cwndsize**2)
     if error is None or cerror < error:
       stride, kernel_size, channels, wndsize = cstride, ckernel_size, cchannels, cwndsize
