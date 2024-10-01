@@ -34,6 +34,10 @@ def calc_best_shape(flat_size, base_c, min_dim):
   return shape, pad
 
 
+def conv_wndsize(size, kernel_size, stride):
+  return int((size - kernel_size) / stride + 1)
+
+
 def calc_conv_params(shape, out_features):
   stride, kernel_size, channels, wndsize, error = None, None, None, None, None
   for cstride in itertools.count(1):
@@ -41,7 +45,7 @@ def calc_conv_params(shape, out_features):
     if ckernel_size > shape[-1] // 2:
       break
 
-    cwndsize = int((shape[-1] - ckernel_size) / cstride + 1)
+    cwndsize = conv_wndsize(shape[-1], ckernel_size, cstride)
     cchannels = max(1, round(out_features / cwndsize**2))
     cerror = abs(out_features - cchannels * cwndsize**2)
     if error is None or cerror < error:
@@ -49,22 +53,23 @@ def calc_conv_params(shape, out_features):
       error = cerror
 
   if error is not None:
-    flat_size = channels * wndsize**2
-
     alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
-               f'out_wnd_size={wndsize} out_channels={channels} flat_size={flat_size}')
+               f'out_wnd_size={wndsize} out_channels={channels}')
 
-    return kernel_size, stride, channels, flat_size
+    return kernel_size, stride, channels
 
 
-def create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
+def create_conv(shape, out_channels, kernel_size, stride, out_features,
                 force, dropout, act):
   layers = [
     nn.Conv2d(shape[0], out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
-  if force and flat_size != out_features:
-    layers.append(nn.Linear(flat_size, out_features, bias=False))
+  if force:
+    cwndsize = conv_wndsize(shape[-1], kernel_size, stride)
+    flat_size = out_channels * wndsize**2
+    if flat_size != out_features:
+      layers.append(nn.Linear(flat_size, out_features, bias=False))
 
   if dropout is not None:
     layers.append(nn.Dropout(dropout))
@@ -98,9 +103,9 @@ class ConvLinear(nn.Module):
 
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
-    kernel_size, stride, out_channels, flat_size = conv_params
+    kernel_size, stride, out_channels = conv_params
 
-    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
+    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features,
                          force, dropout, act)
              for _ in range(num_convs)]
 
