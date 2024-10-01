@@ -15,18 +15,16 @@ from . import utils as ut
 
 
 def calc_shape(n, c):
-  s = int(math.sqrt(n / c))
-  q = s * s
-  k = math.ceil(n / q)
+  s = math.ceil(math.sqrt(n / c))
 
-  return (k, s, s), q * k - n
+  return (c, s, s), c * s**2 - n
 
 
-def calc_best_shape(flat_size, base_c, min_dim):
+def calc_best_shape(flat_size, max_channels, min_dim):
   shape, pad = None, None
-  for c in itertools.count(base_c):
+  for c in round(1, max_channels + 1):
     cshape, cpad = calc_shape(flat_size, c)
-    if cshape[-1] < min_dim:
+    if cshape[-1] < min_dim and shape is not None:
       break
     if shape is None or cpad < pad:
       shape, pad = cshape, cpad
@@ -81,20 +79,18 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
 class ConvLinear(nn.Module):
 
   def __init__(self, in_features, out_features,
-               base_channels=None,
+               max_channels=None,
                min_dim_size=None,
                dropout=None,
                act=None,
                force=None):
-    base_channels = base_channels or 2
+    max_channels = max_channels or 3
     min_dim_size = min_dim_size or 6
     force = False if force is None else True
 
-    shape, pad = calc_best_shape(in_features, base_channels, min_dim_size)
+    shape, pad = calc_best_shape(in_features, max_channels, min_dim_size)
 
     alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features}')
-
-    tas.check_is_not_none(shape, msg=f'ConvLinear not supported for {in_features} -> {out_features}')
 
     conv_params = calc_conv_params(shape, out_features)
 
