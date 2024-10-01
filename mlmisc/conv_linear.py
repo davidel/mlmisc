@@ -102,10 +102,6 @@ class ConvLinear(nn.Module):
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
     kernel_size, stride, out_channels = conv_params
 
-    convs = [create_conv(shape, out_channels, kernel_size, stride, out_features,
-                         force, dropout, act)
-             for _ in range(num_convs)]
-
     super().__init__()
     self.shape, self.pad = shape, pad
     self.conv = create_conv(shape, out_channels, kernel_size, stride, out_features,
