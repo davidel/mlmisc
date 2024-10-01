@@ -58,12 +58,12 @@ def calc_conv_params(shape, out_features):
 
 
 def create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
-                dropout, act):
+                force, dropout, act):
   layers = [
     nn.Conv2d(shape[0], out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
-  if flat_size != out_features:
+  if force and flat_size != out_features:
     layers.append(nn.Linear(flat_size, out_features, bias=False))
 
   if dropout is not None:
@@ -81,10 +81,12 @@ class ConvLinear(nn.Module):
                min_dim_size=None,
                num_convs=None,
                dropout=None,
-               act=None):
+               act=None,
+               force=None):
     base_channels = base_channels or 2
     min_dim_size = min_dim_size or 6
     num_convs = num_convs or 8
+    force = False if force is None else True
 
     shape, pad = calc_best_shape(in_features, base_channels, min_dim_size)
 
@@ -99,7 +101,7 @@ class ConvLinear(nn.Module):
     kernel_size, stride, out_channels, flat_size = conv_params
 
     convs = [create_conv(shape, out_channels, kernel_size, stride, out_features, flat_size,
-                         dropout, act)
+                         force, dropout, act)
              for _ in range(num_convs)]
 
     super().__init__()
