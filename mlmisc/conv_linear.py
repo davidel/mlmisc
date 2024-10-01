@@ -36,21 +36,33 @@ def conv_wndsize(size, kernel_size, stride):
   return int((size - kernel_size) / stride + 1)
 
 
-def calc_conv_params(shape, out_features):
-  stride, kernel_size, channels, wndsize, error = None, None, None, None, None
-  for cstride in itertools.count(1):
-    ckernel_size = 2 * cstride + 1
-    if ckernel_size > shape[-1] // 2:
+def calc_conv_params(shape, out_features, force):
+  params = []
+  for stride in itertools.count(1):
+    kernel_size = 2 * stride + 1
+    if kernel_size > shape[-1] // 2:
       break
 
-    cwndsize = conv_wndsize(shape[-1], ckernel_size, cstride)
-    cchannels = max(1, round(out_features / cwndsize**2))
-    cerror = abs(out_features - cchannels * cwndsize**2)
-    if error is None or cerror < error:
-      stride, kernel_size, channels, wndsize = cstride, ckernel_size, cchannels, cwndsize
-      error = cerror
+    wndsize = conv_wndsize(shape[-1], kernel_size, stride)
+    channels = max(1, round(out_features / wndsize**2))
+    error = channels * wndsize**2 - out_features
 
-  if error is not None:
+    params.append((error, stride, kernel_size, channels, wndsize))
+
+  if params:
+    if force:
+      params = sorted(params, key=lambda x: x[0])
+      best_param = params[-1]
+      for p in params:
+        if p[0] >= 0:
+          best_param = p
+          break
+
+      stride, kernel_size, channels, wndsize = best_param[1:]
+    else:
+      params = sorted(params, key=lambda x: abs(x[0]))
+      stride, kernel_size, channels, wndsize = params[0][1:]
+
     alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
                f'out_wnd_size={wndsize} out_channels={channels}')
 
@@ -92,7 +104,7 @@ class ConvLinear(nn.Module):
 
     alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features}')
 
-    conv_params = calc_conv_params(shape, out_features)
+    conv_params = calc_conv_params(shape, out_features, force)
 
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
