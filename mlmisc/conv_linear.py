@@ -84,7 +84,7 @@ class ConvLinear(nn.Module):
                dropout=None,
                act=None):
     base_channels = base_channels or 2
-    min_dim_size = min_dim_size or 8
+    min_dim_size = min_dim_size or 6
     num_convs = num_convs or 8
 
     shape, pad = calc_best_shape(in_features, base_channels, min_dim_size)
