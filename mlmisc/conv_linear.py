@@ -49,11 +49,7 @@ def calc_conv_params(shape, out_features):
       error = cerror
 
   if error is not None:
-    conv = nn.Conv2d(shape[0], channels,
-                     kernel_size=kernel_size,
-                     stride=stride,
-                     padding='valid')
-    flat_size = np.prod(ut.net_shape(conv, shape))
+    flat_size = channels * wndsize**2
 
     alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
                f'out_wnd_size={wndsize} out_channels={channels} flat_size={flat_size}')
