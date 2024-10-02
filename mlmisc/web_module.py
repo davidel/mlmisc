@@ -13,7 +13,7 @@ import torch.nn as nn
 
 def _clone_repo(repo, root, force_clone, commit):
   pr = urllib.parse.urlparse(repo)
-  upath = pr.path[1: ] if pr.path.startswith('/') else pr.path
+  upath = pr.path[1:] if pr.path.startswith('/') else pr.path
 
   rpath = os.path.join(root, upath)
 
