@@ -24,8 +24,9 @@ def inputfn(lids, back=2):
 
 def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
                   act, dropout):
+  # PixelsPerPatch = np.prod(shape[1:]) / num_patches
+  # log2(PixelsPerPatch) / 2 == log4(PixelsPerPatch) ... (every step reduces by 2x2).
   conv_steps = max(1, int(np.log2(np.prod(shape[1:]) / num_patches) / 2))
-  min_wnd_size = 2 * embed_size
   attn_heads = 2
   num_classes_amp = 16
 
