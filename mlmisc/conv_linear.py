@@ -11,20 +11,21 @@ import torch.nn as nn
 from . import args_sequential as aseq
 from . import einops_layers as eil
 from . import layer_utils as lu
+from . import types as typ
 from . import utils as ut
 
 
 def calc_shape(n, c):
   s = math.ceil(math.sqrt(n / c))
 
-  return (c, s, s), c * s**2 - n
+  return typ.Shape2d(c, s, s), c * s**2 - n
 
 
 def calc_best_shape(flat_size, max_channels, min_dim):
   shape, pad = None, None
   for c in range(1, max_channels + 1):
     cshape, cpad = calc_shape(flat_size, c)
-    if cshape[-1] < min_dim and shape is not None:
+    if cshape.w < min_dim and shape is not None:
       break
     if shape is None or cpad < pad:
       shape, pad = cshape, cpad
@@ -41,11 +42,12 @@ def calc_conv_params(shape, out_features, max_params, force):
   for stride in itertools.count(1):
     param_count = len(params)
     for channels in itertools.count(1):
-      kernel_size = min(shape[-1], int(math.sqrt(max_params / (channels * shape[0]))))
+      kernel_size = int(math.sqrt(max_params / (channels * shape.c)))
+      kernel_size = min(shape.w, kernel_size)
       if kernel_size < 2 * stride + 1:
         break
 
-      wndsize = conv_wndsize(shape[-1], kernel_size, stride)
+      wndsize = conv_wndsize(shape.w, kernel_size, stride)
       error = channels * wndsize**2 - out_features
       params.append((error, stride, kernel_size, channels, wndsize))
 
@@ -79,10 +81,10 @@ def calc_conv_params(shape, out_features, max_params, force):
 def create_conv(shape, out_channels, kernel_size, stride, out_features,
                 force, dropout, act):
   layers = [
-    nn.Conv2d(shape[0], out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
+    nn.Conv2d(shape.c, out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
-  flat_size = out_channels * conv_wndsize(shape[-1], kernel_size, stride)**2
+  flat_size = out_channels * conv_wndsize(shape.w, kernel_size, stride)**2
   if force:
     if flat_size != out_features:
       layers.append(nn.Linear(flat_size, out_features, bias=False))
