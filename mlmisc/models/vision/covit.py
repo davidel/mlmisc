@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.utils as pyu
@@ -26,7 +28,8 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
                   act, dropout):
   # PixelsPerPatch = np.prod(shape[1:]) / num_patches
   # log2(PixelsPerPatch) / 2 == log4(PixelsPerPatch) ... (every step reduces by 2x2).
-  conv_steps = max(1, int(np.log2(np.prod(shape[1:]) / num_patches) / 2))
+  conv_steps = max(1, int(math.log2(np.prod(shape[1:]) / num_patches) / 2))
+  patches_x_edge = round(math.sqrt(num_patches))
   attn_heads = 2
   num_classes_amp = 16
 
@@ -35,13 +38,16 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
   for i in range(conv_steps):
     c, h, w = net.shape
 
-    stride = 2 if h * w >= 4 * num_patches else 1
+    hstride = 2 if (h - 3) >= 2 * patches_x_edge else 1
+    wstride = 2 if (w - 3) >= 2 * patches_x_edge else 1
+    hkernel_size = min(h, 2 * hstride + 1)
+    wkernel_size = min(w, 2 * wstride + 1)
     channels = min(pyu.round_up(c + cstep, 8), embed_size)
 
     net.batchnorm2d()
     net.conv2d(channels,
-               kernel_size=2 * stride + 1,
-               stride=stride,
+               kernel_size=(hkernel_size, wkernel_size),
+               stride=(hstride, wstride),
                padding='valid')
     net.add(lu.create(act))
 
