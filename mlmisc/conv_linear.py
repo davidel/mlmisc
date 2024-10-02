@@ -46,6 +46,7 @@ def calc_conv_params(shape, out_features, max_params, force):
         break
 
       wndsize = conv_wndsize(shape[-1], kernel_size, stride)
+      error = channels * wndsize**2 - out_features
       params.append((error, stride, kernel_size, channels, wndsize))
 
     if param_count == len(params):
