@@ -108,7 +108,7 @@ class ConvLinear(nn.Module):
                bias=None,
                act=None,
                force=None):
-    params_reduction = pyu.value_or(params_reduction, 0.25)
+    params_reduction = pyu.value_or(params_reduction, 0.2)
     max_channels = pyu.value_or(max_channels, 3)
     min_dim_size = pyu.value_or(min_dim_size, 6)
     bias = pyu.value_or(bias, True)
