@@ -38,8 +38,8 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
   for i in range(conv_steps):
     c, h, w = net.shape
 
-    hstride = 2 if (h - 3) >= 2 * patches_x_edge else 1
-    wstride = 2 if (w - 3) >= 2 * patches_x_edge else 1
+    hstride = 2 if (h - 5) >= 2 * patches_x_edge else 1
+    wstride = 2 if (w - 5) >= 2 * patches_x_edge else 1
     hkernel_size = min(h, 2 * hstride + 1)
     wkernel_size = min(w, 2 * wstride + 1)
     channels = min(pyu.round_up(c + cstep, 8), embed_size)
