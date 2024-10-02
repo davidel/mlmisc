@@ -82,17 +82,18 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
     nn.Conv2d(shape[0], out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
+  flat_size = out_channels * conv_wndsize(shape[-1], kernel_size, stride)**2
   if force:
-    flat_size = out_channels * conv_wndsize(shape[-1], kernel_size, stride)**2
     if flat_size != out_features:
       layers.append(nn.Linear(flat_size, out_features, bias=False))
+      flat_size = out_features
 
   if dropout is not None:
     layers.append(nn.Dropout(dropout))
   if act is not None:
     layers.append(lu.create(act))
 
-  return aseq.ArgsSequential(layers)
+  return aseq.ArgsSequential(layers), flat_size
 
 
 class ConvLinear(nn.Module):
@@ -102,11 +103,13 @@ class ConvLinear(nn.Module):
                max_channels=None,
                min_dim_size=None,
                dropout=None,
+               bias=None,
                act=None,
                force=None):
     params_reduction = pyu.value_or(params_reduction, 0.25)
     max_channels = pyu.value_or(max_channels, 3)
     min_dim_size = pyu.value_or(min_dim_size, 6)
+    bias = pyu.value_or(bias, True)
     force = pyu.value_or(force, False)
 
     shape, pad = calc_best_shape(in_features, max_channels, min_dim_size)
@@ -121,17 +124,26 @@ class ConvLinear(nn.Module):
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
     kernel_size, stride, out_channels = conv_params
 
+    conv, flat_size = create_conv(shape, out_channels, kernel_size, stride, out_features,
+                                  force, dropout, act)
+
     super().__init__()
     self.shape, self.pad = shape, pad
-    self.conv = create_conv(shape, out_channels, kernel_size, stride, out_features,
-                            force, dropout, act)
+    self.conv = conv
+    self.bias = nn.Parameter(torch.zeros(flat_size)) if bias else None
 
   def forward(self, x):
-    lpad = self.pad // 2
-    rpad = self.pad - lpad
-    y = nn.functional.pad(x, (lpad, rpad))
+    if self.pad:
+      lpad = self.pad // 2
+      rpad = self.pad - lpad
+      y = nn.functional.pad(x, (lpad, rpad))
+    else:
+      y = x
+
     y = y.reshape(y.shape[0], *self.shape)
     y = self.conv(y)
+    if self.bias is not None:
+      y += self.bias
 
     return y
 
