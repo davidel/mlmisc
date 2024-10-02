@@ -36,18 +36,20 @@ def conv_wndsize(size, kernel_size, stride):
   return int((size - kernel_size) / stride + 1)
 
 
-def calc_conv_params(shape, out_features, force):
+def calc_conv_params(shape, out_features, max_params, force):
   params = []
   for stride in itertools.count(1):
-    kernel_size = 2 * stride + 1
-    if kernel_size > shape[-1] // 2:
+    param_count = len(params)
+    for channels in itertools.count(1):
+      kernel_size = min(shape[-1], int(math.sqrt(max_params / (channels * shape[0]))))
+      if kernel_size < 2 * stride + 1:
+        break
+
+      wndsize = conv_wndsize(shape[-1], kernel_size, stride)
+      params.append((error, stride, kernel_size, channels, wndsize))
+
+    if param_count == len(params):
       break
-
-    wndsize = conv_wndsize(shape[-1], kernel_size, stride)
-    channels = max(1, round(out_features / wndsize**2))
-    error = channels * wndsize**2 - out_features
-
-    params.append((error, stride, kernel_size, channels, wndsize))
 
   if params:
     if force:
@@ -95,11 +97,13 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
 class ConvLinear(nn.Module):
 
   def __init__(self, in_features, out_features,
+               params_reduction=None,
                max_channels=None,
                min_dim_size=None,
                dropout=None,
                act=None,
                force=None):
+    params_reduction = pyu.value_or(params_reduction, 0.25)
     max_channels = pyu.value_or(max_channels, 3)
     min_dim_size = pyu.value_or(min_dim_size, 6)
     force = pyu.value_or(force, False)
@@ -108,7 +112,9 @@ class ConvLinear(nn.Module):
 
     alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features}')
 
-    conv_params = calc_conv_params(shape, out_features, force)
+    max_params = round(in_features * out_features * params_reduction)
+
+    conv_params = calc_conv_params(shape, out_features, max_params, force)
 
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
