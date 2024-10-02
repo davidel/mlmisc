@@ -21,9 +21,9 @@ def calc_shape(n, c):
   return typ.Shape2d(c, s, s), c * s**2 - n
 
 
-def calc_best_shape(flat_size, max_channels, min_dim):
+def calc_best_shape(flat_size, in_channels, min_dim):
   shape, pad = None, None
-  for c in range(1, max_channels + 1):
+  for c in in_channels:
     cshape, cpad = calc_shape(flat_size, c)
     if cshape.w < min_dim and shape is not None:
       break
@@ -102,19 +102,19 @@ class ConvLinear(nn.Module):
 
   def __init__(self, in_features, out_features,
                params_reduction=None,
-               max_channels=None,
+               in_channels=None,
                min_dim_size=None,
                dropout=None,
                bias=None,
                act=None,
                force=None):
     params_reduction = pyu.value_or(params_reduction, 0.2)
-    max_channels = pyu.value_or(max_channels, 3)
+    in_channels = pyu.value_or(in_channels, range(1, 4))
     min_dim_size = pyu.value_or(min_dim_size, 6)
     bias = pyu.value_or(bias, True)
     force = pyu.value_or(force, False)
 
-    shape, pad = calc_best_shape(in_features, max_channels, min_dim_size)
+    shape, pad = calc_best_shape(in_features, in_channels, min_dim_size)
     max_params = round(in_features * out_features * params_reduction)
     conv_params = calc_conv_params(shape, out_features, max_params, force)
     tas.check_is_not_none(conv_params,
