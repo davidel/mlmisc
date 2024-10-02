@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.utils as pyu
 
 from . import layer_utils as lu
 
@@ -45,4 +46,9 @@ class TiledLinear(nn.Module):
     y = self.act(y)
 
     return y
+
+  def extra_repr(self):
+    return pyu.stri(dict(num_tiles=self.num_tiles,
+                         tile_size=self.tiled_fc.weight.shape[-1],
+                         pad=self.pad))
 

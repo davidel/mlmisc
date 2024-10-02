@@ -128,3 +128,6 @@ class ConvLinear(nn.Module):
 
     return y
 
+  def extra_repr(self):
+    return pyu.stri(dict(shape=self.shape, pad=self.pad))
+
