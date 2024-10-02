@@ -15,8 +15,8 @@ class TiledLinear(nn.Module):
   def __init__(self, in_features, out_features, num_tiles,
                bias=None,
                act=None):
-    bias = True if bias is None else bias
-    act = act or nn.Identity
+    bias = pyu.value_or(bias, True)
+    act = pyu.value_or(act, nn.Identity)
 
     tile_size = math.ceil(in_features / num_tiles)
 

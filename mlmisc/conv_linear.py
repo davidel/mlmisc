@@ -100,9 +100,9 @@ class ConvLinear(nn.Module):
                dropout=None,
                act=None,
                force=None):
-    max_channels = max_channels or 3
-    min_dim_size = min_dim_size or 6
-    force = False if force is None else True
+    max_channels = pyu.value_or(max_channels, 3)
+    min_dim_size = pyu.value_or(min_dim_size, 6)
+    force = pyu.value_or(force, False)
 
     shape, pad = calc_best_shape(in_features, max_channels, min_dim_size)
 

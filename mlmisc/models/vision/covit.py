@@ -77,9 +77,9 @@ class CoViT(nn.Module):
                act=None,
                weight=None,
                label_smoothing=None):
-    dropout = dropout if dropout is not None else 0.1
-    act = act or 'relu'
-    label_smoothing = label_smoothing or 0.0
+    dropout = pyu.value_or(dropout, 0.1)
+    act = pyu.value_or(act, nn.ReLU)
+    label_smoothing = pyu.value_or(label_smoothing, 0.0)
 
     net = create_layers(shape, num_layers, embed_size, num_patches, num_classes,
                         act, dropout)

@@ -1,3 +1,4 @@
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -14,8 +15,8 @@ class ShardSeq(sb.SequenceBase):
   def __init__(self, context_size, embed_size, num_heads, vocab_size, num_layers,
                use_attn_mask=None,
                act=None):
-    use_attn_mask = True if use_attn_mask is None else use_attn_mask
-    act = act or 'gelu'
+    use_attn_mask = pyu.value_or(use_attn_mask, True)
+    act = pyu.value_or(act, 'gelu')
 
     def post():
       return aseq.ArgsSequential(

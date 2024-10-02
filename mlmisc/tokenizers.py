@@ -50,7 +50,7 @@ def create_tokenizer(path, max_vocab_size,
 
 
 def enum_chunks(path, chunk_size=None):
-  chunk_size = chunk_size or 32 * 1024 * 1024
+  chunk_size = pyu.value_or(chunk_size, 32 * 1024 * 1024)
   with open(path, mode='rb') as fd:
     rem = b''
     while True:

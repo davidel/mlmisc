@@ -54,11 +54,11 @@ class CNNEnsemble(nb.NetBase):
                dropout=None,
                weight=None,
                label_smoothing=None):
-    num_nets = num_nets or 8
-    max_output = max_output or 1024
-    act = act or 'relu'
-    dropout = dropout or 0.2
-    label_smoothing = label_smoothing or 0.0
+    num_nets = pyu.value_or(num_nets, 8)
+    max_output = pyu.value_or(max_output, 1024)
+    act = pyu.value_or(act, 'relu')
+    dropout = pyu.value_or(dropout, 0.2)
+    label_smoothing = pyu.value_or(label_smoothing, 0.0)
 
     nets = []
     if not conv_specs:

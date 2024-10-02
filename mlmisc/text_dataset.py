@@ -19,8 +19,8 @@ def create(content_path, context_size, max_vocab_size,
            split_pct=None,
            **kwargs):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), '.cache')
-  is_sequence = True if is_sequence is None else is_sequence
-  split_pct = 0.9 if split_pct is None else split_pct
+  is_sequence = pyu.value_or(is_sequence, True)
+  split_pct = pyu.value_or(split_pct, 0.9)
 
   datasets_dir = os.path.join(cache_dir, 'datasets')
 

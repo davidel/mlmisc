@@ -1,6 +1,7 @@
 import math
 
 import einops
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -10,8 +11,8 @@ class Attention(nn.Module):
   def __init__(self, embed_size, num_heads,
                attn_dropout=None,
                dropout=None):
-    attn_dropout = attn_dropout or 0.0
-    dropout = dropout or 0.0
+    attn_dropout = pyu.value_or(attn_dropout, 0.0)
+    dropout = pyu.value_or(dropout, 0.0)
 
     super().__init__()
     self.num_heads = num_heads
