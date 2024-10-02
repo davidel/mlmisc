@@ -62,10 +62,10 @@ class WebModule(nn.Module):
                force_clone=None,
                mod_args=None,
                mod_kwargs=None):
-    cache_dir = cache_dir or _modules_cachedir()
-    force_clone = force_clone or False
-    mod_args = mod_args or ()
-    mod_kwargs = mod_kwargs or {}
+    cache_dir = pyu.value_or(cache_dir, _modules_cachedir())
+    force_clone = pyu.value_or(force_clone, False)
+    mod_args = pyu.value_or(mod_args, ())
+    mod_kwargs = pyu.value_or(mod_kwargs, {})
 
     alog.debug(f'Using Web Modules cache folder "{cache_dir}"')
 
@@ -74,8 +74,16 @@ class WebModule(nn.Module):
     mod = _load_module(rpath, module)
 
     super().__init__()
+    self.repr_args = dict(repo=repo,
+                          module=module,
+                          ctor=ctor,
+                          mod_args=mod_args,
+                          mod_kwargs=mod_kwargs)
     self.net = getattr(mod, ctor)(*mod_args, **mod_kwargs)
 
   def forward(self, *args, **kwargs):
     return self.net(*args, **kwargs)
+
+  def extra_repr(self):
+    return pyu.stri(self.repr_args)
 
