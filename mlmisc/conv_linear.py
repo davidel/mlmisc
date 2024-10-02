@@ -113,19 +113,17 @@ class ConvLinear(nn.Module):
     force = pyu.value_or(force, False)
 
     shape, pad = calc_best_shape(in_features, max_channels, min_dim_size)
-
-    alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> {out_features}')
-
     max_params = round(in_features * out_features * params_reduction)
-
     conv_params = calc_conv_params(shape, out_features, max_params, force)
-
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
     kernel_size, stride, out_channels = conv_params
 
     conv, flat_size = create_conv(shape, out_channels, kernel_size, stride, out_features,
                                   force, dropout, act)
+
+    alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> ' \
+               f'{out_features} ({flat_size})')
 
     super().__init__()
     self.shape, self.pad = shape, pad
