@@ -12,6 +12,7 @@ import torch.nn as nn
 
 from . import layer_utils as lu
 from . import module_builder as mb
+from . import types as typ
 from . import utils as ut
 
 
@@ -97,8 +98,8 @@ def create_random_stack(max_output,
                         act=None,
                         tail=None,
                         **kwargs):
-  round_features = round_features or 16
-  fsigma = fsigma or 0.2
+  round_features = pyu.value_or(round_features, 16)
+  fsigma = pyu.value_or(fsigma, 0.2)
   net = net or mb.ModuleBuilder(shape)
 
   kernel_values, kernel_weights = _load_params(
@@ -140,11 +141,11 @@ def create_random_stack(max_output,
 
   convs = []
   while np.prod(net.shape) > max_output:
-    in_features, h, w = net.shape
+    cshape = typ.Shape2d(net.shape)
 
-    min_size = min(h, w)
+    min_size = min(cshape.h, cshape.w)
     if min_size < 3:
-      ksize, stride, features = (h, w), 1, max_output
+      ksize, stride, features = (cshape.h, cshape.w), 1, max_output
       padding = 'valid'
       maxpool, avgpool = 0, 0
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
@@ -179,8 +180,8 @@ def create_random_stack(max_output,
 
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
 
-      features = int(in_features * max(1.0, random.normalvariate(mu=float(stride),
-                                                                 sigma=fsigma)))
+      features = int(cshape.c * max(1.0, random.normalvariate(mu=float(stride),
+                                                              sigma=fsigma)))
       features = pyu.round_up(features, round_features)
 
     convs.append(ConvSpec(features=features,
@@ -202,7 +203,7 @@ def create_random_stack(max_output,
   return net, tuple(convs)
 
 
-_CSMAP = {
+CONVSPEC_ARGMAP = {
   'f': 'features',
   'k': 'kernel_size',
   's': 'stride',
@@ -216,7 +217,7 @@ _CSMAP = {
 def convs_from_string(config):
   convs = []
   for conv in pyu.resplit(config, ':'):
-    cs = {_CSMAP.get(k, k): v for k, v in pyu.parse_dict(conv).items()}
+    cs = {CONVSPEC_ARGMAP.get(k, k): v for k, v in pyu.parse_dict(conv).items()}
     convs.append(ConvSpec(**cs))
 
   return convs
