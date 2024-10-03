@@ -10,6 +10,8 @@ import torch
 
 
 def load_tokenizer(proto_path):
+  alog.debug(f'Loading tokenizer from "{proto_path}"')
+
   with open(proto_path, mode='rb') as pfd:
     proto_data = pfd.read()
 

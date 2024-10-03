@@ -13,6 +13,40 @@ from . import tokenizers as tkz
 from . import utils as ut
 
 
+def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
+  train_limit = int(len(tokens) * split_pct)
+  train_data = tokens[: train_limit]
+  test_data = tokens[train_limit:]
+
+  # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
+  # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
+  ds_args = dict(
+    target_transform=dsb.to_transform(dtype=torch.long),
+    tokenizer=tokenizer,
+  )
+  if is_sequence:
+    train_dataset = nsd.NextSequenceDataset(train_data, context_size, **ds_args)
+    test_dataset = nsd.NextSequenceDataset(test_data, context_size, **ds_args)
+  else:
+    train_dataset = ntd.NextTokenDataset(train_data, context_size, **ds_args)
+    test_dataset = ntd.NextTokenDataset(test_data, context_size, **ds_args)
+
+  return dict(train=train_dataset, test=test_dataset)
+
+
+def load(proto_path, tokens_path, context_size,
+         is_sequence=None,
+         split_pct=None,
+         **kwargs):
+  is_sequence = pyu.value_or(is_sequence, True)
+  split_pct = pyu.value_or(split_pct, 0.9)
+
+  tokenizer = tkz.load_tokenizer(proto_path)
+  tokens = ut.torch_load(tokens_path)
+
+  return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
+
+
 def create(content_path, context_size, max_vocab_size,
            cache_dir=None,
            is_sequence=None,
@@ -47,22 +81,5 @@ def create(content_path, context_size, max_vocab_size,
 
     alog.info(f'Tokenizer proto file generated at "{proto_path}"')
 
-  train_limit = int(len(tokens) * split_pct)
-  train_data = tokens[: train_limit]
-  test_data = tokens[train_limit:]
-
-  # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
-  # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
-  ds_args = dict(
-    target_transform=dsb.to_transform(dtype=torch.long),
-    tokenizer=tokenizer,
-  )
-  if is_sequence:
-    train_dataset = nsd.NextSequenceDataset(train_data, context_size, **ds_args)
-    test_dataset = nsd.NextSequenceDataset(test_data, context_size, **ds_args)
-  else:
-    train_dataset = ntd.NextTokenDataset(train_data, context_size, **ds_args)
-    test_dataset = ntd.NextTokenDataset(test_data, context_size, **ds_args)
-
-  return dict(train=train_dataset, test=test_dataset)
+  return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
 
