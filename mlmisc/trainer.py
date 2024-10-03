@@ -246,7 +246,7 @@ class Trainer:
                   step_fn=None,
                   scaler=None,
                   amp_dtype=None):
-    tctx = pyu.make_object(**{k:v for k, v in locals().items() if k != 'self'})
+    tctx = pyu.make_object(**{k: v for k, v in locals().items() if k != 'self'})
 
     wrapped_scheduler = LrScheduler(scheduler)
 
