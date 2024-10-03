@@ -201,7 +201,7 @@ def freeze_params(net, freeze=None, thaw=None):
 
 
 def split_dims(shape, npop):
-  return shape[: -npop], *shape[-npop: ]
+  return shape[: -npop], *shape[-npop:]
 
 
 def kuni_tensor(*shape, dtype=None, device=None, a=None):

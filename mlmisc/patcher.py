@@ -42,7 +42,7 @@ def norm_shape(x):
   if x.ndim == 3:
     return torch.unsqueeze(x, 0)
   if x.ndim > 4:
-    return x.reshape(-1, *x.shape[-3: ])
+    return x.reshape(-1, *x.shape[-3:])
 
   return x
 

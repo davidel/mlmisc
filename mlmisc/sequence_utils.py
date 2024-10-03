@@ -42,7 +42,7 @@ def create_eval_sequence(iseq, context_size, pad_mode, pad_value):
                      dtype=iseq.dtype,
                      device=iseq.device)
     if pad_mode == 'front':
-      seq[..., -seqlen: ] = iseq
+      seq[..., -seqlen:] = iseq
     elif pad_mode == 'back':
       seq[..., : seqlen] = iseq
     else:

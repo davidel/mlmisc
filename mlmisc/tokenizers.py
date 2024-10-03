@@ -61,7 +61,7 @@ def enum_chunks(path, chunk_size=None):
       if (epos := data.rfind(b'\n')) < 0:
         epos = data.rfind(b' ')
       if epos >= 0:
-        rem = data[epos + 1: ]
+        rem = data[epos + 1:]
         data = data[: epos + 1]
       else:
         # We did not find an EOL (or alternatively a space) within the read buffer.

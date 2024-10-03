@@ -90,7 +90,7 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
       ds['train'] = Dataset(full_ds[: ntrain],
                             transform=transform.get('train'),
                             target_transform=target_transform.get('train'))
-      ds['test'] = Dataset(full_ds[ntrain: ],
+      ds['test'] = Dataset(full_ds[ntrain:],
                            transform=transform.get('test'),
                            target_transform=target_transform.get('test'))
 

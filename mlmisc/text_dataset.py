@@ -49,7 +49,7 @@ def create(content_path, context_size, max_vocab_size,
 
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]
-  test_data = tokens[train_limit: ]
+  test_data = tokens[train_limit:]
 
   # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
   # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.

@@ -75,7 +75,7 @@ class ModuleBuilder(nn.Module):
 
   def layernorm(self, ndims=1, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.LayerNorm(self.shape[-ndims: ], **kwargs), **aargs)
+    return self.add(nn.LayerNorm(self.shape[-ndims:], **kwargs), **aargs)
 
   def forward(self, *args, **kwargs):
     y, results = args, []
