@@ -24,7 +24,7 @@ class PatcherViT(vb.ViTBase):
                label_smoothing=None):
     patcher_config = []
     if patch_specs:
-      for pcfg in patch_specs.split(':'):
+      for pcfg in pyu.resplit(patch_specs, ':'):
         patch_args = pyu.parse_dict(pcfg)
         patcher_config.append(pch.Patch(**patch_args))
     else:
