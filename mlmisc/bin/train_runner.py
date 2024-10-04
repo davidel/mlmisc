@@ -103,11 +103,13 @@ def _create_model(args, trainer, dataset):
 
     model_args, model_kwargs = [], dict()
     for arg in cmdline_args:
-      parts = [x.strip() for x in pyu.split_unquote(arg, '=', maxsplit=1)]
+      parts = [x.strip() for x in pyu.resplit(arg, '=')]
       if len(parts) == 2:
         model_kwargs[pyu.infer_value(parts[0], vtype=str)] = pyu.infer_value(parts[1])
-      else:
+      elif len(parts) == 1:
         model_args.append(pyu.infer_value(parts[0]))
+      else:
+        alog.xraise(ValueError, f'Syntax error: {arg}')
 
     x, y = dataset[0]
     x_shape = tuple(getattr(x, 'shape', ()))
