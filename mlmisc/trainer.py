@@ -173,7 +173,7 @@ class Trainer:
                                              percentiles=percentiles),
                           dict(value_stats=alog.DEBUG))
     if current_lr := scheduler.get_last_lr():
-      alog.debug(f'Current LR: {current_lr}')
+      alog.debug(f'Current LR: {pyu.format(current_lr, ".3e")}')
 
   def _save_checkpoint(self, tctx):
     checkpoint = tctx.checkpoint or ('optimizer', 'scheduler', 'scaler')
