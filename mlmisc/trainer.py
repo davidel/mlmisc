@@ -44,16 +44,19 @@ class LrScheduler:
     if self.scheduler is not None:
       train_step = getattr(self.scheduler, 'train_step', None)
       if train_step is not None:
-        return train_step(loss)
+        return train_step(ut.item(loss))
 
   def epoch_step(self, loss):
     if self.scheduler is not None:
       epoch_step = getattr(self.scheduler, 'epoch_step', None)
       if epoch_step is not None:
-        return epoch_step(loss)
+        return epoch_step(ut.item(loss))
       else:
         self.scheduler.step()
         alog.debug(f'Scheduler step: lr={pyu.format(self.scheduler.get_last_lr(), ".3e")}')
+
+  def get_last_lr(self):
+    return self.scheduler.get_last_lr() if self.scheduler is not None else None
 
 
 class Trainer:
@@ -161,7 +164,7 @@ class Trainer:
 
     return vloss
 
-  def _show_stats(self, model):
+  def _show_stats(self, model, scheduler):
     percentiles = (0.5, 0.9, 0.95, 0.99)
     du.show_tensors_stats(du.get_parameters_stats(model,
                                                   percentiles=percentiles),
@@ -169,6 +172,8 @@ class Trainer:
     du.show_tensors_stats(du.get_grads_stats(model,
                                              percentiles=percentiles),
                           dict(value_stats=alog.DEBUG))
+    if current_lr := scheduler.get_last_lr():
+      alog.debug(f'Current LR: {current_lr}')
 
   def _save_checkpoint(self, tctx):
     checkpoint = tctx.checkpoint or ('optimizer', 'scheduler', 'scaler')
@@ -260,7 +265,7 @@ class Trainer:
                              (now - tstep) / (sd.stepno - last_stepno), tctx)
         tstep, last_stepno = now, sd.stepno
 
-      wrapped_scheduler.train_step(sd.loss.item())
+      wrapped_scheduler.train_step(sd.loss)
 
       if model_path is not None and now > tsave + model_chkptstep:
         self._train_time.track()
@@ -269,7 +274,7 @@ class Trainer:
 
       if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
         self._train_time.track()
-        self._show_stats(model)
+        self._show_stats(model, wrapped_scheduler)
         vloss = self._run_validation(sd.stepno, sd.num_batches, tctx)
         if vloss is not None:
           val_losses.append(vloss)
