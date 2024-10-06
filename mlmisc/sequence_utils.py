@@ -38,7 +38,7 @@ def create_eval_sequence(iseq, context_size, pad_mode, pad_value):
   elif pad_mode == 'none':
     seq = iseq
   else:
-    seq = torch.full((1, context_size), pad_value,
+    seq = torch.full((iseq.shape[0], context_size), pad_value,
                      dtype=iseq.dtype,
                      device=iseq.device)
     if pad_mode == 'front':
