@@ -32,7 +32,8 @@ class ShardAttention(nn.Module):
 
     if mask is not None:
       y = y.masked_fill(mask, float('-inf'))
-    y = self.attend(y / math.sqrt(y.shape[1]))
+    # The scaled dot product dimension to be used is the head size "hs" (yt.shape[-2]).
+    y = self.attend(y / math.sqrt(yt.shape[-2]))
 
     xx = einops.repeat(x, 'b t c -> b nh t c', nh=self.num_heads)
     # (B, NH, T, T) @ (B, NH, T, C) => (B, NH, T, C)
