@@ -22,7 +22,7 @@ class ShardAttention(nn.Module):
     self.weight = nn.Parameter(ut.kuni_tensor(num_heads * embed_size, embed_size))
     self.attend = nn.Softmax(dim=-1)
     self.post = lu.create(post or nn.Identity)
-    self.post_feed = (lambda x, y: y) if post_feed is None else post_feed
+    self.post_feed = pyu.value_or(post_feed, lambda x, y: y)
 
   def forward(self, x, mask=None):
     y = einops.rearrange(x, 'b t (nh hs) -> b nh t hs', nh=self.num_heads)
