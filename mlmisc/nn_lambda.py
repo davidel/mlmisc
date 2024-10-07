@@ -6,8 +6,12 @@ class Lambda(nn.Module):
 
   def __init__(self, fn, info=None):
     super().__init__()
-    self.fn = fn
-    self.info = info
+    if isinstance(fn, str):
+      self.fn = eval(fn)
+      self.info = info or fn
+    else:
+      self.fn = fn
+      self.info = info
 
   def forward(self, *args, **kwargs):
     return self.fn(*args, **kwargs)
