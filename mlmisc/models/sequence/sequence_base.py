@@ -6,9 +6,11 @@ from ... import loss_wrappers as lsw
 
 class SequenceBase(nn.Module):
 
-  def __init__(self, context_size, embed_size, vocab_size):
+  def __init__(self, context_size, embed_size, vocab_size,
+               padding_idx=None):
     super().__init__()
-    self.tok_emb = nn.Embedding(vocab_size, embed_size)
+    self.tok_emb = nn.Embedding(vocab_size, embed_size,
+                                padding_idx=padding_idx)
     self.pos_emb = nn.Parameter(torch.zeros((1, context_size, embed_size)))
     self.loss = lsw.SeqLoss(nn.CrossEntropyLoss())
 

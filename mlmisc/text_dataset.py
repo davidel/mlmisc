@@ -66,11 +66,13 @@ def create(content_path, context_size, max_vocab_size,
     os.makedirs(ds_dir, exist_ok=True)
 
     proto_path = os.path.join(ds_dir, 'tokenizer.proto')
+    tokenizer_kwargs = pyu.dict_subset(kwargs, 'pad_id,unk_id,bos_id,eos_id')
 
     tokenizer = tkz.create_tokenizer(datafile, max_vocab_size,
                                      proto_path=proto_path,
                                      remove_extra_whitespaces=False,
-                                     user_defined_symbols=['\n', '\r'])
+                                     user_defined_symbols=['\n', '\r'],
+                                     **tokenizer_kwargs)
 
     tokens_path = os.path.join(ds_dir, 'tokens.pt')
     if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
