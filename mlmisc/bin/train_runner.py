@@ -50,8 +50,8 @@ def _create_dataset(args):
     train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'),
                                           env=globals().copy())
 
-    alog.info(f'Train Image Augmentation:\n{train_trans}')
-    alog.info(f'Test Image Augmentation:\n{test_trans}')
+    alog.info(f'Train Dataset Transforms:\n{train_trans}')
+    alog.info(f'Test Dataset Transforms:\n{test_trans}')
 
   if args.dataset_selector:
     select_fn = mldu.keys_selector(pyu.comma_split(args.dataset_selector))
