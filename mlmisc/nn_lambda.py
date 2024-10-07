@@ -7,8 +7,8 @@ class Lambda(nn.Module):
   def __init__(self, fn, info=None):
     super().__init__()
     if isinstance(fn, str):
-      self.fn = eval(fn)
-      self.info = info or fn
+      self.fn = eval(f'lambda {fn}')
+      self.info = info or f'lambda {fn}'
     else:
       self.fn = fn
       self.info = info
