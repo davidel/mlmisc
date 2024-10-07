@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 
 from ... import loss_wrappers as lsw
+from ... import net_base as nb
 
 
-class SequenceBase(nn.Module):
+class SequenceBase(nb.NetBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
                padding_idx=None):

@@ -55,5 +55,5 @@ class NetBase(nn.Module):
     return super().load_state_dict(state, *args, **kwargs)
 
   def pop_net_state(self, state, names):
-    return (state.pop(name, None) for name in pyu.as_sequence(names))
+    return (state.pop(name, None) for name in pyu.expand_strings(names))
 
