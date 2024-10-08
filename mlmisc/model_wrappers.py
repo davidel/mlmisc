@@ -139,7 +139,7 @@ class HugginFaceSeqTune(HugginFaceModel):
                      cache_dir=cache_dir)
 
     self.loss = lsw.SeqLoss(conf.create_loss(loss))
-    self.head = conf.create_model(head, self.config())
+    self.head = conf.create_model(head, self.config(), self.processor())
 
   def forward(self, x, targets=None):
     with torch.no_grad():
