@@ -117,7 +117,9 @@ class HugginFaceImgTune(HugginFaceModel):
     alog.debug(f'Image Processor:\n{self.processor()}')
 
     self.loss = lsw.CatLoss(conf.create_loss(loss))
-    self.head = conf.create_model(head, self.config())
+    self.head = conf.create_model(head,
+                                  config=self.config(),
+                                  processor=self.processor())
 
   def forward(self, x, targets=None):
     with torch.no_grad():
@@ -130,7 +132,7 @@ class HugginFaceImgTune(HugginFaceModel):
 
 class HugginFaceSeqTune(HugginFaceModel):
 
-  def __init__(self, model_name, model_class, head, loss,
+  def __init__(self, model_name, model_class, context_size, head, loss,
                processor_class=None,
                cache_dir=None):
     processor_class = pyu.value_or(processor_class, 'transformers.AutoTokenizer')
@@ -139,7 +141,10 @@ class HugginFaceSeqTune(HugginFaceModel):
                      cache_dir=cache_dir)
 
     self.loss = lsw.SeqLoss(conf.create_loss(loss))
-    self.head = conf.create_model(head, self.config(), self.processor())
+    self.head = conf.create_model(head,
+                                  config=self.config(),
+                                  processor=self.processor(),
+                                  context_size=context_size)
 
   def forward(self, x, targets=None):
     with torch.no_grad():
