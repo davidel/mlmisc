@@ -14,8 +14,8 @@ import torch.optim as optim
 from .lrsched import reduce_on_plateau as rop
 
 
-def _config_split(config):
-  parts = pyu.resplit(config, ':')
+def _config_split(config_data):
+  parts = pyu.resplit(config_data, ':')
   mod_config = pyu.parse_dict(parts[1], allow_args=True) if len(parts) == 2 else (dict(), ())
 
   return parts[0], mod_config
@@ -32,8 +32,8 @@ def _load_class(obj_name):
   return obj_class
 
 
-def create_object(name, config, *args, **kwargs):
-  obj_name, (obj_config, obj_args) = _config_split(config)
+def create_object(name, config_data, *args, **kwargs):
+  obj_name, (obj_config, obj_args) = _config_split(config_data)
 
   kwargs.update(obj_config)
 
@@ -44,18 +44,18 @@ def create_object(name, config, *args, **kwargs):
   return obj_class(*(args + obj_args), **kwargs)
 
 
-def create_optimizer(params, config, **kwargs):
-  return create_object('optimizer', config, params, **kwargs)
+def create_optimizer(params, config_data, **kwargs):
+  return create_object('optimizer', config_data, params, **kwargs)
 
 
-def create_lr_scheduler(optimizer, config, **kwargs):
-  return create_object('LR scheduler', config, optimizer, **kwargs)
+def create_lr_scheduler(optimizer, config_data, **kwargs):
+  return create_object('LR scheduler', config_data, optimizer, **kwargs)
 
 
-def create_loss(config, **kwargs):
-  return create_object('Loss', config, **kwargs)
+def create_loss(config_data, **kwargs):
+  return create_object('Loss', config_data, **kwargs)
 
 
-def create_model(config, *args, **kwargs):
-  return create_object('Model', config, *args, **kwargs)
+def create_model(config_data, *args, **kwargs):
+  return create_object('Model', config_data, *args, **kwargs)
 
