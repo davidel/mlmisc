@@ -94,7 +94,7 @@ def enum_chunks(path, chunk_size=None):
 def tokenize_data(path, tokenizer, chunk_size=None, dtype=None):
   tokens = array.array('I')
   for chunk in enum_chunks(path, chunk_size=chunk_size):
-    enc = tokenizer.encode(chunk.encode())
+    enc = tokenizer.encode(chunk.decode())
     tokens.extend(enc)
 
   return torch.tensor(tokens, dtype=dtype or torch.long)
