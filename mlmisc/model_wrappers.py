@@ -1,6 +1,7 @@
-import einops
 import huggingface_hub as hfh
-import numpy as np
+import py_misc_utils.alog as alog
+import py_misc_utils.assert_checks as tas
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -8,16 +9,10 @@ import torchvision
 import torchvision.transforms.v2 as transforms
 import transformers as trs
 
-import py_misc_utils.alog as alog
-import py_misc_utils.assert_checks as tas
-import py_misc_utils.num_utils as pynu
-import py_misc_utils.utils as pyu
-
 from . import config as conf
 from . import layer_utils as lu
 from . import loss_wrappers as lsw
 from . import module_builder as mbld
-from . import utils as ut
 from . import web_module as wmod
 
 
@@ -96,50 +91,60 @@ class HugginFaceModel(nn.Module):
 
     return res
 
-  def forward(self, *args, **kwargs):
+  def forward(self, *args, processor_kwargs=None, **kwargs):
     with torch.no_grad():
-      if args:
-        model_input = self.ctx.processor(*args)
+      if processor_kwargs is not None:
+        model_kwargs = self.ctx.processor(*args, **processor_kwargs)
+        model_kwargs.update(kwargs)
+        model_args = ()
       else:
-        model_input = kwargs
+        model_args, model_kwargs = args, kwargs
 
-      y = self.ctx.model(**model_input, output_hidden_states=True)
+      y = self.ctx.model(*model_args, **model_kwargs, output_hidden_states=True)
 
       return y.last_hidden_state
 
 
 class HugginFaceImgTune(HugginFaceModel):
 
-  def __init__(self, model_name, model_class, loss, num_classes,
+  def __init__(self, model_name, model_class, head, loss,
                processor_class=None,
-               output_collate=None,
-               dropout=None,
-               act=None,
                cache_dir=None):
     processor_class = pyu.value_or(processor_class, 'AutoImageProcessor')
-    output_collate = pyu.value_or(output_collate, nn.Identity())
-    dropout = pyu.value_or(dropout, 0.1)
-    act = pyu.value_or(act, nn.ReLU)
 
     super().__init__(model_name, model_class, processor_class,
                      cache_dir=cache_dir)
 
     alog.debug(f'Image Processor:\n{self.processor()}')
 
-    hidden_size = max(64 * num_classes, 4 * self.config().hidden_size)
-
     self.loss = lsw.CatLoss(conf.create_loss(loss))
-    self.output_collate = output_collate
-    self.head = mbld.ModuleBuilder((self.config().hidden_size,))
-    self.head.linear(hidden_size)
-    self.head.add(nn.Dropout(dropout))
-    self.head.add(lu.create(act))
-    self.head.linear(num_classes)
+    self.head = conf.create_model(head, self.config())
+
+  def forward(self, x, targets=None):
+    with torch.no_grad():
+      y = super().forward(x, processor_kwargs={})
+
+    y = self.head(y)
+
+    return y, self.loss(y, targets)
+
+
+class HugginFaceSeqTune(HugginFaceModel):
+
+  def __init__(self, model_name, model_class, head, loss,
+               processor_class=None,
+               cache_dir=None):
+    processor_class = pyu.value_or(processor_class, 'AutoTokenizer')
+
+    super().__init__(model_name, model_class, processor_class,
+                     cache_dir=cache_dir)
+
+    self.loss = lsw.SeqLoss(conf.create_loss(loss))
+    self.head = conf.create_model(head, self.config())
 
   def forward(self, x, targets=None):
     with torch.no_grad():
       y = super().forward(x)
-      y = self.output_collate(y)
 
     y = self.head(y)
 
