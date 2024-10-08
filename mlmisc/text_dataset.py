@@ -84,6 +84,8 @@ def create(content_path, context_size,
       else:
         tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
         torch.save(tokens, tokens_path)
+
+      alog.info(f'Tokenizer proto file generated at "{proto_path}"')
     else:
       tokenizer = tkz.from_pretrained(module_path, model_name, cache_dir=cache_dir)
 
@@ -92,8 +94,6 @@ def create(content_path, context_size,
       else:
         tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
         torch.save(tokens, tokens_path)
-
-    alog.info(f'Tokenizer proto file generated at "{proto_path}"')
 
   return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
 
