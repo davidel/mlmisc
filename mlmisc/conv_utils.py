@@ -26,8 +26,7 @@ ConvSpec = collections.namedtuple(
 def apply_conv_spec(net, cs, act=None):
   if cs.norm:
     net.batchnorm2d()
-  net.conv2d(cs.features,
-             kernel_size=cs.kernel_size,
+  net.conv2d(cs.features, cs.kernel_size,
              stride=cs.stride,
              padding=cs.padding)
   cact = act or cs.act

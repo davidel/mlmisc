@@ -49,21 +49,29 @@ class ModuleBuilder(nn.Module):
     aargs = self._pop_add_args(kwargs)
     return self.add(nn.Linear(self.shape[-1], nout, **kwargs), **aargs)
 
-  def conv2d(self, nout, **kwargs):
+  def conv1d(self, nout, kernel_size, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.Conv2d(self.shape[-3], nout, **kwargs), **aargs)
+    return self.add(nn.Conv1d(self.shape[-2], nout, kernel_size, **kwargs), **aargs)
 
-  def deconv2d(self, nout, **kwargs):
+  def deconv1d(self, nout, kernel_size, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, **kwargs), **aargs)
+    return self.add(nn.ConvTranspose1d(self.shape[-2], nout, kernel_size, **kwargs), **aargs)
 
-  def conv3d(self, nout, **kwargs):
+  def conv2d(self, nout, kernel_size, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.Conv3d(self.shape[-4], nout, **kwargs), **aargs)
+    return self.add(nn.Conv2d(self.shape[-3], nout, kernel_size, **kwargs), **aargs)
 
-  def deconv3d(self, nout, **kwargs):
+  def deconv2d(self, nout, kernel_size, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.ConvTranspose3d(self.shape[-4], nout, **kwargs), **aargs)
+    return self.add(nn.ConvTranspose2d(self.shape[-3], nout, kernel_size, **kwargs), **aargs)
+
+  def conv3d(self, nout, kernel_size, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.Conv3d(self.shape[-4], nout, kernel_size, **kwargs), **aargs)
+
+  def deconv3d(self, nout, kernel_size, **kwargs):
+    aargs = self._pop_add_args(kwargs)
+    return self.add(nn.ConvTranspose3d(self.shape[-4], nout, kernel_size, **kwargs), **aargs)
 
   def batchnorm2d(self, **kwargs):
     aargs = self._pop_add_args(kwargs)

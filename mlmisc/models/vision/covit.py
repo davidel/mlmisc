@@ -45,8 +45,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     channels = min(pyu.round_up(c + cstep, 8), embed_size)
 
     net.batchnorm2d()
-    net.conv2d(channels,
-               kernel_size=(hkernel_size, wkernel_size),
+    net.conv2d(channels, (hkernel_size, wkernel_size),
                stride=(hstride, wstride),
                padding='valid')
     net.add(lu.create(act))
@@ -56,7 +55,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     c, h, w = net.shape
 
     net.batchnorm2d(input_fn=inputfn(lids))
-    net.conv2d(c, kernel_size=3, stride=1, padding='same')
+    net.conv2d(c, 3, stride=1, padding='same')
     net.add(lu.create(act))
     net.add(eil.Rearrange('b c h w -> b (h w) c'))
     # b (h w) c -> b (h w) (h w)
@@ -68,7 +67,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     lid = net.add(eil.Rearrange('b (h w) c -> b c h w', h=h, w=w))
     lids.append(lid)
 
-  net.conv2d(net.shape[0], kernel_size=5, stride=2, padding='valid')
+  net.conv2d(net.shape[0], 5, stride=2, padding='valid')
   net.add(lu.create(act))
   net.add(nn.Flatten())
   net.linear(num_classes * num_classes_amp)
