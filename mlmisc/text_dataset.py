@@ -47,7 +47,10 @@ def load(proto_path, tokens_path, context_size,
   return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
 
 
-def create(content_path, context_size, max_vocab_size,
+def create(content_path, context_size,
+           max_vocab_size=None,
+           module_path=None,
+           model_name=None,
            cache_dir=None,
            is_sequence=None,
            split_pct=None,
@@ -65,21 +68,30 @@ def create(content_path, context_size, max_vocab_size,
     ds_dir = os.path.join(datasets_dir, ds_name)
     os.makedirs(ds_dir, exist_ok=True)
 
-    proto_path = os.path.join(ds_dir, 'tokenizer.proto')
-    tokenizer_kwargs = pyu.dict_subset(kwargs, 'pad_id,unk_id,bos_id,eos_id')
-
-    tokenizer = tkz.create_tokenizer(datafile, max_vocab_size,
-                                     proto_path=proto_path,
-                                     remove_extra_whitespaces=False,
-                                     user_defined_symbols=['\n', '\r'],
-                                     **tokenizer_kwargs)
-
     tokens_path = os.path.join(ds_dir, 'tokens.pt')
-    if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
-      tokens = ut.torch_load(tokens_path)
+    if module_path is None:
+      proto_path = os.path.join(ds_dir, 'tokenizer.proto')
+      tokenizer_kwargs = pyu.dict_subset(kwargs, 'pad_id,unk_id,bos_id,eos_id')
+
+      tokenizer = tkz.create_tokenizer(datafile, max_vocab_size,
+                                       proto_path=proto_path,
+                                       remove_extra_whitespaces=False,
+                                       user_defined_symbols=['\n', '\r'],
+                                       **tokenizer_kwargs)
+
+      if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
+        tokens = ut.torch_load(tokens_path)
+      else:
+        tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
+        torch.save(tokens, tokens_path)
     else:
-      tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
-      torch.save(tokens, tokens_path)
+      tokenizer = tkz.from_pretrained(module_path, model_name, cache_dir=cache_dir)
+
+      if os.path.isfile(tokens_path):
+        tokens = ut.torch_load(tokens_path)
+      else:
+        tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
+        torch.save(tokens, tokens_path)
 
     alog.info(f'Tokenizer proto file generated at "{proto_path}"')
 

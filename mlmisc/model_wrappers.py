@@ -1,13 +1,10 @@
-import huggingface_hub as hfh
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torchvision
-import torchvision.transforms.v2 as transforms
-import transformers as trs
 
 from . import config as conf
 from . import layer_utils as lu
@@ -55,14 +52,14 @@ class HugginFaceModel(nn.Module):
 
   def __init__(self, model_name, model_class, processor_class,
                cache_dir=None):
-    model_class = getattr(trs, model_class)
-    model = model_class.from_pretrained(
+    mclass, = pymu.import_module_names(model_class)
+    model = mclass.from_pretrained(
       model_name,
       trust_remote_code=False,
       cache_dir=cache_dir)
 
-    processor_class = getattr(trs, processor_class)
-    processor = processor.from_pretrained(
+    pclass, = pymu.import_module_names(processor_class)
+    processor = pclass.from_pretrained(
       model_name,
       use_fast=True,
       trust_remote_code=False,
@@ -110,7 +107,7 @@ class HugginFaceImgTune(HugginFaceModel):
   def __init__(self, model_name, model_class, head, loss,
                processor_class=None,
                cache_dir=None):
-    processor_class = pyu.value_or(processor_class, 'AutoImageProcessor')
+    processor_class = pyu.value_or(processor_class, 'transformers.AutoImageProcessor')
 
     super().__init__(model_name, model_class, processor_class,
                      cache_dir=cache_dir)
@@ -134,7 +131,7 @@ class HugginFaceSeqTune(HugginFaceModel):
   def __init__(self, model_name, model_class, head, loss,
                processor_class=None,
                cache_dir=None):
-    processor_class = pyu.value_or(processor_class, 'AutoTokenizer')
+    processor_class = pyu.value_or(processor_class, 'transformers.AutoTokenizer')
 
     super().__init__(model_name, model_class, processor_class,
                      cache_dir=cache_dir)

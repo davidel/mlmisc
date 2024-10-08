@@ -4,6 +4,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import sentencepiece as spm
 import torch
@@ -15,9 +16,20 @@ def load_tokenizer(proto_path):
   with open(proto_path, mode='rb') as pfd:
     proto_data = pfd.read()
 
-  toknz = spm.SentencePieceProcessor(model_proto=proto_data)
+  tokenizer = spm.SentencePieceProcessor(model_proto=proto_data)
 
-  return toknz
+  return tokenizer
+
+
+def from_pretrained(module_path, model_name, cache_dir=None):
+  tclass, = pymu.import_module_names(module_path)
+  tokenizer = tclass.from_pretrained(
+    model_name,
+    use_fast=True,
+    trust_remote_code=False,
+    cache_dir=cache_dir)
+
+  return tokenizer
 
 
 def create_tokenizer(path, max_vocab_size,
@@ -26,11 +38,11 @@ def create_tokenizer(path, max_vocab_size,
                      **kwargs):
   if (proto_path is not None and os.path.isfile(proto_path) and
       pyu.is_newer_file(proto_path, path)):
-    toknz = load_tokenizer(proto_path)
-    if toknz.vocab_size() == max_vocab_size:
-      return toknz
+    tokenizer = load_tokenizer(proto_path)
+    if tokenizer.vocab_size() == max_vocab_size:
+      return tokenizer
 
-    alog.warning(f'Existing tokenizer has vocabulary size {toknz.vocab_size()} ' \
+    alog.warning(f'Existing tokenizer has vocabulary size {tokenizer.vocab_size()} ' \
                  f'but {max_vocab_size} is required. Rebuilding ...')
 
   spstg = io.BytesIO()
@@ -46,9 +58,9 @@ def create_tokenizer(path, max_vocab_size,
     with pyfow.FileOverwrite(proto_path, mode='wb') as pfd:
       pfd.write(proto_data)
 
-  toknz = spm.SentencePieceProcessor(model_proto=proto_data)
+  tokenizer = spm.SentencePieceProcessor(model_proto=proto_data)
 
-  return toknz
+  return tokenizer
 
 
 def enum_chunks(path, chunk_size=None):
@@ -79,10 +91,10 @@ def enum_chunks(path, chunk_size=None):
         break
 
 
-def tokenize_data(path, toknz, chunk_size=None, dtype=None):
+def tokenize_data(path, tokenizer, chunk_size=None, dtype=None):
   tokens = array.array('I')
   for chunk in enum_chunks(path, chunk_size=chunk_size):
-    enc = toknz.encode(chunk)
+    enc = tokenizer.encode(chunk)
     tokens.extend(enc)
 
   return torch.tensor(tokens, dtype=dtype or torch.long)
