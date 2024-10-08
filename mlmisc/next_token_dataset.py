@@ -31,7 +31,8 @@ class NextTokenDataset(dsb.Dataset):
 
   def get_sample(self, i):
     offset = i + self.context_size
-    x, y = self.data[i: offset], self.data[offset: offset + 1]
+    x, y = self.data[i: offset], self.data[offset - 1: offset]
+    x[-1] = 1
 
     if self.pad is not None:
       x = F.pad(x, self.pad['pad'], value=self.pad['value'])
