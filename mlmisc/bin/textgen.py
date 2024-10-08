@@ -37,7 +37,11 @@ def _load_model(args):
 
 
 def _load_tokenizer(args):
-  tokenizer = tkz.load_tokenizer(args.tokenizer_path)
+  if args.tokenizer_name is None:
+    tokenizer = tkz.load_tokenizer(args.tokenizer_path)
+  else:
+    tokenizer = tkz.from_pretrained(args.tokenizer_path, args.tokenizer_name,
+                                    cache_dir=args.cache_dir)
 
   return tokenizer
 
@@ -79,7 +83,10 @@ if __name__ == '__main__':
   parser.add_argument('--checkpoint_path', required=True,
                       help='The path to be used to load the model checkpoint')
   parser.add_argument('--tokenizer_path', required=True,
-                      help='The path containing the tokenizer protobuf file')
+                      help='The path containing the tokenizer protobuf file, or the module '\
+                      f'path for a pre-trained one')
+  parser.add_argument('--tokenizer_name',
+                      help='The tokenizer name in case a pre-trained one needs to be loaded')
   parser.add_argument('--input_sequence', required=True,
                       help='The path to be used to store the model checkpoint')
   parser.add_argument('--context_size', type=int, required=True,
@@ -101,6 +108,8 @@ if __name__ == '__main__':
                       help='The seed for the random number generators')
   parser.add_argument('--cpu_num_threads', type=int,
                       help='The number of threads to dedicate to the PyTorch CPU device')
+  parser.add_argument('--cache_dir',
+                      help='The cache folder for the data to be eventually downloaded')
 
   pyam.main(parser, _main)
 

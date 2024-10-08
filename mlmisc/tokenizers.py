@@ -41,6 +41,8 @@ class FpTokenizerWrapper:
 
 
 def from_pretrained(module_path, model_name, cache_dir=None):
+  cache_dir = pyu.cache_dir(path=cache_dir)
+
   tclass, = pymu.import_module_names(module_path)
   tokenizer = tclass.from_pretrained(
     model_name,
