@@ -143,7 +143,7 @@ class HugginFaceSeqTune(HugginFaceModel):
     self.loss = lsw.SeqLoss(conf.create_loss(loss))
     self.head = conf.create_model(head,
                                   config=self.config(),
-                                  processor=self.processor(),
+                                  tokenizer=self.processor(),
                                   context_size=context_size)
 
   def forward(self, x, targets=None):
