@@ -55,7 +55,7 @@ def create(content_path, context_size,
            is_sequence=None,
            split_pct=None,
            **kwargs):
-  cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), '.cache')
+  cache_dir = pyu.cache_dir(path=cache_dir)
   is_sequence = pyu.value_or(is_sequence, True)
   split_pct = pyu.value_or(split_pct, 0.9)
 

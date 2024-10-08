@@ -52,6 +52,8 @@ class HugginFaceModel(nn.Module):
 
   def __init__(self, model_name, model_class, processor_class,
                cache_dir=None):
+    cache_dir = pyu.cache_dir(path=cache_dir)
+
     mclass, = pymu.import_module_names(model_class)
     model = mclass.from_pretrained(
       model_name,
