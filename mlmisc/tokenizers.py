@@ -37,7 +37,7 @@ class FpTokenizerWrapper:
   def decode(self, data):
     ddata = self.tokenizer.decode(data)
 
-    return ddata if isinstance(ddata, bytes) else data.encode()
+    return ddata if isinstance(ddata, bytes) else ddata.encode()
 
 
 def from_pretrained(module_path, model_name, cache_dir=None):
