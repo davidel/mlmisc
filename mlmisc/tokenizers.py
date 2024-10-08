@@ -21,6 +21,25 @@ def load_tokenizer(proto_path):
   return tokenizer
 
 
+class FpTokenizerWrapper:
+
+  def __init__(self, tokenizer):
+    self.tokenizer = tokenizer
+
+  def vocab_size(self):
+    return self.tokenizer.vocab_size
+
+  def encode(self, data):
+    edata = data if isinstance(data, str) else data.decode()
+
+    return self.tokenizer.encode(edata, verbose=False)
+
+  def decode(self, data):
+    ddata = self.tokenizer.decode(data)
+
+    return ddata if isinstance(ddata, bytes) else data.encode()
+
+
 def from_pretrained(module_path, model_name, cache_dir=None):
   tclass, = pymu.import_module_names(module_path)
   tokenizer = tclass.from_pretrained(
@@ -29,7 +48,7 @@ def from_pretrained(module_path, model_name, cache_dir=None):
     trust_remote_code=False,
     cache_dir=cache_dir)
 
-  return tokenizer
+  return FpTokenizerWrapper(tokenizer)
 
 
 def create_tokenizer(path, max_vocab_size,
@@ -94,7 +113,7 @@ def enum_chunks(path, chunk_size=None):
 def tokenize_data(path, tokenizer, chunk_size=None, dtype=None):
   tokens = array.array('I')
   for chunk in enum_chunks(path, chunk_size=chunk_size):
-    enc = tokenizer.encode(chunk.decode())
+    enc = tokenizer.encode(chunk)
     tokens.extend(enc)
 
   return torch.tensor(tokens, dtype=dtype or torch.long)
