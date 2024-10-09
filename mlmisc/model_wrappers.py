@@ -131,10 +131,12 @@ class HugginFaceImgTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, head, loss,
                processor_class=None,
+               frozen=None,
                cache_dir=None):
     processor_class = pyu.value_or(processor_class, 'transformers.AutoImageProcessor')
 
     super().__init__(model_name, model_class, processor_class,
+                     frozen=frozen,
                      cache_dir=cache_dir)
 
     alog.debug(f'Image Processor:\n{self.processor()}')
@@ -155,10 +157,12 @@ class HugginFaceSeqTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, context_size, head, loss,
                processor_class=None,
+               frozen=None,
                cache_dir=None):
     processor_class = pyu.value_or(processor_class, 'transformers.AutoTokenizer')
 
     super().__init__(model_name, model_class, processor_class,
+                     frozen=frozen,
                      cache_dir=cache_dir)
 
     self.loss = lsw.SeqLoss(conf.create_loss(loss))
