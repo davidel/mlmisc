@@ -138,6 +138,8 @@ def _create_model(args, trainer, dataset):
 def _common_main(args):
   if args.seed is not None:
     mlut.randseed(args.seed)
+  if args.autograd_debug:
+    torch.autograd.set_detect_anomaly(True)
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
   if args.device is None:
@@ -266,6 +268,8 @@ if __name__ == '__main__':
                       'configuration of the PyTorch profiler')
   parser.add_argument('--strict', action=argparse.BooleanOptionalAction, default=True,
                       help='Use strict mode when loading model state dictionaries')
+  parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
+                      help='Enable Autograd anomaly detection')
 
   pyam.main(parser, _main, rem_args='model_args')
 
