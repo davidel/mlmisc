@@ -34,7 +34,6 @@ class FpTokenizerWrapper:
 
     return self.tokenizer.encode(edata,
                                  add_special_tokens=False,
-                                 return_tensors='np',
                                  verbose=False)
 
   def decode(self, data):
