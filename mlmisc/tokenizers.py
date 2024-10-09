@@ -32,12 +32,13 @@ class FpTokenizerWrapper:
   def encode(self, data):
     edata = data if isinstance(data, str) else data.decode()
 
-    return self.tokenizer.encode(edata, verbose=False)
+    return self.tokenizer.encode(edata,
+                                 add_special_tokens=False,
+                                 return_tensors='np',
+                                 verbose=False)
 
   def decode(self, data):
-    ddata = self.tokenizer.decode(data)
-
-    return ddata
+    return self.tokenizer.decode(data)
 
 
 def from_pretrained(module_path, model_name, cache_dir=None):
