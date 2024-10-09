@@ -1,4 +1,3 @@
-import importlib
 import os
 import urllib
 
@@ -35,51 +34,44 @@ def _add_python_paths(path):
           _add_python_paths(de.path)
 
 
-def _load_module(rpath, module):
-  mpath = os.path.join(rpath, module)
+def _load_module(rpath, modname):
+  mpath = os.path.join(rpath, modname)
   if os.path.isfile(mpath):
-    mod = pymu.load_module(mpath, add_syspath=True)
+    module = pymu.load_module(mpath, add_syspath=True)
   else:
     _add_python_paths(rpath)
-    mod = importlib.import_module(module)
+    module, = pymu.import_module_names(modname)
 
-  return mod
-
-
-def _modules_cachedir():
-  cache_dir = os.getenv('MODULES_CACHEDIR', None)
-  if cache_dir is None:
-    cache_dir = os.path.join(os.getenv('HOME', '.'), 'module_repos')
-
-  return cache_dir
+  return module
 
 
 class WebModule(nn.Module):
 
-  def __init__(self, repo, module, ctor,
+  def __init__(self, repo, modname, ctor,
                cache_dir=None,
                commit=None,
                force_clone=None,
                mod_args=None,
                mod_kwargs=None):
-    cache_dir = pyu.value_or(cache_dir, _modules_cachedir())
+    cache_dir = pyu.cache_dir(path=cache_dir)
     force_clone = pyu.value_or(force_clone, False)
     mod_args = pyu.value_or(mod_args, ())
     mod_kwargs = pyu.value_or(mod_kwargs, {})
 
-    alog.debug(f'Using Web Modules cache folder "{cache_dir}"')
+    modules_cache_dir = os.path.join(cache_dir, 'module_repos')
+    alog.debug(f'Using Web Modules cache folder "{modules_cache_dir}"')
 
-    rpath = _clone_repo(repo, cache_dir, force_clone, commit)
+    rpath = _clone_repo(repo, modules_cache_dir, force_clone, commit)
 
-    mod = _load_module(rpath, module)
+    module = _load_module(rpath, modname)
 
     super().__init__()
     self.repr_args = dict(repo=repo,
-                          module=module,
+                          module=modname,
                           ctor=ctor,
                           mod_args=mod_args,
                           mod_kwargs=mod_kwargs)
-    self.net = getattr(mod, ctor)(*mod_args, **mod_kwargs)
+    self.net = getattr(module, ctor)(*mod_args, **mod_kwargs)
 
   def forward(self, *args, **kwargs):
     return self.net(*args, **kwargs)

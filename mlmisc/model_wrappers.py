@@ -13,44 +13,79 @@ from . import module_builder as mbld
 from . import web_module as wmod
 
 
-class TorchVision(nn.Module):
+class ModelHolder(nn.Module):
 
-  def __init__(self, name, loss, *args, **kwargs):
+  def __init__(self, model, frozen=None, **kwargs):
+    frozen = pyu.value_or(frozen, True)
+
     super().__init__()
+    self.frozen = frozen
+    # Storing model inside an object prevents nn.Module machinery to save its
+    # weights when checkpointing, which is what we want when they are frozen.
+    self.ctx = pyu.make_object(model=model, **kwargs)
+    if not frozen:
+      self.model = model
+
+  def to(self, *args, **kwargs):
+    xself = super().to(*args, **kwargs)
+    if xself.frozen:
+      xself.ctx.model = xself.ctx.model.to(*args, **kwargs)
+    else:
+      xself.ctx.model = xself.model
+
+    return xself
+
+  def model_ctx(self):
+    return pyu.CtxManagerWrapper(torch.set_grad_enabled(not self.frozen),
+                                 wrap_obj=xself.ctx.model)
+
+
+class TorchVision(ModelHolder):
+
+  def __init__(self, name, loss, *args,
+               frozen=None,
+               **kwargs):
+    model = torchvision.models.get_model(name, *args, **kwargs)
+
+    super().__init__(model, frozen=frozen)
     self.loss = lsw.CatLoss(conf.create_loss(loss))
-    self.mod = torchvision.models.get_model(name, *args, **kwargs)
 
   def forward(self, x, targets=None):
-    y = self.mod(x)
+    with self.model_ctx() as model:
+      y = model(x)
 
     return y, self.loss(y, targets)
 
 
-class Web(nn.Module):
+class Web(ModelHolder):
 
   def __init__(self, repo, module, ctor, loss, *args,
+               frozen=None,
                cache_dir=None,
                commit=None,
                force_clone=None,
                **kwargs):
-    super().__init__()
+    model = wmod.WebModule(repo, module, ctor,
+                           cache_dir=cache_dir,
+                           commit=commit,
+                           force_clone=force_clone,
+                           mod_args=args,
+                           mod_kwargs=kwargs)
+
+    super().__init__(model, frozen=frozen)
     self.loss = lsw.CatLoss(conf.create_loss(loss))
-    self.mod = wmod.WebModule(repo, module, ctor,
-                              cache_dir=cache_dir,
-                              commit=commit,
-                              force_clone=force_clone,
-                              mod_args=args,
-                              mod_kwargs=kwargs)
 
   def forward(self, x, targets=None):
-    y = self.mod(x)
+    with self.model_ctx() as model:
+      y = model(x)
 
     return y, self.loss(y, targets)
 
 
-class HugginFaceModel(nn.Module):
+class HugginFaceModel(ModelHolder):
 
   def __init__(self, model_name, model_class, processor_class,
+               frozen=None,
                cache_dir=None):
     cache_dir = pyu.cache_dir(path=cache_dir)
 
@@ -70,13 +105,7 @@ class HugginFaceModel(nn.Module):
     alog.debug(f'HF Model:\n{model}')
     alog.debug(f'Model Config:\n{model.config}')
 
-    super().__init__()
-    # Storing model inside an object prevents nn.Module machinery to save its
-    # weights when checkpointing, which is what we want as they are frozen.
-    self.ctx = pyu.make_object(model=model, processor=processor)
-
-  def model(self):
-    return self.ctx.model
+    super().__init__(model, frozen=frozen, processor=processor)
 
   def config(self):
     return self.ctx.model.config
@@ -84,14 +113,8 @@ class HugginFaceModel(nn.Module):
   def processor(self):
     return self.ctx.processor
 
-  def to(self, *args, **kwargs):
-    res = super().to(*args, **kwargs)
-    res.ctx.model = res.ctx.model.to(*args, **kwargs)
-
-    return res
-
   def forward(self, *args, processor_kwargs=None, **kwargs):
-    with torch.no_grad():
+    with self.model_ctx() as model:
       if processor_kwargs is not None:
         model_kwargs = self.ctx.processor(*args, **processor_kwargs)
         model_kwargs.update(kwargs)
@@ -99,7 +122,7 @@ class HugginFaceModel(nn.Module):
       else:
         model_args, model_kwargs = args, kwargs
 
-      y = self.ctx.model(*model_args, **model_kwargs, output_hidden_states=True)
+      y = model(*model_args, **model_kwargs, output_hidden_states=True)
 
       return y.last_hidden_state
 
@@ -122,9 +145,7 @@ class HugginFaceImgTune(HugginFaceModel):
                                   processor=self.processor())
 
   def forward(self, x, targets=None):
-    with torch.no_grad():
-      y = super().forward(x, processor_kwargs={})
-
+    y = super().forward(x, processor_kwargs={})
     y = self.head(y)
 
     return y, self.loss(y, targets)
@@ -147,9 +168,7 @@ class HugginFaceSeqTune(HugginFaceModel):
                                   context_size=context_size)
 
   def forward(self, x, targets=None):
-    with torch.no_grad():
-      y = super().forward(x)
-
+    y = super().forward(x)
     y = self.head(y)
 
     return y, self.loss(y, targets)
