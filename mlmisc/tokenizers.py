@@ -29,6 +29,15 @@ class FpTokenizerWrapper:
   def vocab_size(self):
     return self.tokenizer.vocab_size
 
+  def bos_id(self):
+    return self.tokenizer.bos_token_id
+
+  def eos_id(self):
+    return self.tokenizer.eos_token_id
+
+  def unk_id(self):
+    return self.tokenizer.unk_token_id
+
   def encode(self, data):
     edata = data if isinstance(data, str) else data.decode()
 
