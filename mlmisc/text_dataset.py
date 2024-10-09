@@ -65,11 +65,12 @@ def create(content_path, context_size,
                       cache_dir=cache_dir,
                       uncompress=True) as datafile:
     ds_name = os.path.splitext(os.path.basename(datafile))[0]
-    ds_dir = os.path.join(datasets_dir, ds_name)
-    os.makedirs(ds_dir, exist_ok=True)
 
-    tokens_path = os.path.join(ds_dir, 'tokens.pt')
     if module_path is None:
+      ds_dir = os.path.join(datasets_dir, ds_name, 'spm')
+      os.makedirs(ds_dir, exist_ok=True)
+
+      tokens_path = os.path.join(ds_dir, 'tokens.pt')
       proto_path = os.path.join(ds_dir, 'tokenizer.proto')
       tokenizer_kwargs = pyu.dict_subset(kwargs, 'pad_id,unk_id,bos_id,eos_id')
 
@@ -87,6 +88,9 @@ def create(content_path, context_size,
 
       alog.info(f'Tokenizer proto file generated at "{proto_path}"')
     else:
+      ds_dir = os.path.join(datasets_dir, ds_name, 'pre_trained')
+      os.makedirs(ds_dir, exist_ok=True)
+
       tokenizer = tkz.from_pretrained(module_path, model_name, cache_dir=cache_dir)
 
       tokenizer_str = str(tokenizer)
@@ -98,6 +102,7 @@ def create(content_path, context_size,
       else:
         needs_tokenization = True
 
+      tokens_path = os.path.join(ds_dir, 'tokens.pt')
       if os.path.isfile(tokens_path) and not needs_tokenization:
         tokens = ut.torch_load(tokens_path)
       else:
