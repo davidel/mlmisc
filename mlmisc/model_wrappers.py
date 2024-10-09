@@ -37,7 +37,7 @@ class ModelHolder(nn.Module):
 
   def model_ctx(self):
     return pyu.CtxManagerWrapper(torch.set_grad_enabled(not self.frozen),
-                                 wrap_obj=xself.ctx.model)
+                                 wrap_obj=self.ctx.model)
 
 
 class TorchVision(ModelHolder):
