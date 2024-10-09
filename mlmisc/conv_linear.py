@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 
 from . import args_sequential as aseq
+from . import conv_utils as cu
 from . import einops_layers as eil
 from . import layer_utils as lu
 from . import types as typ
@@ -33,10 +34,6 @@ def calc_best_shape(flat_size, in_channels, min_dim):
   return shape, pad
 
 
-def conv_wndsize(size, kernel_size, stride):
-  return int((size - kernel_size) / stride + 1)
-
-
 def calc_conv_params(shape, out_features, max_params, force):
   params = []
   for stride in itertools.count(1):
@@ -47,7 +44,7 @@ def calc_conv_params(shape, out_features, max_params, force):
       if kernel_size < 2 * stride + 1:
         break
 
-      wndsize = conv_wndsize(shape.w, kernel_size, stride)
+      wndsize = cu.conv_wndsize(shape.w, kernel_size, stride)
       error = channels * wndsize**2 - out_features
       params.append((error, stride, kernel_size, channels, wndsize))
 
@@ -84,7 +81,7 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
     nn.Conv2d(shape.c, out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
-  flat_size = out_channels * conv_wndsize(shape.w, kernel_size, stride)**2
+  flat_size = out_channels * cu.conv_wndsize(shape.w, kernel_size, stride)**2
   if force:
     if flat_size != out_features:
       layers.append(nn.Linear(flat_size, out_features, bias=False))

@@ -221,3 +221,7 @@ def convs_from_string(config):
 
   return convs
 
+
+def conv_wndsize(size, kernel_size, stride):
+  return int((size - kernel_size) / stride + 1)
+
