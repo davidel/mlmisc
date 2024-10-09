@@ -89,11 +89,22 @@ def create(content_path, context_size,
     else:
       tokenizer = tkz.from_pretrained(module_path, model_name, cache_dir=cache_dir)
 
-      if os.path.isfile(tokens_path):
+      tokenizer_str = str(tokenizer)
+      tokenizer_path = os.path.join(ds_dir, 'tokenizer.repr')
+      if os.path.isfile(tokenizer_path):
+        with open(tokenizer_path, mode='rt') as tfd:
+          stored_tokenizer_str = tfd.read()
+        needs_tokenization = tokenizer_str == stored_tokenizer_str
+      else:
+        needs_tokenization = True
+
+      if os.path.isfile(tokens_path) and not needs_tokenization:
         tokens = ut.torch_load(tokens_path)
       else:
         tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
         torch.save(tokens, tokens_path)
+        with open(tokenizer_path, mode='wt') as tfd:
+          tfd.write(tokenizer_str)
 
   return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
 
