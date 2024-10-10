@@ -1,4 +1,6 @@
 import collections
+import itertools
+import math
 import random
 import yaml
 
@@ -224,4 +226,51 @@ def convs_from_string(config):
 
 def conv_wndsize(size, kernel_size, stride):
   return int((size - kernel_size) / stride + 1)
+
+
+ReduceConvParams = collections.namedtuple(
+  'ReduceConvParams',
+  'error, stride, kernel_size, channels, wndsize')
+
+def conv_flat_reduce(shape, out_features, force):
+  shape = typ.Shape2d(shape)
+  params = []
+  for stride in itertools.count(1):
+    param_count = len(params)
+    for channels in itertools.count(1):
+      kernel_size = int(math.sqrt(out_features / channels))
+      kernel_size = min(shape.w, kernel_size)
+      if kernel_size < 2 * stride + 1:
+        break
+
+      wndsize = conv_wndsize(shape.w, kernel_size, stride)
+      error = channels * wndsize**2 - out_features
+      params.append(ReduceConvParams(error, stride, kernel_size, channels, wndsize))
+
+      alog.debug(f'Conv Params: error={error} stride={stride} kernel_size={kernel_size} ' \
+                 f'out_wnd_size={wndsize} out_channels={channels}')
+
+    if param_count == len(params):
+      break
+
+  if params:
+    if force:
+      # When "forcing" we are going to add a marshaling linear layer, so it is better
+      # to end up with an higher flattened size, and turn it down, instead of the
+      # contrary. Hence we look for "error" >= 0, if any. otherwise we pick the less
+      # negative error.
+      params = sorted(params, key=lambda x: x.error)
+      best = params[-1]
+      for p in params:
+        if p.error >= 0:
+          best = p
+          break
+    else:
+      params = sorted(params, key=lambda x: abs(x.error))
+      best = params[0]
+
+    alog.debug(f'Selected: stride={best.stride} kernel_size={best.kernel_size} ' \
+               f'out_wnd_size={best.wndsize} out_channels={best.channels}')
+
+    return best
 
