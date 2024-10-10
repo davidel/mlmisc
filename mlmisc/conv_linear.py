@@ -1,3 +1,4 @@
+import collections
 import itertools
 import math
 
@@ -14,6 +15,11 @@ from . import einops_layers as eil
 from . import layer_utils as lu
 from . import types as typ
 from . import utils as ut
+
+
+OutputConvParams = collections.namedtuple(
+  'OutputConvParams',
+  'error, stride, kernel_size, channels, wndsize')
 
 
 def calc_shape(n, c):
@@ -46,7 +52,10 @@ def calc_conv_params(shape, out_features, max_params, force):
 
       wndsize = cu.conv_wndsize(shape.w, kernel_size, stride)
       error = channels * wndsize**2 - out_features
-      params.append((error, stride, kernel_size, channels, wndsize))
+      params.append(OutputConvParams(error, stride, kernel_size, channels, wndsize))
+
+      alog.debug(f'Conv Params: error={error} stride={stride} kernel_size={kernel_size} ' \
+                 f'out_wnd_size={wndsize} out_channels={channels}')
 
     if param_count == len(params):
       break
@@ -57,22 +66,20 @@ def calc_conv_params(shape, out_features, max_params, force):
       # to end up with an higher flattened size, and turn it down, instead of the
       # contrary. Hence we look for "error" >= 0, if any. otherwise we pick the less
       # negative error.
-      params = sorted(params, key=lambda x: x[0])
-      best_param = params[-1]
+      params = sorted(params, key=lambda x: x.error)
+      best = params[-1]
       for p in params:
-        if p[0] >= 0:
-          best_param = p
+        if p.error >= 0:
+          best = p
           break
-
-      stride, kernel_size, channels, wndsize = best_param[1:]
     else:
-      params = sorted(params, key=lambda x: abs(x[0]))
-      stride, kernel_size, channels, wndsize = params[0][1:]
+      params = sorted(params, key=lambda x: abs(x.error))
+      best = params[0]
 
-    alog.debug(f'Conv params: stride={stride} kernel_size={kernel_size} ' \
-               f'out_wnd_size={wndsize} out_channels={channels}')
+    alog.debug(f'Selected: stride={best.stride} kernel_size={best.kernel_size} ' \
+               f'out_wnd_size={best.wndsize} out_channels={best.channels}')
 
-    return kernel_size, stride, channels
+    return best
 
 
 def create_conv(shape, out_channels, kernel_size, stride, out_features,
@@ -116,10 +123,16 @@ class ConvLinear(nn.Module):
     conv_params = calc_conv_params(shape, out_features, max_params, force)
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
-    kernel_size, stride, out_channels = conv_params
 
-    conv, flat_size = create_conv(shape, out_channels, kernel_size, stride, out_features,
-                                  force, dropout, act)
+    conv, flat_size = create_conv(
+      shape,
+      conv_params.channels,
+      conv_params.kernel_size,
+      conv_params.stride,
+      out_features,
+      force,
+      dropout,
+      act)
 
     alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> ' \
                f'{out_features} ({flat_size})')
