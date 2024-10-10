@@ -100,7 +100,7 @@ class ModuleBuilder(nn.Module):
         xx = cfg.input_fn(y, results)
         if isinstance(xx, dict):
           net_kwargs.update(xx.get('kwargs', dict()))
-          xx = xx['args']
+          xx = xx.get('args', xx)
 
       xx = pyu.as_sequence(xx)
 
