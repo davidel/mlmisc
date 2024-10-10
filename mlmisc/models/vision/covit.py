@@ -14,16 +14,6 @@ from ... import module_builder as mb
 from ... import utils as ut
 
 
-def inputfn(lids, back=2):
-  iid = len(lids) - back
-  rid = lids[iid] if iid >= 0 else None
-
-  def input_fn(x, results):
-    return (x + results[rid]) if rid is not None else x
-
-  return input_fn
-
-
 def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
                   act, dropout):
   # PixelsPerPatch = np.prod(shape[1:]) / num_patches
@@ -54,7 +44,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
   for i in range(num_layers):
     c, h, w = net.shape
 
-    net.batchnorm2d(input_fn=inputfn(lids))
+    net.batchnorm2d(input_fn=mb.inputfn(lids))
     net.conv2d(c, 3, stride=1, padding='same')
     net.add(lu.create(act))
     net.add(eil.Rearrange('b c h w -> b (h w) c'))

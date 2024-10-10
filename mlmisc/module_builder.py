@@ -109,3 +109,13 @@ class ModuleBuilder(nn.Module):
 
     return y
 
+
+def inputfn(result_ids, back=2):
+  iid = len(result_ids) - back
+  rid = result_ids[iid] if iid >= 0 else None
+
+  def input_fn(x, results):
+    return (x + results[rid]) if rid is not None else x
+
+  return input_fn
+
