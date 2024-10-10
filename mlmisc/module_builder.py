@@ -20,6 +20,7 @@ class ModuleBuilder(nn.Module):
     self.shape = tuple(shape)
     self.layers = nn.ModuleList()
     self.config = []
+    self.aux_modules = nn.ModuleList()
 
   def _pop_add_args(self, kwargs):
     args = pyu.pop_kwargs(kwargs, NetConfig._fields)
@@ -42,6 +43,10 @@ class ModuleBuilder(nn.Module):
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
                                  net_args=net_args))
+    # If the input functions are modules, store them here so that their parameters
+    # can then be saved/loaded from the normal PyTorch state-dict machinery.
+    if isinstance(input_fn, nn.Module):
+      self.aux_modules.append(input_fn)
 
     return len(self.layers) - 1
 
