@@ -1,5 +1,6 @@
 import inspect
 
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -18,7 +19,8 @@ class Lambda(nn.Module):
   def __init__(self, fn, info=None, env=None):
     super().__init__()
     if isinstance(fn, str):
-      self.fn = eval(f'lambda {fn}', env)
+      self.fn = eval(f'lambda {fn}',
+                     env if env is not None else pyiu.parent_globals())
       self.info = info or f'lambda {fn}'
     else:
       self.fn = fn
