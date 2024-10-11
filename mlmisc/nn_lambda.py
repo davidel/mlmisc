@@ -16,13 +16,15 @@ def _try_getsource(fn):
 
 NETFN = 'netfn'
 
-def _compile(fn, info, env):
-  if fn.find('\n') < 0:
-    lfn = f'lambda {fn}'
-    return eval(lfn, env), info or lfn
+def _compile(sfn, info, env):
+  if sfn.find('\n') < 0:
+    sfn = f'lambda {sfn}'
+    fn = eval(sfn, env)
   else:
-    sfn = fn.strip()
-    return pyu.compile(sfn, NETFN, env=env)[0], info or sfn
+    sfn = sfn.strip()
+    fn = pyu.compile(sfn, NETFN, env=env)[0]
+
+  return fn, info or sfn
 
 
 class Lambda(nn.Module):
