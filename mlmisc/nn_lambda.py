@@ -18,7 +18,8 @@ NETFN = 'netfn'
 
 def _compile(fn, info, env):
   if fn.find('\n') < 0:
-    return eval(f'lambda {fn}', env), info or f'lambda {fn}'
+    lfn = f'lambda {fn}'
+    return eval(lfn, env), info or lfn
   else:
     sfn = fn.strip()
     return pyu.compile(sfn, NETFN)[0], info or sfn
