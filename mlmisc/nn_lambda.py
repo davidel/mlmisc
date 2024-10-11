@@ -1,6 +1,16 @@
+import inspect
+
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
+
+
+def _try_getsource(fn):
+  # Do not fail if inspect is not able to fetch the source.
+  try:
+    return inspect.getsource(fn)
+  except:
+    pass
 
 
 class Lambda(nn.Module):
@@ -12,7 +22,7 @@ class Lambda(nn.Module):
       self.info = info or f'lambda {fn}'
     else:
       self.fn = fn
-      self.info = info
+      self.info = info if info is not None else _try_getsource(fn)
 
   def forward(self, *args, **kwargs):
     return self.fn(*args, **kwargs)
