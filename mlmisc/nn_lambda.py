@@ -20,7 +20,8 @@ def _compile(fn, info, env):
   if fn.find('\n') < 0:
     return eval(f'lambda {fn}', env), info or f'lambda {fn}'
   else:
-    return pyu.compile(fn, NETFN)[0], info or fn
+    sfn = fn.strip()
+    return pyu.compile(sfn, NETFN)[0], info or sfn
 
 
 class Lambda(nn.Module):
