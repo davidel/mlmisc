@@ -14,14 +14,22 @@ def _try_getsource(fn):
     pass
 
 
+NETFN = 'netfn'
+
+def _compile(fn, info, env):
+  if fn.find('\n') < 0:
+    return eval(f'lambda {fn}', env), info or f'lambda {fn}'
+  else:
+    return pyu.compile(fn, NETFN)[0], info or fn
+
+
 class Lambda(nn.Module):
 
   def __init__(self, fn, info=None, env=None):
     super().__init__()
     if isinstance(fn, str):
-      self.fn = eval(f'lambda {fn}',
-                     env if env is not None else pyiu.parent_globals())
-      self.info = info or f'lambda {fn}'
+      genv = env if env is not None else pyiu.parent_globals()
+      self.fn, self.info = _compile(fn, info, genv)
     else:
       self.fn = fn
       self.info = info if info is not None else _try_getsource(fn)
