@@ -22,7 +22,7 @@ def _compile(fn, info, env):
     return eval(lfn, env), info or lfn
   else:
     sfn = fn.strip()
-    return pyu.compile(sfn, NETFN)[0], info or sfn
+    return pyu.compile(sfn, NETFN, env=env)[0], info or sfn
 
 
 class Lambda(nn.Module):
