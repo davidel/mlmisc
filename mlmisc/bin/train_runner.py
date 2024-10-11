@@ -95,11 +95,12 @@ def _replace_args(model_args, model_kwargs, config):
 def _create_model(args, trainer, dataset):
   module = pymu.import_module(args.model_path, modname='train_module')
 
+  ref_model, state = None, dict()
   if os.path.exists(args.checkpoint_path):
-    model, state = trainer.load_model(args.checkpoint_path,
-                                      device=args.device,
-                                      strict=args.strict)
-  else:
+    ref_model, state = trainer.load_model(args.checkpoint_path,
+                                          strict=args.strict)
+
+  if ref_model is None or args.rebuild_model:
     model_function, *cmdline_args = args.model_args
 
     model_args, model_kwargs = [], dict()
@@ -123,8 +124,12 @@ def _create_model(args, trainer, dataset):
 
     model = mlam.create(model_ctor, *model_args, **model_kwargs)
 
-    model = model.to(args.device)
-    state = dict()
+    if ref_model is not None:
+      model.load_state_dict(ref_model.state_dict())
+  else:
+    model = ref_model
+
+  model = model.to(args.device)
 
   alog.info(f'Model Network:\n{model}')
   alog.info(f'Model Parameters:')
@@ -223,6 +228,9 @@ if __name__ == '__main__':
                       help='The number of threads to dedicate to the PyTorch CPU device')
   parser.add_argument('--checkpoint_path', required=True,
                       help='The path to be used to store the model checkpoint')
+  parser.add_argument('--rebuild_model', action=argparse.BooleanOptionalAction, default=False,
+                      help='Force model rebuild while loading parameters from existing ' \
+                      f'checkpoint (if any)')
   parser.add_argument('--amp_dtype',
                       help='The type to be used with the AMP (Automatic Mixed Precision) module')
   parser.add_argument('--batch_size', type=int, default=32,
