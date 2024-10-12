@@ -84,7 +84,7 @@ class CrossSeq(sb.SequenceBase):
                       dropout,
                       kwargs)
     if kwargs:
-      alog.info(f'Unused {pyu.cname(self)} kyword arguments: {kwargs}')
+      alog.info(f'Unused {pyu.cname(self)} keyword arguments: {kwargs}')
 
     super().__init__(context_size, embed_size, vocab_size,
                      padding_idx=padding_idx)
