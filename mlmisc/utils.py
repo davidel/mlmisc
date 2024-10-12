@@ -79,7 +79,7 @@ def net_shape(net, shape, device=None, dtype=None):
   with torch.no_grad(), Training(net, False):
     # Add and remove the artificial batch dimension.
     x = torch.randn((1,) + tuple(shape), dtype=dtype, device=device)
-    y = net(zin)
+    y = net(x)
 
     return tuple(y.shape[1:])
 
