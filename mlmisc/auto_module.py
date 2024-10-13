@@ -51,7 +51,7 @@ def _generate_wrapped(create_args):
   ctor = create_args[_CLASS]
   # TODO: Remove dual handling till we have other-than-strings ctors.
   if isinstance(ctor, str):
-    ctor = pymu.import_module_names(ctor)
+    ctor = pymu.import_module_names(ctor)[0]
 
   mod = ctor(*create_args[_ARGS], **create_args[_KWARGS])
 
