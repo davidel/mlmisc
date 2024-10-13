@@ -2,10 +2,7 @@ import functools
 import io
 import pickle
 
-import py_misc_utils.module_utils as pymu
-import py_misc_utils.utils as pyu
 import torch
-import torch.nn as nn
 
 
 _CLASS = 'mclass'
@@ -48,19 +45,14 @@ def _wrap_module(mod, create_args):
 
 
 def _generate_wrapped(create_args):
-  ctor = create_args[_CLASS]
-  # TODO: Remove dual handling till we have other-than-strings ctors.
-  if isinstance(ctor, str):
-    ctor, = pymu.import_module_names(ctor)
-
-  mod = ctor(*create_args[_ARGS], **create_args[_KWARGS])
+  mod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
 
   return _wrap_module(mod, create_args)
 
 
 def create(mclass, *args, **kwargs):
   create_args = {
-    _CLASS: pyu.qual_name(mclass),
+    _CLASS: mclass,
     _ARGS: args,
     _KWARGS: kwargs,
   }
