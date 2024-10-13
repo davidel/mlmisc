@@ -105,7 +105,8 @@ class ModuleBuilder(nn.Module):
       xx = pyu.as_sequence(xx)
 
       for k in cfg.net_args or ():
-        net_kwargs[k] = kwargs.get(k)
+        nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
+        net_kwargs[nk] = kwargs.get(wk)
 
       res = net(*xx, **net_kwargs)
 
