@@ -8,7 +8,7 @@ from . import args_base as ab
 class ArgsParallel(ab.ArgsBase):
 
   def __init__(self, *args, **kwargs):
-    cat_dim, stack_dim = pyu.pop_kwargs(kwargs, ('cat_dim', 'stack_dim'))
+    cat_dim, stack_dim = pyu.pop_kwargs(kwargs, 'cat_dim, stack_dim')
 
     super().__init__(*args, **kwargs)
     self.cat_dim = cat_dim
