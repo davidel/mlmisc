@@ -69,6 +69,7 @@ class Trainer:
     self._train_time = TimeTracker(total=state.get('train_time', 0))
     self._val_time = TimeTracker(total=state.get('val_time', 0))
     self._save_time = TimeTracker(total=state.get('save_time', 0))
+    self._metrics = state.get('metrics', [])
 
   def _get_state(self):
     return dict(
@@ -76,6 +77,7 @@ class Trainer:
       train_time=self._train_time.total,
       val_time=self._val_time.total,
       save_time=self._save_time.total,
+      metrics=self._metrics,
     )
 
   def save_model(self, model, path, **kwargs):
@@ -140,15 +142,17 @@ class Trainer:
 
     return np.mean(losses) if losses else None
 
-  def _tblog(self, tb_writer, total_samples, name, value):
+  def _metric_log(self, tb_writer, total_samples, name, value):
     epoch = 100 * self._num_samples / total_samples
+    self._metrics.append(dict(name=name, epoch=epoch, time=self._train_time.seconds))
     if tb_writer is not None:
       tb_writer.add_scalar(name, value, global_step=int(epoch * 10))
 
     return epoch
 
   def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
-    epoch = self._tblog(tctx.tb_writer, num_batches * tctx.batch_size, 'Train Loss', loss)
+    epoch = self._metric_log(tctx.tb_writer, num_batches * tctx.batch_size,
+                             'loss.train', loss)
     alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
               f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
@@ -157,8 +161,8 @@ class Trainer:
   def _run_validation(self, batch_num, num_batches, tctx):
     vloss = self._val_loss(tctx)
     if vloss is not None:
-      epoch = self._tblog(tctx.tb_writer, num_batches * tctx.batch_size,
-                          'Validation Loss', vloss)
+      epoch = self._metric_log(tctx.tb_writer, num_batches * tctx.batch_size,
+                               'loss.validation', vloss)
       alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
                 f'Validation Loss {vloss:.4f}')
 
