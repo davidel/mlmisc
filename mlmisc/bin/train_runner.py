@@ -184,6 +184,7 @@ def _main(args):
   del state
 
   tprof = create_profiler(args.profiler)
+  tb_writer = mlut.create_tb_writer(args.tb_path) if args.tb_path else None
 
   with pybc.BreakControl() as bc, tprof:
     step_fn = create_stepfn(tprof)
@@ -199,6 +200,7 @@ def _main(args):
                           model_chkptstep=args.checkpoint_step,
                           checkpoint=pyu.comma_split(args.checkpoint),
                           model_path=args.checkpoint_path,
+                          tb_writer=tb_writer,
                           num_workers=args.num_workers,
                           should_stop=lambda: bc.hit(),
                           step_fn=step_fn,
@@ -271,6 +273,8 @@ if __name__ == '__main__':
                       '(class_path:arg0,...,name0=value0,...)')
   parser.add_argument('--load_lrsched_state', action=argparse.BooleanOptionalAction, default=True,
                       help='Whether to load the learning rate scheduler state')
+  parser.add_argument('--tb_path',
+                      help='The path of the Tensorboard logging folder, if required')
   parser.add_argument('--profiler',
                       help='The comma-separated name=value string to be used for the ' \
                       'configuration of the PyTorch profiler')
