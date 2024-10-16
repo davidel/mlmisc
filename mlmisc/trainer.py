@@ -144,7 +144,10 @@ class Trainer:
 
   def _metric_log(self, tb_writer, total_samples, name, value):
     epoch = 100 * self._num_samples / total_samples
-    self._metrics.append(dict(name=name, epoch=epoch, time=self._train_time.seconds))
+    self._metrics.append(dict(name=name,
+                              epoch=epoch,
+                              time=self._train_time.seconds,
+                              value=value))
     if tb_writer is not None:
       tb_writer.add_scalar(name, value, global_step=int(epoch * 10))
 
