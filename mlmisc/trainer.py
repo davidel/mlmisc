@@ -151,7 +151,10 @@ class Trainer:
                               time=self._train_time.seconds,
                               value=value))
     if tb_writer is not None:
-      tb_writer.add_scalar(name, value, global_step=int(epoch * 10))
+      if isinstance(value, dict):
+        tb_writer.add_scalars(name, value, global_step=int(epoch * 10))
+      else:
+        tb_writer.add_scalar(name, value, global_step=int(epoch * 10))
 
   def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
     epoch = self._epoch(num_batches * tctx.batch_size)
@@ -171,16 +174,28 @@ class Trainer:
 
     return vloss
 
-  def _show_stats(self, model, scheduler, num_batches, tctx):
-    epoch = self._epoch(num_batches * tctx.batch_size)
+  def _log_tensor_stats(self, name_fmt, stats, epoch, tctx):
+    for ts in stats:
+      value = {k: getattr(ts, k)
+               for k in pyu.comma_split('min, max, mean, std')}
+      for p, pv in zip(ts.percentiles, ts.percentile_values):
+        value[f'p{int(100 * p)}'] = pv
 
+      self._metric_log(tctx.tb_writer, epoch, name_fmt.format(ts.name), value)
+
+  def _show_stats(self, model, scheduler, num_batches, tctx):
     percentiles = (0.5, 0.9, 0.95, 0.99)
-    du.show_tensors_stats(du.get_parameters_stats(model,
-                                                  percentiles=percentiles),
-                          dict(value_stats=alog.DEBUG))
-    du.show_tensors_stats(du.get_grads_stats(model,
-                                             percentiles=percentiles),
-                          dict(value_stats=alog.DEBUG))
+
+    pstats = du.get_parameters_stats(model, percentiles=percentiles)
+    du.show_tensors_stats(pstats, dict(value_stats=alog.DEBUG))
+
+    gstats = du.get_grads_stats(model, percentiles=percentiles)
+    du.show_tensors_stats(gstats, dict(value_stats=alog.DEBUG))
+
+    epoch = self._epoch(num_batches * tctx.batch_size)
+    self._log_tensor_stats('PARA.{}', pstats.stats, epoch, tctx)
+    self._log_tensor_stats('GRAD.{}', gstats.stats, epoch, tctx)
+
     if current_lr := scheduler.get_last_lr():
       alog.debug(f'Current LR: {pyu.format(current_lr, ".3e")}')
       for name, lr in pyu.name_values('lr', current_lr):

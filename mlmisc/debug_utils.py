@@ -54,11 +54,11 @@ def get_tensors_stats(prefix, tensor_list,
     stats = stats[: n]
 
   value_stats = [f'{prefix} Values:']
-  for tstat in stats:
-    pcts = [f'{int(100 * pp)}%={pv:{fmt}}' for pp, pv in zip(percentiles, tstat.percentile_values)]
-    value_stats.append(f'  {tstat.name}\tshape={tstat.shape}\tmin={tstat.min:{fmt}}\t' \
-                       f'max={tstat.max:{fmt}}\tmean={tstat.mean:{fmt}}' \
-                       f'\tstd={tstat.std:{fmt}}\tpercentiles={pcts}')
+  for ts in stats:
+    pcts = [f'{int(100 * pp)}%={pv:{fmt}}' for pp, pv in zip(percentiles, ts.percentile_values)]
+    value_stats.append(f'  {ts.name}\tshape={ts.shape}\tmin={ts.min:{fmt}}\t' \
+                       f'max={ts.max:{fmt}}\tmean={ts.mean:{fmt}}' \
+                       f'\tstd={ts.std:{fmt}}\tpercentiles={pcts}')
 
   return pyu.make_object(stats=stats,
                          value_stats='\n'.join(value_stats))
@@ -88,7 +88,7 @@ def get_grads_stats(model,
                            top_n=top_n)
 
 
-def show_tensors_stats(tstats, slevs):
+def show_tensors_stats(stats, slevs):
   for k, v in slevs.items():
-    alog.log(v, getattr(tstats, k))
+    alog.log(v, getattr(stats, k))
 
