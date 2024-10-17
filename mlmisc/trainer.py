@@ -3,8 +3,8 @@ import datetime
 import time
 
 import numpy as np
-from py_misc_utils import alog
-from py_misc_utils import utils as pyu
+import py_misc_utils.alog as alog
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
