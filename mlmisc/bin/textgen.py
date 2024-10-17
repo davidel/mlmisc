@@ -57,9 +57,7 @@ def _eval_model(net):
 
 
 def _generate(args, model, tokenizer):
-  model.eval()
-
-  with torch.no_grad():
+  with torch.no_grad(), ut.Training(model, False):
     iseq = tokenizer.encode(args.input_sequence)
     iseq_tensor = torch.tensor(iseq, dtype=torch.long, device=args.device)
 
