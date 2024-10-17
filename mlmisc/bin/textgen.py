@@ -46,22 +46,35 @@ def _load_tokenizer(args):
   return tokenizer
 
 
+def _eval_model(net):
+  def forward(*args, **kwargs):
+    # Model returns (output, loss) tuple. We select the output.
+    result = net(*args, **kwargs)
+
+    return result[0]
+
+  return forward
+
+
 def _generate(args, model, tokenizer):
-  iseq = tokenizer.encode(args.input_sequence)
-  iseq_tensor = torch.tensor(iseq, dtype=torch.long, device=args.device)
+  model.eval()
 
-  gids = sequ.generate(lambda *a, **kw: model(*a, **kw)[0],
-                       iseq_tensor,
-                       args.context_size,
-                       args.num_steps,
-                       args.pad_mode,
-                       args.pad_value,
-                       temperature=args.temperature,
-                       sample=True,
-                       top_k=args.top_k)
+  with torch.no_grad():
+    iseq = tokenizer.encode(args.input_sequence)
+    iseq_tensor = torch.tensor(iseq, dtype=torch.long, device=args.device)
 
-  gentext = tokenizer.decode(gids.tolist())
-  print(gentext)
+    gids = sequ.generate(_eval_model(model),
+                         iseq_tensor,
+                         args.context_size,
+                         args.num_steps,
+                         args.pad_mode,
+                         args.pad_value,
+                         temperature=args.temperature,
+                         sample=True,
+                         top_k=args.top_k)
+
+    gentext = tokenizer.decode(gids.tolist())
+    print(gentext)
 
 
 def _main(args):
