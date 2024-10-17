@@ -3,7 +3,6 @@ import os
 
 import torch
 
-import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
@@ -12,11 +11,12 @@ import py_misc_utils.utils as pyu
 
 from .. import sequence_utils as sequ
 from .. import tokenizers as tkz
+from .. import utils as ut
 
 
 def _common_main(args):
   if args.seed is not None:
-    mlut.randseed(args.seed)
+    ut.randseed(args.seed)
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
   if args.device is None:
@@ -28,7 +28,7 @@ def _common_main(args):
 def _load_model(args):
   module = pymu.import_module(args.model_path, modname='train_module')
 
-  state = mlut.load_data(args.checkpoint_path)
+  state = ut.load_data(args.checkpoint_path)
 
   model = state['model']
   model = model.to(args.device)
