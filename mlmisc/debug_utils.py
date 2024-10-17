@@ -42,18 +42,11 @@ def get_tensors_stats(prefix, tensor_list,
                       percentiles=(),
                       top_n=None,
                       fmt='.3e'):
-  tensor_devices = collections.defaultdict(list)
-  stats = []
-  for name, tensor in tensor_list:
-    stats.append(tensor_stats(tensor,
-                              name=name,
-                              abs_stats=abs_stats,
-                              percentiles=percentiles))
-    tensor_devices[tensor.device].append(name)
-
-  device_stats = [f'{prefix} Devices:']
-  for dev, names in tensor_devices.items():
-    device_stats.append(f'  {dev}\t{names}')
+  stats = [tensor_stats(tensor,
+                        name=name,
+                        abs_stats=abs_stats,
+                        percentiles=percentiles)
+           for name, tensor in tensor_list]
 
   stats.sort(key=lambda s: getattr(s, sort_by), reverse=True)
   if top_n is not None:
@@ -67,7 +60,7 @@ def get_tensors_stats(prefix, tensor_list,
                        f'max={tstat.max:{fmt}}\tmean={tstat.mean:{fmt}}' \
                        f'\tstd={tstat.std:{fmt}}\tpercentiles={pcts}')
 
-  return pyu.make_object(device_stats='\n'.join(device_stats),
+  return pyu.make_object(stats=stats,
                          value_stats='\n'.join(value_stats))
 
 
