@@ -5,6 +5,8 @@ from py_misc_utils import alog
 from py_misc_utils import utils as pyu
 import torch
 
+from . import utils as ut
+
 
 STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
 
@@ -86,14 +88,7 @@ def get_grads_stats(model,
                     sort_by='mean',
                     percentiles=(),
                     top_n=None):
-  grads = []
-  for name, param in model.named_parameters():
-    if param.grad is not None:
-      grads.append((name, param.grad))
-    else:
-      alog.debug0(f'Parameter has no gradient: {name}')
-
-  return get_tensors_stats('Gradients', grads,
+  return get_tensors_stats('Gradients', ut.named_grads(model),
                            abs_stats=abs_stats,
                            sort_by=sort_by,
                            percentiles=percentiles,

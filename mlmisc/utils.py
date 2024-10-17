@@ -177,6 +177,17 @@ def count_params(net):
   return params
 
 
+def named_grads(net):
+  grads = []
+  for name, param in net.named_parameters():
+    if param.grad is not None:
+      grads.append((name, param.grad))
+    else:
+      alog.debug0(f'Parameter has no gradient: {name}')
+
+  return tuple(grads)
+
+
 def freeze_params(net, freeze=None, thaw=None):
   freeze = freeze or ()
   thaw = thaw or ()
