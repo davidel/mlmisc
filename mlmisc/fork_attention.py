@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 from . import layer_utils as lu
-from . import models.sequence.sequence_base as sb
+from .models.sequence import sequence_base as sb
 
 
 class ForkAttention(nn.Module):
