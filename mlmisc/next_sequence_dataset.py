@@ -27,7 +27,7 @@ class NextSequenceDataset(dsb.Dataset):
     return extra_arg(name) if extra_arg is not None else None
 
   def __len__(self):
-    return max(len(self.data) - self.context_size, 0)
+    return max(len(self.data) - self.context_size - 1, 0)
 
   def get_sample(self, i):
     offset = i + self.context_size
