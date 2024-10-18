@@ -120,8 +120,7 @@ class Trainer:
 
     alog.info(f'Running validation on {len(loader)} batches')
 
-    tctx.model.eval()
-    with torch.no_grad():
+    with torch.no_grad(), ut.Training(False):
       losses, val_start = [], self._val_time.start()
       for i, (x, y) in enumerate(loader):
         if tctx.device is not None:
@@ -135,8 +134,6 @@ class Trainer:
           alog.info(f'Validation run on {i} of {len(loader)} batches due to ' \
                     f'{datetime.timedelta(seconds=tctx.val_time)} required time stop')
           break
-
-    tctx.model.train()
 
     self._val_time.track()
 
