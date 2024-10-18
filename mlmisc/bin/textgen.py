@@ -6,6 +6,7 @@ import torch
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.gen_open as pygo
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 
@@ -72,7 +73,9 @@ def _generate(args, model, tokenizer):
                          top_k=args.top_k)
 
     gentext = tokenizer.decode(gids.tolist())
-    print(gentext)
+
+    with pygo.gen_open(args.output_file, mode='wt') as ofd:
+      ofd.write(gentext)
 
 
 def _main(args):
@@ -113,6 +116,8 @@ if __name__ == '__main__':
                       help='The temperature value')
   parser.add_argument('--top_k', type=int,
                       help='The top number of tokens to restrict the selection to')
+  parser.add_argument('--output_file', default='STDOUT',
+                      help='The file where the output should be written (supports STDOUT, STDERR)')
   parser.add_argument('--device',
                       help='The device to be used')
   parser.add_argument('--seed', type=int,
