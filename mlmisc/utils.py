@@ -17,6 +17,7 @@ import torch.nn as nn
 import torch.utils.tensorboard
 
 from . import auto_module as am
+from . import load_state_dict as lsd
 
 
 class Training:
@@ -91,15 +92,16 @@ def model_save(model, path):
   alog.debug(f'Model saved to {path}')
 
 
-def model_load(path, model=None, device=None, strict=True):
+def model_load(path, model=None, device=None, strict=None):
   map_location = torch.device('cpu') if device is not None else None
   if model is None:
     alog.debug(f'Loading model state from {path}')
     model = am.load(path, map_location=map_location, strict=strict)
   elif os.path.exists(path):
     alog.debug(f'Loading model state from {path}')
-    model.load_state_dict(torch.load(path, map_location=map_location),
-                          strict=strict, weights_only=True)
+    lsd.load_state_dict(model,
+                        torch.load(path, map_location=map_location, weights_only=True),
+                        strict=strict)
 
   return model.to(device) if device is not None else model
 
@@ -132,7 +134,7 @@ def save_data(path, **kwargs):
   alog.debug(f'Data saved to {path}')
 
 
-def load_data(path, map_location=None, strict=True, **kwargs):
+def load_data(path, map_location=None, strict=None, **kwargs):
   alog.debug(f'Loading data from {path}')
   td = torch_load(path, map_location=map_location or torch.device('cpu'))
 
@@ -140,7 +142,7 @@ def load_data(path, map_location=None, strict=True, **kwargs):
   for name, ndata in td.items():
     sdobj = kwargs.get(name)
     if sdobj is not None:
-      sdobj.load_state_dict(ndata, strict=strict)
+      lsd.load_state_dict(sdobj, ndata, strict=strict)
       data[name] = sdobj
     elif isinstance(ndata, dict) and am.is_auto_state(ndata):
       data[name] = am.load(ndata, strict=strict)

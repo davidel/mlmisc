@@ -4,12 +4,14 @@ import pickle
 
 import torch
 
+from . import load_state_dict as lsd
+
 
 _CLASS = 'mclass'
 _ARGS = 'args'
 _KWARGS = 'kwargs'
 _STATE = '__AM_ARGS__'
-_MODARGS = '_create_args'
+_MODULE_ARGS = '_create_args'
 
 
 def _save_state(state):
@@ -28,26 +30,26 @@ def _load_state(data):
   return pickle.load(bio)
 
 
-def _wrapped_state_dict(mod, *args, **kwargs):
-  state = mod._saved_state_dict(*args, **kwargs)
-  state[_STATE] = _save_state(module_args(mod))
+def _wrapped_state_dict(module, *args, **kwargs):
+  state = module._saved_state_dict(*args, **kwargs)
+  state[_STATE] = _save_state(module_args(module))
 
   return state
 
 
-def _wrap_module(mod, create_args):
-  setattr(mod, _MODARGS, create_args)
+def _wrap_module(module, create_args):
+  setattr(module, _MODULE_ARGS, create_args)
 
-  mod._saved_state_dict = mod.state_dict
-  mod.state_dict = functools.partial(_wrapped_state_dict, mod)
+  module._saved_state_dict = module.state_dict
+  module.state_dict = functools.partial(_wrapped_state_dict, module)
 
-  return mod
+  return module
 
 
 def _generate_wrapped(create_args):
-  mod = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
+  module = create_args[_CLASS](*create_args[_ARGS], **create_args[_KWARGS])
 
-  return _wrap_module(mod, create_args)
+  return _wrap_module(module, create_args)
 
 
 def create(mclass, *args, **kwargs):
@@ -64,11 +66,11 @@ def is_auto_state(state):
   return _STATE in state
 
 
-def is_auto(mod):
-  return hasattr(mod, _MODARGS)
+def is_auto(module):
+  return hasattr(module, _MODULE_ARGS)
 
 
-def load(source, map_location=None, strict=True):
+def load(source, map_location=None, strict=None):
   if isinstance(source, dict):
     state = source.copy()
   else:
@@ -76,24 +78,24 @@ def load(source, map_location=None, strict=True):
 
   create_args = _load_state(state.pop(_STATE))
 
-  mod = _generate_wrapped(create_args)
-  mod.load_state_dict(state, strict=strict)
+  module = _generate_wrapped(create_args)
+  lsd.load_state_dict(module, state, strict=strict)
 
-  return mod
-
-
-def module_args(mod):
-  return getattr(mod, _MODARGS)
+  return module
 
 
-def clone(mod):
-  state = mod.state_dict()
+def module_args(module):
+  return getattr(module, _MODULE_ARGS)
+
+
+def clone(module):
+  state = module.state_dict()
 
   return load(state)
 
 
-def new_as(mod):
-  create_args = module_args(mod)
+def new_as(module):
+  create_args = module_args(module)
 
   return _generate_wrapped(create_args)
 

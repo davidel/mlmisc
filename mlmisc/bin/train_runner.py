@@ -11,6 +11,7 @@ import torchvision.transforms.v2 as transforms
 import mlmisc.auto_module as mlam
 import mlmisc.config as mlco
 import mlmisc.dataset_utils as mldu
+import mlmisc.load_state_dict as mlsd
 import mlmisc.torch_profiler as mltp
 import mlmisc.trainer as mltr
 import mlmisc.utils as mlut
@@ -125,7 +126,7 @@ def _create_model(args, trainer, dataset):
     model = mlam.create(model_ctor, *model_args, **model_kwargs)
 
     if ref_model is not None:
-      model.load_state_dict(ref_model.state_dict(), strict=args.strict)
+      mlsd.load_state_dict(model, ref_model.state_dict(), strict=args.strict)
   else:
     model = ref_model
 
@@ -278,8 +279,9 @@ if __name__ == '__main__':
   parser.add_argument('--profiler',
                       help='The comma-separated name=value string to be used for the ' \
                       'configuration of the PyTorch profiler')
-  parser.add_argument('--strict', action=argparse.BooleanOptionalAction, default=True,
-                      help='Use strict mode when loading model state dictionaries')
+  parser.add_argument('--strict', default='true',
+                      choices=tuple(lsd.VALID_STRICTS.keys()),
+                      help='Which strict mode to use when loading model state dictionaries')
   parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
                       help='Enable Autograd anomaly detection')
 
