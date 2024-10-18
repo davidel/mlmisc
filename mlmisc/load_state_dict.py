@@ -1,6 +1,14 @@
+import collections
+
 import py_misc_utils.alog as alog
 import torch
 
+
+LoadResult = collections.namedtuple(
+  'LoadResult',
+  'missing_keys, unexpected_keys, exception',
+  defaults=(None,),
+)
 
 VALID_STRICTS = {
   'true': True,
@@ -17,14 +25,22 @@ def load_state_dict(module, state, strict=None, **kwargs):
     strict = VALID_STRICTS[strict.lower()]
 
   if isinstance(strict, bool):
-    result = module.load_state_dict(state, strict=strict, **kwargs)
+    lsd_res = module.load_state_dict(state, strict=strict, **kwargs)
+    result = LoadResult(missing_keys=lsd_res.missing_keys,
+                        unexpected_keys=lsd_res.unexpected_keys)
   elif strict == 'force':
     result = None
     try:
-      result = module.load_state_dict(state, strict=False, **kwargs)
+      lsd_res = module.load_state_dict(state, strict=False, **kwargs)
+      result = LoadResult(missing_keys=lsd_res.missing_keys,
+                          unexpected_keys=lsd_res.unexpected_keys)
     except Exception as ex:
       alog.warning(f'{ex}')
+      result = LoadResult(missing_keys=(),
+                          unexpected_keys=(),
+                          exception=ex)
   else:
     alog.xraise(ValueError, f'Wrong argument value for "strict": {strict}')
 
   return result
+
