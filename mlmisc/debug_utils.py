@@ -17,7 +17,8 @@ def tensor_stats(tensor,
                  percentiles=()):
   if abs_stats:
     tensor = torch.abs(tensor)
-  std, mean = torch.std_mean(tensor)
+  # Avoid size==1 tensors to trigger warnings within the torch.std_mean() API.
+  std, mean = torch.std_mean(tensor, correction=min(1, torch.numel(tensor) - 1))
   mm = torch.aminmax(tensor)
 
   if percentiles:
