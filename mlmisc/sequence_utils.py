@@ -23,7 +23,7 @@ def build_vocab_head(embed_size, vocab_size,
   )
 
 
-def top_k_logits(logits, k):
+def mask_top_k_logits(logits, k):
   v, _ = torch.topk(logits, k)
   logits[logits < v[..., -1:]] = float('-inf')
 
@@ -75,7 +75,7 @@ def generate(evalfn, seq, context_size, steps, pad_mode, pad_value,
     if temperature is not None:
       logits /= temperature
     if top_k is not None and top_k > 0:
-      logits = top_k_logits(logits, top_k)
+      logits = mask_top_k_logits(logits, top_k)
     probs = F.softmax(logits, dim=-1)
 
     if sample:
