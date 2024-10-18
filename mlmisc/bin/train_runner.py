@@ -280,7 +280,7 @@ if __name__ == '__main__':
                       help='The comma-separated name=value string to be used for the ' \
                       'configuration of the PyTorch profiler')
   parser.add_argument('--strict', default='true',
-                      choices=tuple(lsd.VALID_STRICTS.keys()),
+                      choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
   parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
                       help='Enable Autograd anomaly detection')
