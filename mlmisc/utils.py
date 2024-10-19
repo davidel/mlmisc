@@ -165,10 +165,17 @@ def checkpoint_data(path, gs_path=None, **kwargs):
                            gs_path))
 
 
-def create_tb_writer(path):
+def create_tb_writer(path, **kwargs):
   alog.debug(f'Creating TB summary writer in {path}')
 
-  return torch.utils.tensorboard.SummaryWriter(path)
+  return torch.utils.tensorboard.SummaryWriter(path, **kwargs)
+
+
+def tb_write(tb_writer, name, value, **kwargs):
+  if isinstance(value, dict):
+    tb_writer.add_scalars(name, value, **kwargs)
+  else:
+    tb_writer.add_scalar(name, value, **kwargs)
 
 
 def count_params(net):

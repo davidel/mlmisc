@@ -148,11 +148,9 @@ class Trainer:
                               time=self._train_time.seconds,
                               value=value))
     if tb_writer is not None:
-      wargs = dict(global_step=int(epoch * 10), walltime=self._train_time.seconds)
-      if isinstance(value, dict):
-        tb_writer.add_scalars(name, value, **wargs)
-      else:
-        tb_writer.add_scalar(name, value, **wargs)
+      ut.tb_write(tb_writer, name, value,
+                  global_step=int(epoch * 10),
+                  walltime=self._train_time.seconds)
 
   def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
     epoch = self._epoch(num_batches * tctx.batch_size)
