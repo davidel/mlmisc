@@ -47,7 +47,8 @@ class TiledLinear(nn.Module):
     return y
 
   def extra_repr(self):
-    return pyu.stri(dict(num_tiles=self.num_tiles,
+    return pyu.stri(dict(crossed=self.crossed,
+                         num_tiles=self.num_tiles,
                          tile_size=self.tiled_fc.weight.shape[-1],
                          pad=self.pad))
 
