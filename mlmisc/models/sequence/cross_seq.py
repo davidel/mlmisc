@@ -94,7 +94,7 @@ class CrossSeq(sb.SequenceBase):
 
   def forward(self, x, targets=None):
     y = super().forward(x)
-    y = self.convs(y)
+    y = self.net(y)
 
     return y, self.loss(y, targets)
 
