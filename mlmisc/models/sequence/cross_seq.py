@@ -53,7 +53,7 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
 
   net.add(el.Rearrange('b c e -> b (e c)'))
   net.add(nn.Dropout(dropout))
-  net.add(tl.TiledLinear(net.shape[-1], bottleneck, num_tiles))
+  net.add(tl.TiledLinear(net.shape[-1], bottleneck, num_tiles, crossed=crossed))
   net.add(lu.create(act))
   net.linear(vocab_size)
 
