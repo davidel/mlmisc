@@ -211,6 +211,10 @@ def _main(args):
       if bc.hit():
         break
 
+  if tb_writer is not None:
+    tb_writer.flush()
+    tb_writer.close()
+
 
 if __name__ == '__main__':
   # Do basic logging setup ... will be setup later once the modules are parsed.
