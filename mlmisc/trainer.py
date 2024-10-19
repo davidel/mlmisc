@@ -65,26 +65,26 @@ class Trainer:
     self._load_state(dict())
 
   def _load_state(self, state):
-    self._num_samples = state.get('num_samples', 0)
-    self._train_time = TimeTracker(total=state.get('train_time', 0))
-    self._val_time = TimeTracker(total=state.get('val_time', 0))
-    self._save_time = TimeTracker(total=state.get('save_time', 0))
-    self._metrics = state.get('metrics', [])
+    self.num_samples = state.get('num_samples', 0)
+    self.train_time = TimeTracker(total=state.get('train_time', 0))
+    self.val_time = TimeTracker(total=state.get('val_time', 0))
+    self.save_time = TimeTracker(total=state.get('save_time', 0))
+    self.metrics = state.get('metrics', [])
 
   def _get_state(self):
     return dict(
-      num_samples=self._num_samples,
-      train_time=self._train_time.total,
-      val_time=self._val_time.total,
-      save_time=self._save_time.total,
-      metrics=self._metrics,
+      num_samples=self.num_samples,
+      train_time=self.train_time.total,
+      val_time=self.val_time.total,
+      save_time=self.save_time.total,
+      metrics=self.metrics,
     )
 
   def save_model(self, model, path, **kwargs):
-    self._save_time.start()
+    self.save_time.start()
     state = self._get_state()
     ut.save_data(path, model=model, **kwargs, **state)
-    self._save_time.track()
+    self.save_time.track()
 
   def load_model(self, path, device=None, strict=True):
     state = ut.load_data(path, strict=strict)
@@ -107,10 +107,24 @@ class Trainer:
 
     return tuple(loaded)
 
+  @classmethod
+  def load_metrics(cls, path):
+    state = ut.torch_load(path, map_location=torch.device('cpu'))
+
+    return state.get('metrics')
+
+  @classmethod
+  def export_tb_metrics(cls, path, tb_writer):
+    metrics = cls.load_metrics(path) or ()
+    for m in metrics:
+      ut.tb_write(tb_writer, m['name'], m['value'],
+                  global_step=int(m['epoch'] * 10),
+                  walltime=m['time'])
+
   def _times(self):
-    return f'train={self._train_time.total}\t' \
-      f'val={self._val_time.total}\t' \
-      f'save={self._save_time.total}'
+    return f'train={self.train_time.total}\t' \
+      f'val={self.val_time.total}\t' \
+      f'save={self.save_time.total}'
 
   def _val_loss(self, tctx):
     loader = torch.utils.data.DataLoader(tctx.val_data,
@@ -121,7 +135,7 @@ class Trainer:
     alog.info(f'Running validation on {len(loader)} batches')
 
     with torch.no_grad(), ut.Training(tctx.model, False):
-      losses, val_start = [], self._val_time.start()
+      losses, val_start = [], self.val_time.start()
       for i, (x, y) in enumerate(loader):
         if tctx.device is not None:
           x, y = x.to(tctx.device), y.to(tctx.device)
@@ -135,22 +149,22 @@ class Trainer:
                     f'{datetime.timedelta(seconds=tctx.val_time)} required time stop')
           break
 
-    self._val_time.track()
+    self.val_time.track()
 
     return np.mean(losses) if losses else None
 
   def _epoch(self, total_samples):
-    return 100 * self._num_samples / total_samples
+    return 100 * self.num_samples / total_samples
 
   def _metric_log(self, tb_writer, epoch, name, value):
-    self._metrics.append(dict(name=name,
-                              epoch=epoch,
-                              time=self._train_time.seconds,
-                              value=value))
+    self.metrics.append(dict(name=name,
+                             epoch=epoch,
+                             time=self.train_time.seconds,
+                             value=value))
     if tb_writer is not None:
       ut.tb_write(tb_writer, name, value,
                   global_step=int(epoch * 10),
-                  walltime=self._train_time.seconds)
+                  walltime=self.train_time.seconds)
 
   def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
     epoch = self._epoch(num_batches * tctx.batch_size)
@@ -237,7 +251,7 @@ class Trainer:
       else:
         bloss.backward()
 
-      self._num_samples += tctx.batch_size
+      self.num_samples += tctx.batch_size
       if (i + 1) % tctx.accum_steps == 0:
         if tctx.scaler is not None:
           if tctx.grad_clip is not None and tctx.grad_clip > 0:
@@ -277,10 +291,10 @@ class Trainer:
 
     wrapped_scheduler = LrScheduler(scheduler)
 
-    tstep, tval, tsave = [self._train_time.start()] * 3
+    tstep, tval, tsave = [self.train_time.start()] * 3
     train_losses, val_losses, last_stepno = array.array('f'), array.array('f'), -1
     for sd in self._step(tctx):
-      now = self._train_time.track()
+      now = self.train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
         self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches,
@@ -290,17 +304,17 @@ class Trainer:
       wrapped_scheduler.train_step(sd.loss)
 
       if model_path is not None and now > tsave + model_chkptstep:
-        self._train_time.track()
+        self.train_time.track()
         self._save_checkpoint(tctx)
-        tsave = self._train_time.start()
+        tsave = self.train_time.start()
 
       if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
-        self._train_time.track()
+        self.train_time.track()
         self._show_stats(model, wrapped_scheduler, sd.num_batches, tctx)
         vloss = self._run_validation(sd.stepno, sd.num_batches, tctx)
         if vloss is not None:
           val_losses.append(vloss)
-        tval = self._train_time.start()
+        tval = self.train_time.start()
 
       if step_fn is not None:
         step_fn(sd)
@@ -315,7 +329,7 @@ class Trainer:
     if not stopped:
       wrapped_scheduler.epoch_step(np.mean(val_losses) if val_losses else None)
 
-    self._train_time.track()
+    self.train_time.track()
 
     if model_path is not None:
       self._save_checkpoint(tctx)
