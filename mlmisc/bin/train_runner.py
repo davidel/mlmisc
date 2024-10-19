@@ -126,7 +126,7 @@ def _create_model(args, trainer, dataset):
     model = mlam.create(model_ctor, *model_args, **model_kwargs)
 
     if ref_model is not None:
-      mlsd.load_state_dict(model, ref_model.state_dict(), strict=args.strict)
+      mlsd.load_state_dict(model, mlam.raw_state_dict(ref_model), strict=args.strict)
   else:
     model = ref_model
 

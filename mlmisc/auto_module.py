@@ -10,6 +10,7 @@ from . import load_state_dict as lsd
 _CLASS = 'mclass'
 _ARGS = 'args'
 _KWARGS = 'kwargs'
+_SAVED_STATE_DICT = '_saved_state_dict'
 _STATE = '__AM_ARGS__'
 _MODULE_ARGS = '_create_args'
 
@@ -30,8 +31,16 @@ def _load_state(data):
   return pickle.load(bio)
 
 
+def raw_state_dict(module, *args, **kwargs):
+  state_dict = getattr(module, _SAVED_STATE_DICT, None)
+  if state_dict is None:
+    return module.state_dict(*args, **kwargs)
+
+  return state_dict(*args, **kwargs)
+
+
 def _wrapped_state_dict(module, *args, **kwargs):
-  state = module._saved_state_dict(*args, **kwargs)
+  state = raw_state_dict(module, *args, **kwargs)
   state[_STATE] = _save_state(module_args(module))
 
   return state
@@ -39,8 +48,7 @@ def _wrapped_state_dict(module, *args, **kwargs):
 
 def _wrap_module(module, create_args):
   setattr(module, _MODULE_ARGS, create_args)
-
-  module._saved_state_dict = module.state_dict
+  setattr(module, _SAVED_STATE_DICT, module.state_dict)
   module.state_dict = functools.partial(_wrapped_state_dict, module)
 
   return module
