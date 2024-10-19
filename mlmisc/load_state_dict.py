@@ -42,5 +42,10 @@ def load_state_dict(module, state, strict=None, **kwargs):
   else:
     alog.xraise(ValueError, f'Wrong argument value for "strict": {strict}')
 
+  for pk in result.missing_keys:
+    alog.debug(f'Missing parameter: {pk}')
+  for pk in result.unexpected_keys:
+    alog.debug(f'Extra parameter: {pk}')
+
   return result
 
