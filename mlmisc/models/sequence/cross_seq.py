@@ -40,6 +40,7 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
                   act, dropout, net_kwargs):
   shortcut = net_kwargs.pop('shortcut', 3)
   num_tiles = net_kwargs.pop('num_tiles', 16)
+  crossed = net_kwargs.pop('crossed', False)
 
   net = mb.ModuleBuilder((context_size, embed_size))
   result_ids = []
@@ -52,7 +53,8 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
 
   net.add(el.Rearrange('b c e -> b (e c)'))
   net.add(nn.Dropout(dropout))
-  net.add(tl.TiledLinear(net.shape[-1], bottleneck, num_tiles, act=act))
+  net.add(tl.TiledLinear(net.shape[-1], bottleneck, num_tiles))
+  net.add(lu.create(act))
   net.linear(vocab_size)
 
   return net
@@ -88,8 +90,7 @@ class CrossSeq(sb.SequenceBase):
 
     super().__init__(context_size, embed_size, vocab_size,
                      padding_idx=padding_idx)
-    # TODO: Replace "convs" with "net" once done with existing checkpoints testing.
-    self.convs = net
+    self.net = net
 
   def forward(self, x, targets=None):
     y = super().forward(x)
