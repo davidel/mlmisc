@@ -7,13 +7,10 @@ import torch.nn as nn
 
 class CrossLinear(nn.Module):
 
-  def __init__(self, context_size, embed_size, post=None):
-    post = pyu.value_or(post, nn.Identity)
-
+  def __init__(self, context_size, embed_size):
     super().__init__()
     self.fc = nn.Linear(embed_size, embed_size)
     self.alt_fc = nn.Linear(context_size, context_size)
-    self.post = lu.create(post)
 
   def forward(self, x):
     y = self.fc(x)
@@ -21,7 +18,6 @@ class CrossLinear(nn.Module):
     ya = self.alt_fc(xa)
     ya = einops.rearrange(ya, 'b e c -> b c e')
     y += ya
-    y = self.post(y)
 
     return y
 
