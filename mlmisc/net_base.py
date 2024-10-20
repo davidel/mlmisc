@@ -1,3 +1,5 @@
+import collections
+
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.utils as pyu
 import torch
@@ -8,24 +10,21 @@ STATE_KEY = '_NET_STATE'
 
 class NetBase(nn.Module):
 
-  def __init__(self, device=None):
-    super().__init__()
-    self.device = torch.device(device or 'cpu')
+  def infer_device(self):
+    devices = collections.defaultdict(int)
+    for param in self.parameters():
+      devices[param.device] += 1
 
-  def to(self, *args, **kwargs):
-    if args and isinstance(args[0], (str, torch.device)):
-      device = torch.device(args[0])
-    elif 'device' in kwargs:
-      device = torch.device(kwargs['device'])
-    else:
-      device = self.device
+    devices = sorted(devices.items(), key=lambda d: d[1])
 
-    result = super().to(*args, **kwargs)
+    return devices[-1][0] if devices else torch.device('cpu')
 
-    self.device = device
-
-    return result
-
+  # The nn.Module "extra state" gets loaded after the normal state, which does not
+  # allow the proper reconfiguration in case that is required before loading the
+  # state parameter values.
+  # The net_state_dict() and net_load_state_dict() implemented from the sub-classes
+  # allows the modules to perform pre-configuration before the actual load_state_dict()
+  # is called.
   def state_dict(self, *args, **kwargs):
     state = super().state_dict(*args, **kwargs)
 
