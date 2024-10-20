@@ -117,7 +117,7 @@ def _try_module(name, cache_dir, split_pct, dataset_kwargs):
   if len(parts) == 2:
     modpath, ctor_fn = parts
     try:
-      module = pymu.import_module(modpath)
+      module = pymu.import_module(pyu.normpath(modpath))
     except ImportError:
       return
 
