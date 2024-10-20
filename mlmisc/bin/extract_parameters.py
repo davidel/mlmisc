@@ -18,7 +18,7 @@ def _main(args):
       alog.debug(f'Found parameter "{name}" with shape {tuple(param.shape)}')
       if not args.match or re.match(args.match, name):
         data = getattr(param, 'data', param)
-        path = os.path.join(args.output_path, name)
+        path = os.path.join(args.output_path, f'{name}.pt')
 
         alog.info(f'Saving parameter "{name}" to {path} ...')
         torch.save(data, path)
