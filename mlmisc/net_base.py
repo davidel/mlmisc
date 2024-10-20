@@ -10,7 +10,7 @@ STATE_KEY = '_NET_STATE'
 
 class NetBase(nn.Module):
 
-  def infer_device(self):
+  def device(self):
     devices = collections.defaultdict(int)
     for param in self.parameters():
       devices[param.device] += 1
