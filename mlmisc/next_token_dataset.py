@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 
 from . import dataset_base as dsb
-from . import dataset_utils as dsu
 
 
 class NextTokenDataset(dsb.Dataset):
