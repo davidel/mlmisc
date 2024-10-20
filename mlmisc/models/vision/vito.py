@@ -10,10 +10,11 @@ from ... import args_sequential as aseq
 from ... import encoder_block as eb
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
+from ... import net_base as nb
 from ... import utils as ut
 
 
-class ViTO(nn.Module):
+class ViTO(nb.NetBase):
 
   def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
                htile_size=None,

@@ -10,11 +10,12 @@ from ... import args_sequential as aseq
 from ... import encoder_block as eb
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
+from ... import net_base as nb
 from ... import patcher as pch
 from ... import utils as ut
 
 
-class ViTBase(nn.Module):
+class ViTBase(nb.NetBase):
 
   def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
                attn_dropout=None,

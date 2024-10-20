@@ -11,6 +11,7 @@ from ... import einops_layers as eil
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
 from ... import module_builder as mb
+from ... import net_base as nb
 from ... import utils as ut
 
 
@@ -67,7 +68,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
   return net
 
 
-class CoViT(nn.Module):
+class CoViT(nb.NetBase):
 
   def __init__(self, shape, num_classes, num_layers, embed_size, num_patches,
                dropout=None,
