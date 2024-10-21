@@ -78,7 +78,7 @@ def torch_load(path, **kwargs):
 
 def torch_load_to(dest, path, **kwargs):
   alog.debug(f'Loading tensor data from {path} to tensor/parameter with ' \
-             f'shape {dest.shape} ...')
+             f'shape {tuple(dest.shape)} ...')
   t = torch.load(path, weights_only=True, **kwargs)
   dest.data.copy_(getattr(t, 'data', t))
 
