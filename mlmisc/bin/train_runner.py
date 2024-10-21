@@ -59,7 +59,7 @@ def _create_dataset(args):
   else:
     select_fn = None
 
-  dataset_kwargs = pyu.parse_dict(args.dataset_kwargs or '')
+  dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
   cache_dir = os.path.normpath(os.path.expanduser(args.cache_dir))
 
   dsets = mldu.create_dataset(args.dataset,
@@ -124,6 +124,10 @@ def _create_model(args, trainer, dataset):
     model_ctor = operator.attrgetter(model_function)(module)
 
     model = mlam.create(model_ctor, *model_args, **model_kwargs)
+
+    if args.init_kwargs:
+      init_kwargs = pyu.parse_config(args.init_kwargs)
+      model.try_call('init', init_kwargs)
 
     if ref_model is not None:
       mlsd.load_state_dict(model, mlam.raw_state_dict(ref_model), strict=args.strict)
@@ -238,6 +242,9 @@ if __name__ == '__main__':
   parser.add_argument('--rebuild_model', action=argparse.BooleanOptionalAction, default=False,
                       help='Force model rebuild while loading parameters from existing ' \
                       f'checkpoint (if any)')
+  parser.add_argument('--init_kwargs',
+                      help='The comma-separated key=value arguments to call the module init() API ' \
+                      f'(or the path to a YAML/JSON file containing such configuration)')
   parser.add_argument('--amp_dtype',
                       help='The type to be used with the AMP (Automatic Mixed Precision) module')
   parser.add_argument('--batch_size', type=int, default=32,
@@ -266,7 +273,8 @@ if __name__ == '__main__':
   parser.add_argument('--dataset_selector',
                       help='The comma-separated keys to be used to select the dataset items')
   parser.add_argument('--dataset_kwargs',
-                      help='The comma-separated key=value arguments for the dataset constructor')
+                      help='The comma-separated key=value arguments for the dataset constructor ' \
+                      f'(or the path to a YAML/JSON file containing such configuration)')
   parser.add_argument('--show_images', type=int,
                       help='The number of sample images to be shown before starting training')
   parser.add_argument('--optimizer', required=True,
