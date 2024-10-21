@@ -73,7 +73,14 @@ def is_integer(t):
 
 
 def torch_load(path, **kwargs):
-  return torch.load(path, weights_only=False, **kwargs)
+  return torch.load(path, weights_only=True, **kwargs)
+
+
+def torch_load_to(dest, path, **kwargs):
+  t = torch_load(path, **kwargs)
+  dest.data.copy_(getattr(t, 'data', t))
+
+  return dest
 
 
 def net_shape(net, shape, device=None, dtype=None):
