@@ -99,6 +99,7 @@ def _create_model(args, trainer, dataset):
   model, state = None, dict()
   if os.path.exists(args.checkpoint_path):
     if args.rebuild_model:
+      alog.debug(f'Loading raw state from {args.checkpoint_path}')
       state = trainer.load_raw_state(args.checkpoint_path)
     else:
       model, state = trainer.load_model(args.checkpoint_path,
