@@ -96,12 +96,15 @@ def _replace_args(model_args, model_kwargs, config):
 def _create_model(args, trainer, dataset):
   module = pymu.import_module(args.model_path, modname='train_module')
 
-  ref_model, state = None, dict()
+  model, state = None, dict()
   if os.path.exists(args.checkpoint_path):
-    ref_model, state = trainer.load_model(args.checkpoint_path,
-                                          strict=args.strict)
+    if args.rebuild_model:
+      state = trainer.load_raw_state(args.checkpoint_path)
+    else:
+      model, state = trainer.load_model(args.checkpoint_path,
+                                            strict=args.strict)
 
-  if ref_model is None or args.rebuild_model:
+  if model is None:
     model_function, *cmdline_args = args.model_args
 
     model_args, model_kwargs = [], dict()
@@ -129,10 +132,9 @@ def _create_model(args, trainer, dataset):
       init_kwargs = pyu.parse_config(args.init_kwargs)
       model.try_call('init', init_kwargs)
 
-    if ref_model is not None:
-      mlsd.load_state_dict(model, mlam.raw_state_dict(ref_model), strict=args.strict)
-  else:
-    model = ref_model
+    model_state = trainer.model_state(state)
+    if model_state is not None:
+      mlsd.load_state_dict(model, mlam.purged_state(model_state), strict=args.strict)
 
   model = model.to(args.device)
 

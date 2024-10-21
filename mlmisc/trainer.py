@@ -108,14 +108,22 @@ class Trainer:
     return tuple(loaded)
 
   @classmethod
-  def load_model_state(cls, path):
-    state = ut.torch_load(path, map_location=torch.device('cpu'))
+  def load_raw_state(cls, path):
+    return ut.torch_load(path, map_location=torch.device('cpu'))
 
+  @classmethod
+  def model_state(cls, state):
     return state.get('model')
 
   @classmethod
+  def load_model_state(cls, path):
+    state = cls.load_raw_state(path)
+
+    return cls.model_state(state)
+
+  @classmethod
   def load_metrics(cls, path):
-    state = ut.torch_load(path, map_location=torch.device('cpu'))
+    state = cls.load_raw_state(path)
 
     return state.get('metrics')
 

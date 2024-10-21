@@ -74,6 +74,12 @@ def is_auto_state(state):
   return _STATE in state
 
 
+def purged_state(state):
+  state.pop(_STATE, None)
+
+  return state
+
+
 def is_auto(module):
   return hasattr(module, _MODULE_ARGS)
 
