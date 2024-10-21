@@ -73,11 +73,13 @@ def is_integer(t):
 
 
 def torch_load(path, **kwargs):
-  return torch.load(path, weights_only=True, **kwargs)
+  return torch.load(path, weights_only=False, **kwargs)
 
 
 def torch_load_to(dest, path, **kwargs):
-  t = torch_load(path, **kwargs)
+  alog.debug(f'Loading tensor data from {path} to tensor/parameter with ' \
+             f'shape {dest.shape} ...')
+  t = torch.load(path, weights_only=True, **kwargs)
   dest.data.copy_(getattr(t, 'data', t))
 
   return dest
