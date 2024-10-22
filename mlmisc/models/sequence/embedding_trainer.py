@@ -60,11 +60,6 @@ class EmbeddingTrainer(sb.SequenceBase):
                      padding_idx=padding_idx)
     self.net = net
 
-  def init(self, args):
-    embedding_path = args.get('embedding_path')
-    if embedding_path is not None:
-      ut.torch_load_to(self.tok_emb.weight, embedding_path)
-
   def forward(self, x, targets=None):
     y = super().forward(x)
     y = self.net(y)
