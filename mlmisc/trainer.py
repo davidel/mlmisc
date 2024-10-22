@@ -62,16 +62,16 @@ class LrScheduler:
 class Trainer:
 
   def __init__(self):
-    self._load_state(dict())
+    self.load_state(dict())
 
-  def _load_state(self, state):
+  def load_state(self, state):
     self.num_samples = state.get('num_samples', 0)
     self.train_time = TimeTracker(total=state.get('train_time', 0))
     self.val_time = TimeTracker(total=state.get('val_time', 0))
     self.save_time = TimeTracker(total=state.get('save_time', 0))
     self.metrics = state.get('metrics', [])
 
-  def _get_state(self):
+  def get_state(self):
     return dict(
       num_samples=self.num_samples,
       train_time=self.train_time.total,
@@ -82,13 +82,13 @@ class Trainer:
 
   def save_model(self, model, path, **kwargs):
     self.save_time.start()
-    state = self._get_state()
+    state = self.get_state()
     ut.save_data(path, model=model, **kwargs, **state)
     self.save_time.track()
 
   def load_model(self, path, device=None, strict=True):
     state = ut.load_data(path, strict=strict)
-    self._load_state(state)
+    self.load_state(state)
 
     model = state['model']
     if device is not None:

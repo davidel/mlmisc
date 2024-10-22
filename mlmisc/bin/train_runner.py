@@ -101,9 +101,10 @@ def _create_model(args, trainer, dataset):
     if args.rebuild_model:
       alog.debug(f'Loading raw state from {args.checkpoint_path}')
       state = trainer.load_raw_state(args.checkpoint_path)
+      trainer.load_state(state)
     else:
       model, state = trainer.load_model(args.checkpoint_path,
-                                            strict=args.strict)
+                                        strict=args.strict)
 
   if model is None:
     model_function, *cmdline_args = args.model_args
