@@ -111,7 +111,7 @@ if __name__ == '__main__':
     'dreplace',
     help='Replaces model parameter names using rewritten dump file')
   dreplace_parser.add_argument('--input', required=True)
-  dump_parser.add_argument('--dump_file', required=True)
+  dreplace_parser.add_argument('--dump_file', required=True)
   dreplace_parser.add_argument('--output')
   dreplace_parser.set_defaults(cmd_fn=dreplace)
 
