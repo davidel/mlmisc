@@ -45,14 +45,17 @@ def dump(args):
 
   names = sorted(model_data.keys())
 
-  od, rd = dict(), dict()
+  orig, replace = dict(), dict()
   for i, name in enumerate(names):
     param = model_data[name]
     if isinstance(param, torch.Tensor):
-      od[str(i)] = dict(name=name, shape=str(tuple(param.shape)))
-      rd[str(i)] = dict(name=name)
+      pkey = f'P{i}'
+      orig[pkey] = dict(name=name, shape=str(tuple(param.shape)))
+      replace[pkey] = dict(name=name)
+    else:
+      alog.debug(f'Key "{name}" is not a tensor: {type(param)}')
 
-  pyu.write_config(dict(orig=od, replace=rd), args.dump_file)
+  pyu.write_config(dict(orig=orig, replace=replace), args.dump_file)
 
 
 def replace(args):
