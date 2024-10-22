@@ -76,11 +76,13 @@ def dreplace(args):
 
   for pdata, rname in repl:
     if rname is not None:
-      alog.info(f'Renaming "{pdata["name"]}" with shape {pdata["shape"]} to "{rname}"')
-      model_data[rname] = model_data[pdata['name']]
+      if rname != pdata['name']:
+        alog.info(f'Renaming "{pdata["name"]}" with shape {pdata["shape"]} to "{rname}"')
+        model_data[rname] = model_data[pdata['name']]
+        model_data.pop(pdata['name'])
     else:
       alog.info(f'Dropping "{pdata["name"]}" with shape {pdata["shape"]}')
-    model_data.pop(pdata['name'])
+      model_data.pop(pdata['name'])
 
   if repl:
     rewrite_data(args, data)
