@@ -92,6 +92,7 @@ def dreplace(args):
       param = model_data[pdata['name']]
       trans = rdata.get('trans')
       if trans is not None:
+        alog.info(f'Transforming "{pdata["name"]}": {trans}')
         param = trans_data(param, trans)
 
       if rdata['name'] != pdata['name']:
