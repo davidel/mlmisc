@@ -81,13 +81,10 @@ def dreplace(args):
 
   repl_config = pyu.load_config(cfg_file=args.dump_file)
 
-  repl = []
   orig, replace = pyu.mget(repl_config, 'orig, replace')
+  changed = 0
   for pid, pdata in orig.items():
     rdata = replace.get(pid)
-    repl.append((pdata, rdata))
-
-  for pdata, rdata in repl:
     if rdata is not None:
       param = model_data[pdata['name']]
       trans = rdata.get('trans')
@@ -99,11 +96,13 @@ def dreplace(args):
         alog.info(f'Renaming "{pdata["name"]}" with shape {pdata["shape"]} to "{rdata["name"]}"')
         model_data[rdata['name']] = param
         model_data.pop(pdata['name'])
+        changed += 1
     else:
       alog.info(f'Dropping "{pdata["name"]}" with shape {pdata["shape"]}')
       model_data.pop(pdata['name'])
+      changed += 1
 
-  if repl:
+  if changed:
     rewrite_data(args, data)
 
 
