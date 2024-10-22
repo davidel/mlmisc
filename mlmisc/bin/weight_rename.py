@@ -89,6 +89,7 @@ def dreplace(args):
 if __name__ == '__main__':
   parser = argparse.ArgumentParser('Manipulate parameter names from PyTorch checkpoints')
   parser.add_argument('--map_location')
+  parser.add_argument('--log_level', default='DEBUG')
 
   subparsers = parser.add_subparsers(required=True,
                                      help='Command help')
@@ -124,5 +125,8 @@ if __name__ == '__main__':
   analyze_parser.set_defaults(cmd_fn=analyze)
 
   args = parser.parse_args()
+
+  alog.basic_setup(log_level=args.log_level)
+
   args.cmd_fn(args)
 
