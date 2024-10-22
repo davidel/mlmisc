@@ -235,7 +235,7 @@ def split_dims(shape, npop):
 
 
 def extra_repr(**kwargs):
-  rstr = pyu.stri(**kwargs)
+  rstr = pyu.stri(kwargs)
 
   return rstr[1: -1]
 
