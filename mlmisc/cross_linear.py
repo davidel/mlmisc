@@ -18,10 +18,9 @@ class CrossLinear(nn.Module):
 
   def forward(self, x):
     y = x @ self.fc
-    ya = torch.einsum('bce,ck->bke', x, self.alt_fc)
-    y += ya
+    y = y + torch.einsum('bce,ck->bke', x, self.alt_fc)
     if self.bias is not None:
-      y += self.bias
+      y = y + self.bias
 
     return y
 
