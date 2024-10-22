@@ -53,7 +53,7 @@ class EmbeddingTrainer(sb.SequenceBase):
     if kwargs:
       alog.info(f'Unused {pyu.cname(self)} keyword arguments: {kwargs}')
 
-    context_size = 1 if mode == 'skipgram' else (2 * window_size)
+    context_size = 1 if mode == 'skipgram' else 2 * window_size
 
     super().__init__(context_size, embed_size, vocab_size,
                      use_positions=False,
