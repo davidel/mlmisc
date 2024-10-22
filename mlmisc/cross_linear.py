@@ -3,24 +3,30 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import utils as ut
+
 
 class CrossLinear(nn.Module):
 
-  def __init__(self, context_size, embed_size):
+  def __init__(self, context_size, embed_size, bias=None):
+    bias = pyu.value_or(bias, True)
+
     super().__init__()
-    self.fc = nn.Linear(embed_size, embed_size)
-    self.alt_fc = nn.Linear(context_size, context_size)
+    self.fc = nn.Parameter(ut.kuni_tensor((embed_size, embed_size)))
+    self.alt_fc = nn.Parameter(ut.kuni_tensor((context_size, context_size)))
+    self.bias = nn.Parameter(torch.zeros(embed_size)) if bias else None
 
   def forward(self, x):
-    y = self.fc(x)
-    xa = einops.rearrange(x, 'b c e -> b e c')
-    ya = self.alt_fc(xa)
-    ya = einops.rearrange(ya, 'b e c -> b c e')
+    y = x @ self.fc
+    ya = torch.einsum('bce,ck->bke', x, self.alt_fc)
     y += ya
+    if self.bias is not None:
+      y += self.bias
 
     return y
 
   def extra_repr(self):
-    return pyu.stri(dict(context_size=self.alt_fc.weight.shape[-1],
-                         embed_size=self.fc.weight.shape[-1]))
+    return pyu.stri(dict(context_size=self.alt_fc.shape[-1],
+                         embed_size=self.fc.shape[-1],
+                         bias=self.bias is not None))
 

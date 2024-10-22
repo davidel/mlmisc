@@ -1,6 +1,8 @@
 import argparse
 import re
+import yaml
 
+import mlmisc.trainer as mltr
 import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
 import torch
@@ -8,15 +10,29 @@ import torch
 
 def load_data(path, map_location):
   alog.debug(f'Loading {args.input} checkpoint')
-  data = mlut.torch_load(args.input, map_location=args.map_location)
+  state = mltr.Trainer.load_raw_state(args.input)
 
-  # Handle mlut.save_data() packages ...
-  return data, data.get('model', data)
+  return state, mltr.Trainer.model_state(state)
 
 
 def analyze(args):
   _, from_data = load_data(args.from_path, args.map_location)
   _, to_data = load_data(args.to_path, args.map_location)
+
+
+def dump(args):
+  _, model_data = load_data(args.input, args.map_location)
+
+  names = sorted(model_data.keys())
+
+  od, rd = dict(), dict()
+  for i, name in enumerate(names):
+    param = model_data[name]
+    od[str(i)] = dict(name=name, shape=str(tuple(param.shape)))
+    rd[str(i)] = name
+
+  with open(args.dump_file, mode='wt') as df:
+    yaml.dump(dict(orig=od, replace=rd), df, default_flow_style=None)
 
 
 def replace(args):
@@ -54,6 +70,11 @@ if __name__ == '__main__':
   replace_parser.add_argument('--replace', nargs='+')
   replace_parser.add_argument('--output')
   replace_parser.set_defaults(cmd_fn=replace)
+
+  dump_parser = subparsers.add_parser('dump', help='Dumps model parameter names')
+  dump_parser.add_argument('--input', required=True)
+  dump_parser.add_argument('--dump_file', required=True)
+  dump_parser.set_defaults(cmd_fn=dump)
 
   analyze_parser = subparsers.add_parser('analyze', help='Analyzes model parameter names')
   analyze_parser.add_argument('--from_path', required=True)
