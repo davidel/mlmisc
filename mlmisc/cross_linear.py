@@ -26,7 +26,7 @@ class CrossLinear(nn.Module):
     return y
 
   def extra_repr(self):
-    return pyu.stri(dict(context_size=self.alt_fc.shape[-1],
+    return ut.extra_repr(context_size=self.alt_fc.shape[-1],
                          embed_size=self.fc.shape[-1],
-                         bias=self.bias is not None))
+                         bias=self.bias is not None)
 

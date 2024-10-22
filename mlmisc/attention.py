@@ -5,6 +5,8 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import utils as ut
+
 
 class Attention(nn.Module):
 
@@ -55,10 +57,10 @@ class Attention(nn.Module):
     return out
 
   def extra_repr(self):
-    return pyu.stri(dict(num_heads=self.num_heads,
+    return ut.extra_repr(num_heads=self.num_heads,
                          embed_size=self.unifyheads.out_features,
                          attn_dropout=self.attn_drop.p,
-                         dropout=self.resid_drop.p))
+                         dropout=self.resid_drop.p)
 
 
 class SelfAttention(Attention):

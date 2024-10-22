@@ -7,6 +7,7 @@ import torch.nn as nn
 
 from . import layer_utils as lu
 from .models.sequence import sequence_base as sb
+from . import utils as ut
 
 
 class ForkAttention(nn.Module):
@@ -46,6 +47,6 @@ class ForkAttention(nn.Module):
     return self.post(self.post_feed(x, y))
 
   def extra_repr(self):
-    return pyu.stri(dict(context_size=self.alt_fc.weight.shape[-1],
-                         embed_size=self.fc.weight.shape[-1]))
+    return ut.extra_repr(context_size=self.alt_fc.weight.shape[-1],
+                         embed_size=self.fc.weight.shape[-1])
 

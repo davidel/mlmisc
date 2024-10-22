@@ -234,6 +234,12 @@ def split_dims(shape, npop):
   return shape[: -npop], *shape[-npop:]
 
 
+def extra_repr(**kwargs):
+  rstr = pyu.stri(**kwargs)
+
+  return rstr[1: -1]
+
+
 def kuni_tensor(*shape, dtype=None, device=None, a=None):
   t = torch.empty(*shape, dtype=dtype, device=device)
 
