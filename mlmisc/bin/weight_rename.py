@@ -33,7 +33,7 @@ def dump(args):
       rd[str(i)] = name
 
   with open(args.dump_file, mode='wt') as df:
-    yaml.dump(dict(orig=od, replace=rd), df, default_flow_style=None)
+    yaml.dump(dict(orig=od, replace=rd), df, default_flow_style=False)
 
 
 def replace(args):
