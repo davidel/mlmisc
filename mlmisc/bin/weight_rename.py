@@ -28,8 +28,9 @@ def dump(args):
   od, rd = dict(), dict()
   for i, name in enumerate(names):
     param = model_data[name]
-    od[str(i)] = dict(name=name, shape=str(tuple(param.shape)))
-    rd[str(i)] = name
+    if isinstance(param, torch.Tensor):
+      od[str(i)] = dict(name=name, shape=str(tuple(param.shape)))
+      rd[str(i)] = name
 
   with open(args.dump_file, mode='wt') as df:
     yaml.dump(dict(orig=od, replace=rd), df, default_flow_style=None)
