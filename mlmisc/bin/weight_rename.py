@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 import yaml
 
@@ -22,6 +23,18 @@ def rewrite_data(args, data):
   torch.save(data, wpath)
 
 
+def trans_data(param, trans):
+  if os.path.isfile(trans):
+    with open(trans, mode='rt') as cfd:
+      code = cfd.read()
+
+    transfn, = pyu.compile(code, 'transfn')
+
+    return transfn(param)
+  else:
+    return eval(trans, dict(data=param))
+
+
 def analyze(args):
   _, from_data = load_data(args.from_path, args.map_location)
   _, to_data = load_data(args.to_path, args.map_location)
@@ -37,7 +50,7 @@ def dump(args):
     param = model_data[name]
     if isinstance(param, torch.Tensor):
       od[str(i)] = dict(name=name, shape=str(tuple(param.shape)))
-      rd[str(i)] = name
+      rd[str(i)] = dict(name=name)
 
   pyu.write_config(dict(orig=od, replace=rd), args.dump_file)
 
@@ -71,14 +84,19 @@ def dreplace(args):
   repl = []
   orig, replace = pyu.mget(repl_config, 'orig, replace')
   for pid, pdata in orig.items():
-    rname = replace.get(pid)
-    repl.append((pdata, rname))
+    rdata = replace.get(pid)
+    repl.append((pdata, rdata))
 
-  for pdata, rname in repl:
-    if rname is not None:
-      if rname != pdata['name']:
-        alog.info(f'Renaming "{pdata["name"]}" with shape {pdata["shape"]} to "{rname}"')
-        model_data[rname] = model_data[pdata['name']]
+  for pdata, rdata in repl:
+    if rdata is not None:
+      param = model_data[pdata['name']]
+      trans = rdata.get('trans')
+      if trans is not None:
+        param = trans_data(param, trans)
+
+      if rdata['name'] != pdata['name']:
+        alog.info(f'Renaming "{pdata["name"]}" with shape {pdata["shape"]} to "{rdata["name"]}"')
+        model_data[rdata['name']] = param
         model_data.pop(pdata['name'])
     else:
       alog.info(f'Dropping "{pdata["name"]}" with shape {pdata["shape"]}')
