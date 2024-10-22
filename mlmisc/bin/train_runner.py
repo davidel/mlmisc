@@ -112,7 +112,7 @@ def _create_model(args, trainer, dataset):
     for arg in cmdline_args:
       parts = [x.strip() for x in pyu.resplit(arg, '=')]
       if len(parts) == 2:
-        model_kwargs[pyu.infer_value(parts[0], vtype=str)] = pyu.infer_value(parts[1])
+        model_kwargs[parts[0]] = pyu.infer_value(parts[1])
       elif len(parts) == 1:
         model_args.append(pyu.infer_value(parts[0]))
       else:
