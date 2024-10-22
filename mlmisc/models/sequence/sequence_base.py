@@ -11,9 +11,11 @@ from ... import utils as ut
 class SequenceBase(nb.NetBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
+               use_positions=None,
                embeddings=None,
                freeze=None,
                padding_idx=None):
+    use_positions = pyu.value_or(use_positions, True)
     freeze = pyu.value_or(freeze, False)
 
     super().__init__()
@@ -27,7 +29,8 @@ class SequenceBase(nb.NetBase):
       self.tok_emb = nn.Embedding.from_pretrained(embeddings,
                                                   freeze=freeze,
                                                   padding_idx=padding_idx)
-    self.pos_emb = nn.Parameter(torch.zeros((1, context_size, embed_size)))
+    self.pos_emb = nn.Parameter(torch.zeros((1, context_size, embed_size))) \
+      if use_positions else None
     self.loss = lsw.SeqLoss(nn.CrossEntropyLoss())
 
   def init(self, args):
@@ -36,7 +39,10 @@ class SequenceBase(nb.NetBase):
       ut.torch_load_to(self.tok_emb.weight, embedding_path)
 
   def forward(self, x):
-    y = self.tok_emb(x) + self.pos_emb
+    if self.pos_emb is not None:
+      y = self.tok_emb(x) + self.pos_emb
+    else:
+      y = self.tok_emb(x)
 
     return y
 

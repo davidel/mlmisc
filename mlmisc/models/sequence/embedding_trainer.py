@@ -6,10 +6,10 @@ import torch.nn as nn
 from ... import args_sequential as aseq
 from ... import einops_layers as el
 from ... import layer_utils as lu
-from ... import loss_wrappers as lsw
 from ... import module_builder as mb
-from ... import net_base as nb
 from ... import utils as ut
+
+from . import sequence_base as sb
 
 
 def create_net_skipgram_v1(window_size, embed_size, vocab_size, act, net_kwargs):
@@ -37,7 +37,7 @@ def create_net_cbow_v1(window_size, embed_size, vocab_size, act, net_kwargs):
   return net
 
 
-class EmbeddingTrainer(nb.NetBase):
+class EmbeddingTrainer(sb.SequenceBase):
 
   def __init__(self, window_size, mode, embed_size, vocab_size,
                netver=None,
@@ -53,11 +53,12 @@ class EmbeddingTrainer(nb.NetBase):
     if kwargs:
       alog.info(f'Unused {pyu.cname(self)} keyword arguments: {kwargs}')
 
-    super().__init__()
-    self.tok_emb = nn.Embedding(vocab_size, embed_size,
-                                padding_idx=padding_idx)
+    context_size = 1 if mode == 'skipgram' else (2 * window_size)
+
+    super().__init__(context_size, embed_size, vocab_size,
+                     use_positions=False,
+                     padding_idx=padding_idx)
     self.net = net
-    self.loss = lsw.SeqLoss(nn.CrossEntropyLoss())
 
   def init(self, args):
     embedding_path = args.get('embedding_path')
@@ -65,7 +66,7 @@ class EmbeddingTrainer(nb.NetBase):
       ut.torch_load_to(self.tok_emb.weight, embedding_path)
 
   def forward(self, x, targets=None):
-    y = self.tok_emb(x)
+    y = super().forward(x)
     y = self.net(y)
 
     return y, self.loss(y, targets)
