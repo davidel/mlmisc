@@ -32,13 +32,12 @@ class CrossVizSeq(vb.ViTBase):
 
     patcher = cu.build_conv_stack(convs, shape=shape)
     patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
+    patcher.linear(embed_size)
+    patcher.add(lu.create(act))
 
     alog.debug(f'Input shape {shape}, patcher shape {patcher.shape}')
 
     net = mb.ModuleBuilder((patcher.shape[0] + result_tiles, patcher.shape[1]))
-    net.linear(embed_size)
-    net.add(lu.create(act))
-
     result_ids = []
     for i in range(num_layers):
       net.add(xl.CrossLinear(*net.shape),
