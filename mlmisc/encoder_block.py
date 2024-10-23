@@ -31,8 +31,8 @@ class EncoderBlock(nn.Module):
 
     super().__init__()
     self.norm_mode = norm_mode
-    self.attn = atn.Attention(input_dim, num_heads,
-                              dropout=attn_dropout)
+    self.attn = atn.SelfAttention(input_dim, num_heads,
+                                  dropout=attn_dropout)
 
     self.linear_net = aseq.ArgsSequential(
       ifc=nn.Linear(input_dim, dim_feedforward),
@@ -47,10 +47,10 @@ class EncoderBlock(nn.Module):
   def forward(self, x, mask=None):
     if self.norm_mode == PRE_NORM:
       xx = self.norm1(x)
-      x = x + self.attn(xx, xx, xx, mask=mask)
+      x = x + self.attn(xx, mask=mask)
       x = x + self.linear_net(self.norm2(x))
     else:
-      x = self.norm1(x + self.attn(x, x, x, mask=mask))
+      x = self.norm1(x + self.attn(x, mask=mask))
       x = self.norm2(x + self.linear_net(x))
 
     return x
