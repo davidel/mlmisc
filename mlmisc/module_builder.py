@@ -47,6 +47,8 @@ class ModuleBuilder(nn.Module):
     # can then be saved/loaded from the normal PyTorch state-dict machinery.
     if isinstance(input_fn, nn.Module):
       self.aux_modules.append(input_fn)
+    if isinstance(output_fn, nn.Module):
+      self.aux_modules.append(output_fn)
 
     return len(self.layers) - 1
 
