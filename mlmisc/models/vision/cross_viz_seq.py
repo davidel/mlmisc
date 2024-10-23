@@ -19,13 +19,11 @@ class CrossVizSeq(vb.ViTBase):
   def __init__(self, shape, embed_size, num_classes, num_layers,
                convs=None,
                shortcut=None,
-               dropout=None,
                result_tiles=None,
                act=None,
                weight=None,
                label_smoothing=None):
     shortcut = pyu.value_or(shortcut, 2)
-    dropout = pyu.value_or(dropout, 0.1)
     act = pyu.value_or(act, 'gelu')
 
     if isinstance(convs, str):
@@ -40,7 +38,7 @@ class CrossVizSeq(vb.ViTBase):
 
     result_ids = []
     for i in range(num_layers):
-      net.add(xl.CrossLinear(*net.patch),
+      net.add(xl.CrossLinear(*net.shape),
               input_fn=mb.inputfn(result_ids, back=shortcut))
       net.add(lu.create(act))
       rid = net.layernorm()
