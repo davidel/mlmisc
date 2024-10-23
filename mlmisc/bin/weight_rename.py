@@ -64,15 +64,21 @@ def replace(args):
   repl = []
   for k in model_data.keys():
     for r in args.replace:
-      mx, rx = r.split(',')
-
-      nk = re.sub(mx, rx, k)
-      if nk != k:
-        repl.append((k, nk))
+      rxparts = r.split(',')
+      if len(rxparts) == 2:
+        nk = re.sub(rxparts[0], rxparts[1], k)
+        if nk != k:
+          repl.append((k, nk))
+      else:
+        if re.match(rxparts[0], k):
+          repl.append((k, None))
 
   for k, nk in repl:
-    alog.info(f'Renaming "{k}" to "{nk}"')
-    model_data[nk] = model_data[k]
+    if nk is not None:
+      alog.info(f'Renaming "{k}" to "{nk}"')
+      model_data[nk] = model_data[k]
+    else:
+      alog.info(f'Dropping "{k}"')
     model_data.pop(k)
 
   if repl:
