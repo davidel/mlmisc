@@ -20,9 +20,9 @@ class ViTBase(nb.NetBase):
                act=None,
                weight=None,
                label_smoothing=None):
-    result_tiles = result_tiles or 2
-    act = act or 'gelu'
-    label_smoothing = label_smoothing or 0.0
+    result_tiles = pyu.value_or(result_tiles, 2)
+    act = pyu.value_or(act, 'gelu')
+    label_smoothing = pyu.value_or(label_smoothing, 0.0)
 
     shape = ut.net_shape(patcher, ishape)
 

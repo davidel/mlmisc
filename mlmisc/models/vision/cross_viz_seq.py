@@ -24,6 +24,7 @@ class CrossVizSeq(vb.ViTBase):
                weight=None,
                label_smoothing=None):
     shortcut = pyu.value_or(shortcut, 2)
+    result_tiles = pyu.value_or(result_tiles, 2)
     act = pyu.value_or(act, 'gelu')
 
     if isinstance(convs, str):
@@ -34,7 +35,7 @@ class CrossVizSeq(vb.ViTBase):
 
     alog.debug(f'Input shape {shape}, patcher shape {patcher.shape}')
 
-    net = mb.ModuleBuilder(patcher.shape)
+    net = mb.ModuleBuilder((patcher.shape[0] + result_tiles, patcher.shape[1]))
     net.linear(embed_size)
     net.add(lu.create(act))
 
