@@ -22,7 +22,7 @@ def _compile(sfn, info, env):
     fn = eval(sfn, env)
   else:
     sfn = sfn.strip()
-    fn = pyu.compile(sfn, NETFN, env=env)[0]
+    fn, = pyu.compile(sfn, NETFN, env=env)
 
   return fn, info or sfn
 
