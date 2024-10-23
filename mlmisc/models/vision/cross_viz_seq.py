@@ -5,45 +5,46 @@ import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
-from ... import args_sequential as aseq
 from ... import conv_utils as cu
-from ... import encoder_block as eb
+from ... import cross_linear as xl
+from ... import layer_utils as lu
+from ... import module_builder as mb
 from ... import utils as ut
 
 from . import vit_base as vb
 
 
-class ConvViT(vb.ViTBase):
+class CrossVizSeq(vb.ViTBase):
 
-  def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
+  def __init__(self, shape, embed_size, num_classes, num_layers,
                convs=None,
-               attn_dropout=None,
+               shortcut=None,
                dropout=None,
-               norm_mode=None,
                result_tiles=None,
                act=None,
                weight=None,
                label_smoothing=None):
-    attn_dropout = pyu.value_or(attn_dropout, 0.1)
+    shortcut = pyu.value_or(shortcut, 2)
     dropout = pyu.value_or(dropout, 0.1)
     act = pyu.value_or(act, 'gelu')
 
     if isinstance(convs, str):
       convs = cu.convs_from_string(convs)
 
-    cstack = cu.build_conv_stack(convs, shape=shape)
-    patcher = aseq.ArgsSequential(
-      cstack,
-      einpt.Rearrange('b c h w -> b (h w) c'),
-    )
+    patcher = cu.build_conv_stack(convs, shape=shape)
+    patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
 
-    net = aseq.ArgsSequential(
-      [eb.EncoderBlock(embed_size, num_heads,
-                       attn_dropout=attn_dropout,
-                       dropout=dropout,
-                       norm_mode=norm_mode,
-                       act=act)
-       for _ in range(num_layers)])
+    net = mb.ModuleBuilder(patcher.shape)
+    net.linear(embed_size)
+    net.add(lu.create(act))
+
+    result_ids = []
+    for i in range(num_layers):
+      net.add(xl.CrossLinear(*net.patch),
+              input_fn=mb.inputfn(result_ids, back=shortcut))
+      net.add(lu.create(act))
+      rid = net.layernorm()
+      result_ids.append(rid)
 
     super().__init__(patcher, net, shape, embed_size, num_classes,
                      result_tiles=result_tiles,
