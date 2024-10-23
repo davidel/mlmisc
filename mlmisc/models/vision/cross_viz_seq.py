@@ -32,6 +32,8 @@ class CrossVizSeq(vb.ViTBase):
     patcher = cu.build_conv_stack(convs, shape=shape)
     patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
 
+    alog.debug(f'Input shape {shape}, patcher shape {patcher.shape}')
+
     net = mb.ModuleBuilder(patcher.shape)
     net.linear(embed_size)
     net.add(lu.create(act))
