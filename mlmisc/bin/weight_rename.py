@@ -25,12 +25,7 @@ def rewrite_data(args, data):
 
 def trans_data(param, trans):
   if os.path.isfile(trans):
-    with open(trans, mode='rt') as cfd:
-      code = cfd.read()
-
-    transfn, = pyu.compile(code, 'transfn')
-
-    return transfn(param)
+    return pyu.run(trans, 'transfn', param)
   else:
     return eval(trans, dict(data=param))
 
