@@ -4,6 +4,8 @@ import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
+from ... import args_sequential as aseq
+from ... import encoder_block as eb
 from ... import patcher as pch
 from ... import utils as ut
 
@@ -22,6 +24,10 @@ class PatcherViT(vb.ViTBase):
                act=None,
                weight=None,
                label_smoothing=None):
+    attn_dropout = attn_dropout or 0.1
+    dropout = dropout or 0.1
+    act = act or 'gelu'
+
     patcher_config = []
     if patch_specs:
       for pcfg in pyu.resplit(patch_specs, ':'):
@@ -39,16 +45,18 @@ class PatcherViT(vb.ViTBase):
     patcher = pch.Patcher(patcher_config,
                           mode=patch_mode,
                           in_channels=shape[0])
-    n_tiles, patch_size = ut.net_shape(patcher, shape)
 
-    super().__init__(ut.net_shape(patcher, shape), embed_size, num_heads, num_classes, num_layers,
-                     attn_dropout=attn_dropout,
-                     dropout=dropout,
-                     norm_mode=norm_mode,
-                     patch_mode=patch_mode,
+    net = aseq.ArgsSequential(
+      [eb.EncoderBlock(embed_size, num_heads,
+                       attn_dropout=attn_dropout,
+                       dropout=dropout,
+                       norm_mode=norm_mode,
+                       act=act)
+       for _ in range(num_layers)])
+
+    super().__init__(patcher, net, shape, embed_size, num_classes,
                      result_tiles=result_tiles,
                      act=act,
                      weight=weight,
                      label_smoothing=label_smoothing)
-    self.patcher = patcher
 

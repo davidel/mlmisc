@@ -7,6 +7,7 @@ import torch
 
 from ... import args_sequential as aseq
 from ... import conv_utils as cu
+from ... import encoder_block as eb
 from ... import utils as ut
 
 from . import vit_base as vb
@@ -19,11 +20,14 @@ class ConvViT(vb.ViTBase):
                attn_dropout=None,
                dropout=None,
                norm_mode=None,
-               patch_mode=None,
                result_tiles=None,
                act=None,
                weight=None,
                label_smoothing=None):
+    attn_dropout = attn_dropout or 0.1
+    dropout = dropout or 0.1
+    act = act or 'gelu'
+
     if isinstance(convs, str):
       convs = cu.convs_from_string(convs)
 
@@ -33,14 +37,17 @@ class ConvViT(vb.ViTBase):
       einpt.Rearrange('b c h w -> b (h w) c'),
     )
 
-    super().__init__(ut.net_shape(patcher, shape), embed_size, num_heads, num_classes, num_layers,
-                     attn_dropout=attn_dropout,
-                     dropout=dropout,
-                     norm_mode=norm_mode,
-                     patch_mode=patch_mode,
+    net = aseq.ArgsSequential(
+      [eb.EncoderBlock(embed_size, num_heads,
+                       attn_dropout=attn_dropout,
+                       dropout=dropout,
+                       norm_mode=norm_mode,
+                       act=act)
+       for _ in range(num_layers)])
+
+    super().__init__(patcher, net, shape, embed_size, num_classes,
                      result_tiles=result_tiles,
                      act=act,
                      weight=weight,
                      label_smoothing=label_smoothing)
-    self.patcher = patcher
 

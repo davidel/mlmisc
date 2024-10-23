@@ -7,36 +7,32 @@ import torch
 import torch.nn as nn
 
 from ... import args_sequential as aseq
-from ... import encoder_block as eb
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
 from ... import net_base as nb
-from ... import patcher as pch
 from ... import utils as ut
 
 
 class ViTBase(nb.NetBase):
 
-  def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
-               attn_dropout=None,
-               dropout=None,
-               norm_mode=None,
-               patch_mode=None,
+  def __init__(self, patcher, net, ishape, embed_size, num_classes,
                result_tiles=None,
                act=None,
                weight=None,
                label_smoothing=None):
-    attn_dropout = attn_dropout or 0.1
-    dropout = dropout or 0.1
     result_tiles = result_tiles or 2
     act = act or 'gelu'
     label_smoothing = label_smoothing or 0.0
+
+    shape = ut.net_shape(patcher, ishape)
 
     n_tiles, patch_size = shape
 
     alog.debug(f'ViT using {n_tiles} tiles of size {patch_size}')
 
     super().__init__()
+    self.patcher = patcher
+    self.net = net
     self.result_tiles = result_tiles
     self.loss = lsw.CatLoss(
       nn.CrossEntropyLoss(weight=weight, label_smoothing=label_smoothing)
@@ -44,13 +40,6 @@ class ViTBase(nb.NetBase):
     self.embedding = nn.Linear(patch_size, embed_size)
     self.pos_embedding = nn.Parameter(torch.zeros(1, n_tiles + result_tiles, embed_size))
     self.pweight = nn.Parameter(torch.zeros(result_tiles, embed_size))
-    self.blocks = aseq.ArgsSequential(
-      [eb.EncoderBlock(embed_size, num_heads,
-                       attn_dropout=attn_dropout,
-                       dropout=dropout,
-                       norm_mode=norm_mode,
-                       act=act)
-       for _ in range(num_layers)])
 
     self.prj = aseq.ArgsSequential(
       nn.LayerNorm(embed_size * result_tiles),
@@ -68,7 +57,7 @@ class ViTBase(nb.NetBase):
     y = torch.cat((pw, y), dim=1)
     y = y + self.pos_embedding
     # (B, NH * NW + RT, E) => (B, NH * NW + RT, E)
-    y = self.blocks(y)
+    y = self.net(y)
     # (B, NH * NW + RT, E) => (B, RT, E)
     y = y[:, : self.result_tiles, :]
     y = einops.rearrange(y, 'b rt e -> b (rt e)')
