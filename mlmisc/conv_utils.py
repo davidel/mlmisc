@@ -143,7 +143,7 @@ def create_random_stack(max_output,
 
   convs = []
   while np.prod(net.shape) > max_output:
-    cshape = typ.Shape2d(net.shape)
+    cshape = typ.Shape2d(*net.shape)
 
     min_size = min(cshape.h, cshape.w)
     if min_size < 3:
