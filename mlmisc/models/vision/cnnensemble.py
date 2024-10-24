@@ -101,15 +101,6 @@ class CNNEnsemble(nb.NetBase):
   def net_load_state_dict(self, state):
     conv_specs, = self.pop_net_state(state, 'conv_specs')
 
-    cc = []
-    for convs in conv_specs:
-      ll = []
-      for cs in convs:
-        ll.append(pyu.new_with(cs, act=self.act))
-      cc.append(tuple(ll))
-
-    conv_specs = tuple(cc)
-
     nets = _build_nets(conv_specs, self.num_classes, self.shape, self.act,
                        self.dropout)
 
