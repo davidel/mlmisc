@@ -25,25 +25,24 @@ ConvSpec = collections.namedtuple(
 )
 
 
-def apply_conv_spec(net, cs, act=None):
+def apply_conv_spec(net, cs):
   if cs.norm:
     net.batchnorm2d()
   net.conv2d(cs.features, cs.kernel_size,
              stride=cs.stride,
              padding=cs.padding)
-  cact = act or cs.act
-  if cact is not None:
-    net.add(lu.create(cact))
+  if cs.act is not None:
+    net.add(lu.create(cs.act))
   if cs.maxpool is not None:
     net.add(nn.MaxPool2d(cs.maxpool))
   if cs.avgpool is not None:
     net.add(nn.AvgPool2d(cs.avgpool))
 
 
-def build_conv_stack(convs, net=None, shape=None, act=None):
+def build_conv_stack(convs, net=None, shape=None):
   net = net or mb.ModuleBuilder(shape)
   for cs in convs:
-    apply_conv_spec(net, cs, act=act)
+    apply_conv_spec(net, cs)
 
   return net
 
