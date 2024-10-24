@@ -5,6 +5,7 @@ import torch.nn as nn
 
 from . import auto_module as am
 from . import config as conf
+from . import step_lu as slu
 
 
 _LAYERS = {
@@ -19,6 +20,7 @@ _LAYERS = {
   'silu': nn.SiLU,
   'selu': nn.SELU,
   'sigm': nn.Sigmoid,
+  'step_lu': slu.StepLU,
   'tanh': nn.Tanh,
 }
 
