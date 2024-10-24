@@ -176,9 +176,9 @@ def create_random_stack(max_output,
           pool_size = min(pool_values[pyr.choices(pool_weights, 1)[0]],
                           (min_size - 2 * ksize) // stride)
           if pool == 'max':
-            maxpool = pool_size
+            maxpool = pool_size if pool_size > 1 else maxpool
           elif pool == 'avg':
-            avgpool = pool_size
+            avgpool = pool_size if pool_size > 1 else avgpool
 
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
 
