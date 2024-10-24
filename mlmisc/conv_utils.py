@@ -215,10 +215,12 @@ CONVSPEC_ARGMAP = {
   'a': 'act',
 }
 
-def convs_from_string(config):
+def convs_from_string(config, defaults=None):
   convs = []
   for conv in pyu.resplit(config, ':'):
-    cs = {CONVSPEC_ARGMAP.get(k, k): v for k, v in pyu.parse_dict(conv).items()}
+    conv_args = defaults.copy() if defaults else dict()
+    conv_args.update({CONVSPEC_ARGMAP.get(k, k): v
+                      for k, v in pyu.parse_dict(conv).items()})
     convs.append(ConvSpec(**cs))
 
   return convs
