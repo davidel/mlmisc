@@ -96,7 +96,7 @@ def create(content_path, context_size,
       tokenizer_str = str(tokenizer)
       tokenizer_path = os.path.join(ds_dir, 'tokenizer.repr')
       if os.path.isfile(tokenizer_path):
-        with open(tokenizer_path, mode='rt') as tfd:
+        with open(tokenizer_path, mode='r') as tfd:
           stored_tokenizer_str = tfd.read()
         needs_tokenization = tokenizer_str == stored_tokenizer_str
       else:
@@ -108,7 +108,7 @@ def create(content_path, context_size,
       else:
         tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)
         torch.save(tokens, tokens_path)
-        with open(tokenizer_path, mode='wt') as tfd:
+        with open(tokenizer_path, mode='w') as tfd:
           tfd.write(tokenizer_str)
 
   return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
