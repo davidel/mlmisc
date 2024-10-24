@@ -200,7 +200,7 @@ def create_random_stack(max_output,
     apply_conv_spec(net, convs[-1])
 
   if tail is not None:
-    tail(net)
+    net = tail(net)
 
   return net, tuple(convs)
 
