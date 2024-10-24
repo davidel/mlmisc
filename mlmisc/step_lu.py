@@ -7,13 +7,12 @@ from . import utils as ut
 
 class StepLU(nn.Module):
 
-  def __init__(self, threshold=None, lthreshold=None, rthreshold=None):
+  def __init__(self, threshold=None):
     super().__init__()
-    if threshold is not None:
-      self.lthreshold, self.rthreshold = threshold, 0.0
+    if isinstance(threshold, (list, tuple)):
+      self.lthreshold, self.rthreshold = threshold
     else:
-      self.lthreshold = pyu.value_or(lthreshold, 0.5)
-      self.rthreshold = pyu.value_or(rthreshold, 0.0)
+      self.lthreshold, self.rthreshold = pyu.value_or(threshold, 0.5), 0.0
 
   def forward(self, x):
     zero = torch.tensor(0.0, dtype=x.dtype, device=x.device)
