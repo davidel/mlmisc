@@ -1,6 +1,7 @@
 import functools
 import importlib
 import math
+import operator
 import os
 import random
 import re
@@ -248,16 +249,12 @@ def kuni_tensor(*shape, dtype=None, device=None, a=None):
   return t
 
 
-def add(*args, mul=None):
-  xargs = pyu.expand_args(args)
-  if mul is None:
-    return functools.reduce(torch.Tensor.add_, xargs, torch.zeros_like(xargs[0]))
-  else:
-    result = torch.zeros_like(xargs[0])
-    for arg, k in zip(xargs, mul):
-      result.add_(arg * k)
+def add(*args):
+  return functools.reduce(operator.add, pyu.expand_args(args))
 
-    return result
+
+def mul(*args):
+  return functools.reduce(operator.mul, pyu.expand_args(args))
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
