@@ -10,10 +10,10 @@ class StepLU(nn.Module):
   def __init__(self, threshold=None, lthreshold=None, rthreshold=None):
     super().__init__()
     if threshold is not None:
-      self.lthreshold, self.rthreshold = threshold, threshold
+      self.lthreshold, self.rthreshold = threshold, 0.0
     else:
-      self.lthreshold = pyu.value_or(lthreshold, 0.25)
-      self.rthreshold = pyu.value_or(rthreshold, 0.25)
+      self.lthreshold = pyu.value_or(lthreshold, 0.5)
+      self.rthreshold = pyu.value_or(rthreshold, 0.0)
 
   def forward(self, x):
     zero = torch.tensor(0.0, dtype=x.dtype, device=x.device)
