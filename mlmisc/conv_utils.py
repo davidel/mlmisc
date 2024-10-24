@@ -44,6 +44,8 @@ def build_conv_stack(convs, net=None, shape=None):
   for cs in convs:
     apply_conv_spec(net, cs)
 
+  alog.debug(f'ConvStack exit shape: {net.shape}')
+
   return net
 
 
