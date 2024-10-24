@@ -1,8 +1,10 @@
 import py_misc_utils.alog as alog
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
 from . import auto_module as am
+from . import config as conf
 
 
 _LAYERS = {
@@ -22,7 +24,9 @@ _LAYERS = {
 
 def create(lay):
   if isinstance(lay, str):
-    return _LAYERS[lay]()
+    cls = _LAYERS.get(lay)
+
+    return cls() if cls is not None else conf.create_object('Layer', lay)
   elif isinstance(lay, nn.Module):
     if am.is_auto(lay):
       return am.new_as(lay)
