@@ -122,6 +122,8 @@ def _create_model(args, trainer, dataset):
     x, y = dataset[0]
     x_shape = tuple(getattr(x, 'shape', ()))
     y_shape = tuple(getattr(y, 'shape', ()))
+    alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')
+
     config = dict(dataset=dataset, x_shape=x_shape, y_shape=y_shape)
 
     model_args, model_kwargs = _replace_args(model_args, model_kwargs, config)
