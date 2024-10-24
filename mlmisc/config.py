@@ -25,11 +25,11 @@ def _load_class(obj_name):
   m = re.match(r'(.*),([^\.]+)$', obj_name)
   if m:
     module = pymu.import_module(m.group(1))
-    obj_class = getattr(module, m.group(2))
+    obj_name = m.group(2)
   else:
-    obj_class = operator.attrgetter(obj_name)(pyiu.current_module())
+    module = pyiu.current_module()
 
-  return obj_class
+  return operator.attrgetter(obj_name)(module)
 
 
 def create_object(name, config_data, *args, **kwargs):
