@@ -23,7 +23,7 @@ def _config_split(config_data):
 
 def _load_class(obj_name):
   m = re.match(r'(.*),([^\.]+)$', obj_name)
-  if m and os.path.isfile(m.group(1)):
+  if m:
     module = pymu.import_module(m.group(1))
     obj_class = getattr(module, m.group(2))
   else:
