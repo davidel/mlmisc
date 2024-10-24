@@ -99,10 +99,7 @@ class CNNEnsemble(nb.NetBase):
     return dict(conv_specs=self.conv_specs)
 
   def net_load_state_dict(self, state):
-    conv_specs, = self.pop_net_state(
-      state,
-      ('conv_specs',)
-    )
+    conv_specs, = self.pop_net_state(state, 'conv_specs')
 
     nets = _build_nets(conv_specs, self.num_classes, self.shape, self.act,
                        self.dropout)
