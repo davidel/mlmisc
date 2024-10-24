@@ -149,7 +149,7 @@ def create_random_stack(max_output,
     if min_size < 3:
       ksize, stride, features = (cshape.h, cshape.w), 1, max_output
       padding = 'valid'
-      maxpool, avgpool = 0, 0
+      maxpool, avgpool = None, None
       norm = norm_values[pyr.choices(norm_weights, 1)[0]]
     else:
       ksize = kernel_values[pyr.choices(kernel_weights, 1)[0]]
@@ -169,7 +169,7 @@ def create_random_stack(max_output,
       else:
         padding = padding_values[pyr.choices(padding_weights, 1)[0]]
 
-      maxpool, avgpool = 0, 0
+      maxpool, avgpool = None, None
       if stride == 1:
         pool = pool_type_values[pyr.choices(pool_type_weights, 1)[0]]
         if pool is not None:
@@ -186,14 +186,14 @@ def create_random_stack(max_output,
                                                               sigma=fsigma)))
       features = pyu.round_up(features, round_features)
 
+    opt_args = pyu.strip_nones(maxpool=maxpool, avgpool=avgpool, act=act)
+
     convs.append(ConvSpec(features=features,
                           kernel_size=ksize,
                           stride=stride,
                           padding=padding,
-                          maxpool=maxpool if maxpool > 1 else None,
-                          avgpool=avgpool if avgpool > 1 else None,
                           norm=norm,
-                          act=act))
+                          **opt_args))
 
     alog.debug(f'Layer: {convs[-1]}')
 
