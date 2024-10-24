@@ -221,7 +221,7 @@ def convs_from_string(config, defaults=None):
     conv_args = defaults.copy() if defaults else dict()
     conv_args.update({CONVSPEC_ARGMAP.get(k, k): v
                       for k, v in pyu.parse_dict(conv).items()})
-    convs.append(ConvSpec(**cs))
+    convs.append(ConvSpec(**conv_args))
 
   return convs
 
