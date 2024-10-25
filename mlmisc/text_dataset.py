@@ -2,6 +2,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.http_cache as pyhc
 import py_misc_utils.utils as pyu
 import torch
@@ -55,7 +56,7 @@ def create(content_path, context_size,
            is_sequence=None,
            split_pct=None,
            **kwargs):
-  cache_dir = pyu.cache_dir(path=cache_dir)
+  cache_dir = gfs.cache_dir(path=cache_dir)
   is_sequence = pyu.value_or(is_sequence, True)
   split_pct = pyu.value_or(split_pct, 0.9)
 

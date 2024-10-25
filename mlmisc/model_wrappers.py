@@ -1,6 +1,7 @@
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.context_managers as pycm
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
@@ -88,7 +89,7 @@ class HugginFaceModel(ModelHolder):
   def __init__(self, model_name, model_class, processor_class,
                frozen=None,
                cache_dir=None):
-    cache_dir = pyu.cache_dir(path=cache_dir)
+    cache_dir = gfs.cache_dir(path=cache_dir)
 
     mclass, = pymu.import_module_names(model_class)
     model = mclass.from_pretrained(

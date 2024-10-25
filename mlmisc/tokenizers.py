@@ -4,6 +4,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import sentencepiece as spm
@@ -50,7 +51,7 @@ class FpTokenizerWrapper:
 
 
 def from_pretrained(module_path, model_name, cache_dir=None):
-  cache_dir = pyu.cache_dir(path=cache_dir)
+  cache_dir = gfs.cache_dir(path=cache_dir)
 
   tclass, = pymu.import_module_names(module_path)
   tokenizer = tclass.from_pretrained(

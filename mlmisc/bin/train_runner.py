@@ -19,6 +19,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 
@@ -60,7 +61,7 @@ def _create_dataset(args):
     select_fn = None
 
   dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
-  cache_dir = pyu.cache_dir(path=args.cache_dir)
+  cache_dir = gfs.cache_dir(path=args.cache_dir)
 
   dsets = mldu.create_dataset(args.dataset,
                               cache_dir=cache_dir,

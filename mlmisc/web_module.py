@@ -3,6 +3,7 @@ import urllib
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.git_repo as pygr
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
@@ -55,7 +56,7 @@ class WebModule(nn.Module):
                force_clone=None,
                mod_args=None,
                mod_kwargs=None):
-    cache_dir = pyu.cache_dir(path=cache_dir)
+    cache_dir = gfs.cache_dir(path=cache_dir)
     force_clone = pyu.value_or(force_clone, False)
     mod_args = pyu.value_or(mod_args, ())
     mod_kwargs = pyu.value_or(mod_kwargs, {})
