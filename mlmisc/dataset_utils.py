@@ -7,6 +7,7 @@ import huggingface_hub as hfh
 import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
@@ -117,7 +118,7 @@ def _try_module(name, cache_dir, split_pct, dataset_kwargs):
   if len(parts) == 2:
     modpath, ctor_fn = parts
     try:
-      module = pymu.import_module(pyu.normpath(modpath))
+      module = pymu.import_module(gfs.normpath(modpath))
     except ImportError:
       return
 

@@ -1,4 +1,5 @@
 import py_misc_utils.alog as alog
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.utils as pyu
 import torch
 
@@ -43,7 +44,7 @@ def create(tokens_path, window_size, mode,
            **kwargs):
   split_pct = pyu.value_or(split_pct, 0.9)
 
-  tokens = ut.torch_load(pyu.normpath(tokens_path))
+  tokens = ut.torch_load(gfs.normpath(tokens_path))
 
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]
