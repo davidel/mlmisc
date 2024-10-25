@@ -11,6 +11,7 @@ import sys
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
@@ -74,13 +75,15 @@ def is_integer(t):
 
 
 def torch_load(path, **kwargs):
-  return torch.load(path, weights_only=False, **kwargs)
+  with gfs.open(path, mode='rb', local_open=True) as ptfd:
+    return torch.load(ptfd, weights_only=False, **kwargs)
 
 
 def torch_load_to(dest, path, **kwargs):
   alog.debug(f'Loading tensor data from {path} to tensor/parameter with ' \
              f'shape {tuple(dest.shape)} ...')
-  t = torch.load(path, weights_only=True, **kwargs)
+  with gfs.open(path, mode='rb', local_open=True) as ptfd:
+    t = torch.load(ptfd, weights_only=True, **kwargs)
   dest.data.copy_(getattr(t, 'data', t))
 
   return dest

@@ -4,6 +4,7 @@ import re
 
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.utils as pyu
 import torch
 
@@ -21,7 +22,8 @@ def _main(args):
         path = os.path.join(args.output_path, f'{name}.pt')
 
         alog.info(f'Saving parameter "{name}" to {path} ...')
-        torch.save(data, path)
+        with gfs.open(path, mode='wb') as ptfd:
+          torch.save(data, ptfd)
 
 
 if __name__ == '__main__':

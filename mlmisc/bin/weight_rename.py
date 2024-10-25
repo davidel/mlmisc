@@ -6,6 +6,7 @@ import yaml
 import mlmisc.trainer as mltr
 import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
+import py_misc_utils.gen_fs as gfs
 import py_misc_utils.utils as pyu
 import torch
 
@@ -20,7 +21,8 @@ def load_data(path, map_location):
 def rewrite_data(args, data):
   wpath = args.input + '.replace' if args.output is None else args.output
   alog.debug(f'Saving updated checkpoint to {wpath}')
-  torch.save(data, wpath)
+  with gfs.open(wpath, mode='wb') as ptfd:
+    torch.save(data, ptfd)
 
 
 def trans_data(param, trans):
