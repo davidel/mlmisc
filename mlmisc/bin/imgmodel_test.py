@@ -80,7 +80,7 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
       plt.show()
     else:
       spath = os.path.join(args.report_path, tclass, pclass)
-      gfs.makedirs(spath)
+      gfs.makedirs(spath, exist_ok=True)
 
       imgpath = os.path.join(spath, f'dsn_{num_processed + u}.jpg')
       with gfs.open(imgpath, mode='wb') as imgfd:
