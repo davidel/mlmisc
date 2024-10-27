@@ -79,7 +79,7 @@ def main(args):
       alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
 
       misses = num_processed - num_correct
-      ms = [f'{}={100 * class_misses[mc] / misses:.2f}%' for mc in sorted(class_misses.keys())]
+      ms = [f'{mc}={100 * class_misses[mc] / misses:.2f}%' for mc in sorted(class_misses.keys())]
       alog.info(f'Class Misses: {", ".join(ms)}')
 
       if bc.hit():
