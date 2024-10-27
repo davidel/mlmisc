@@ -72,7 +72,7 @@ def report_mismatches(x, targets, predicted, mismatch_indices, classes,
     imgdata = einops.rearrange(x[u].cpu(), 'c h w -> h w c')
 
     plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
-    plt.imshow(shimg, interpolation='bicubic')
+    plt.imshow(imgdata, interpolation='bicubic')
 
     path = None
     if path is None:
