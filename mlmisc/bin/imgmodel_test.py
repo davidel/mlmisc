@@ -54,7 +54,8 @@ def main(args):
     x, y = test_dataset[i]
     classes_counts[class_name(y, classes)] += 1
 
-  alog.info(f'Test balance: {classes_counts}')
+  counts = [f'{k}={c}' for k, c in classes_counts.items()]
+  alog.info(f'Test balance: {", ".join(counts)}')
 
   model = load_model(args)
 
