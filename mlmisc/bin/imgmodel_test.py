@@ -62,7 +62,7 @@ def show_balance(dsname, dataset, classes):
   alog.info(f'{dsname} Balance: {", ".join(counts)}')
 
 
-def report_mismatches(x, targets, predicted, mismatch_indices, classes,
+def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
                       class_misses, num_processed):
   for u in mismatch_indices:
     tclass = class_name(targets[u], classes)
@@ -117,7 +117,7 @@ def main(args):
       match_mask = predicted == targets
 
       mismatch_indices = torch.nonzero(~match_mask).flatten().tolist()
-      report_mismatches(x, targets.tolist(), predicted.tolist(), mismatch_indices,
+      report_mismatches(args, x, targets.tolist(), predicted.tolist(), mismatch_indices,
                         classes, class_misses, num_processed)
 
       num_correct += match_mask.sum().item()
