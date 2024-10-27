@@ -53,19 +53,20 @@ def main(args):
                                          shuffle=False,
                                          num_workers=args.num_workers)
 
-    num_processes, num_correct = 0, 0
+    num_processed, num_correct = 0, 0
     for i, (x, y) in enumerate(loader):
       if args.device is not None:
         x, y = x.to(args.device), y.to(args.device)
 
-      out, _ = tctx.model(x)
+      out, _ = model(x)
 
       _, predicted = torch.max(out, dim=-1)
-      correct = (predicted == y).sum()
+      match_mask = predicted == y
 
-      num_correct += correct.item()
-      num_processes += x.shape[0]
+      num_correct += match_mask.sum().item()
+      num_processed += x.shape[0]
 
+      alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
 
     if bc.hit():
       break
