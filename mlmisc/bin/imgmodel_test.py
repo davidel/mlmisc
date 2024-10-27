@@ -36,7 +36,7 @@ def load_model(args):
 
 
 def class_name(idx, classes):
-  return classes[idx] if classes is not None else f'CLS{idx:05d}'
+  return classes[idx] if classes else f'CLS{idx:05d}'
 
 
 def main(args):
@@ -45,7 +45,8 @@ def main(args):
   train_dataset, test_dataset = ds.create_dataset(args)
 
   classes = test_dataset.extra_arg('classes')
-  if classes is not None:
+  if classes:
+    classes = tuple(c[0] for c in classes) if isinstance(classes[0], (list, tuple)) else classes
     alog.info(f'Dataset Classes: {classes}')
 
   model = load_model(args)
