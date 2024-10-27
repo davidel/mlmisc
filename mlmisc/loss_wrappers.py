@@ -17,10 +17,10 @@ class CatLoss(nn.Module):
         return self.loss(y, targets)
 
       # If not training the "loss" is meant as the categorization error.
-      _, predicted = torch.max(y, dim=1)
+      _, predicted = torch.max(y, dim=-1)
       correct = (predicted == targets).sum()
 
-      return 1.0 - correct / y.shape[0]
+      return 1.0 - correct / ut.mul(*predicted.shape)
 
 
 class SeqLoss(nn.Module):
