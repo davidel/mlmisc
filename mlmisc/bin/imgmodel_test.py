@@ -69,7 +69,7 @@ def main(args):
 
       match_mask = predicted == targets
 
-      unmatch_indices = torch.nonzero(~match_mask).tolist()
+      unmatch_indices = torch.nonzero(~match_mask).flatten().tolist()
       for c in unmatch_indices:
         class_misses[class_name(c, classes)] += 1
 
