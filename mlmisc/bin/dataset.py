@@ -38,7 +38,7 @@ def create_dataset(args):
     select_fn = None
 
   dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
-  cache_dir = gfs.cache_dir(path=args.cache_dir)
+  cache_dir = gfs.cache_dir(path=getattr(args, 'cache_dir', None))
 
   dsets = mldu.create_dataset(args.dataset,
                               cache_dir=cache_dir,
