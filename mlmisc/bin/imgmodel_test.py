@@ -63,7 +63,7 @@ def show_balance(dsname, dataset, classes):
 
 
 def report_mismatches(x, targets, predicted, mismatch_indices, classes,
-                      class_misses):
+                      class_misses, num_processed):
   for u in mismatch_indices:
     tclass = class_name(targets[u], classes)
     pclass = class_name(predicted[u], classes)
@@ -71,14 +71,20 @@ def report_mismatches(x, targets, predicted, mismatch_indices, classes,
 
     imgdata = einops.rearrange(x[u].cpu(), 'c h w -> h w c')
 
+    plt.figure(figsize=(8, 6), dpi=128)
+
     plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
     plt.imshow(imgdata, interpolation='bicubic')
 
-    path = None
-    if path is None:
+    if args.report_path is None:
       plt.show()
     else:
-      plt.savefig(fpath)
+      spath = os.path.join(args.report_path, tclass, pclass)
+      gfs.makedirs(spath)
+
+      imgpath = os.path.join(spath, f'dsn_{num_processed + u}.jpg')
+      with gfs.open(imgpath, mode='wb') as imgfd:
+        plt.savefig(imgfd)
 
 
 def main(args):
@@ -110,14 +116,13 @@ def main(args):
       targets, predicted = y.flatten(), predicted.flatten()
       match_mask = predicted == targets
 
-      num_correct += match_mask.sum().item()
-      num_processed += len(match_mask)
-
-      alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
-
       mismatch_indices = torch.nonzero(~match_mask).flatten().tolist()
       report_mismatches(x, targets.tolist(), predicted.tolist(), mismatch_indices,
-                        classes, class_misses)
+                        classes, class_misses, num_processed)
+
+      num_correct += match_mask.sum().item()
+      num_processed += len(match_mask)
+      alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
 
       if bc.hit():
         break
@@ -144,6 +149,8 @@ if __name__ == '__main__':
   parser.add_argument('--strict', default='true',
                       choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
+  parser.add_argument('--report_path',
+                      help='The path where the report should be generated')
 
   pyam.main(parser, main)
 
