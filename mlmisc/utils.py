@@ -253,11 +253,11 @@ def kuni_tensor(*shape, dtype=None, device=None, a=None):
 
 
 def add(*args):
-  return functools.reduce(operator.add, pyu.expand_args(args))
+  return functools.reduce(operator.add, args)
 
 
 def mul(*args):
-  return functools.reduce(operator.mul, pyu.expand_args(args))
+  return functools.reduce(operator.mul, args)
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
