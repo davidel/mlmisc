@@ -1,4 +1,5 @@
 import argparse
+import collections
 import os
 
 import mlmisc.load_state_dict as mlsd
@@ -53,6 +54,8 @@ def main(args):
                                          shuffle=False,
                                          num_workers=args.num_workers)
 
+    class_misses = collections.defaultdict(int)
+
     num_processed, num_correct = 0, 0
     for i, (x, y) in enumerate(loader):
       if args.device is not None:
@@ -61,14 +64,23 @@ def main(args):
       out, _ = model(x)
 
       _, predicted = torch.max(out, dim=-1)
-      match_mask = predicted == y
 
-      alog.info(f'PredShape: {tuple(predicted.shape)}\tTargetShape: {tuple(y.shape)}')
+      targets, predicted = y.flatten(), predicted.flatten()
+
+      match_mask = predicted == targets
+
+      unmatch_indices = torch.nonzero(~match_mask).tolist()
+      for c in unmatch_indices:
+        class_misses[class_name(c, classes)] += 1
 
       num_correct += match_mask.sum().item()
       num_processed += x.shape[0]
 
       alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
+
+      misses = num_processed - num_correct
+      ms = [f'{}={100 * class_misses[mc] / misses:.2f}%' for mc in sorted(class_misses.keys())]
+      alog.info(f'Class Misses: {", ".join(ms)}')
 
       if bc.hit():
         break
