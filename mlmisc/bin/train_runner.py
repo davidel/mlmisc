@@ -4,7 +4,6 @@ import os
 
 import mlmisc.auto_module as mlam
 import mlmisc.config as mlco
-import mlmisc.dataset_utils as mldu
 import mlmisc.load_state_dict as mlsd
 import mlmisc.torch_profiler as mltp
 import mlmisc.trainer as mltr
@@ -13,11 +12,12 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
-import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
+
+from . import dataset as ds
 
 
 def create_profiler(prof_config):
@@ -39,42 +39,6 @@ def create_stepfn(tprof):
   return stepfn
 
 
-def _create_dataset(args):
-  train_trans, test_trans = nn.Identity(), nn.Identity()
-  if args.dataset_transform:
-    with gfs.open(args.dataset_transform, mode='r') as dtf:
-      code = dtf.read()
-
-    train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'))
-
-    alog.info(f'Train Dataset Transforms:\n{train_trans}')
-    alog.info(f'Test Dataset Transforms:\n{test_trans}')
-
-  if args.dataset_selector:
-    select_fn = mldu.keys_selector(pyu.comma_split(args.dataset_selector))
-  else:
-    select_fn = None
-
-  dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
-  cache_dir = gfs.cache_dir(path=args.cache_dir)
-
-  dsets = mldu.create_dataset(args.dataset,
-                              cache_dir=cache_dir,
-                              select_fn=select_fn,
-                              transform=dict(train=train_trans, test=test_trans),
-                              dataset_kwargs=dataset_kwargs)
-
-  train_dataset = dsets['train']
-  test_dataset = dsets['test']
-
-  alog.info(f'Train/Test Dataset samples = {len(train_dataset)}/{len(test_dataset)}')
-
-  if args.show_images:
-    mldu.show_images(train_dataset, args.show_images)
-
-  return train_dataset, test_dataset
-
-
 def _replace_args(model_args, model_kwargs, config):
   args, kwargs = [], dict()
   for arg in model_args:
@@ -93,7 +57,7 @@ def _create_model(args, trainer, dataset):
   module = pymu.import_module(args.model_path, modname='train_module')
 
   model, state = None, dict()
-  if os.path.exists(args.checkpoint_path):
+  if gfs.exists(args.checkpoint_path):
     if args.rebuild_model:
       alog.debug(f'Loading raw state from {args.checkpoint_path}')
       state = trainer.load_raw_state(args.checkpoint_path)
@@ -163,7 +127,7 @@ def _common_main(args):
 def _main(args):
   _common_main(args)
 
-  train_dataset, test_dataset = _create_dataset(args)
+  train_dataset, test_dataset = ds.create_dataset(args)
 
   trainer = mltr.Trainer()
 
@@ -267,18 +231,9 @@ if __name__ == '__main__':
                       help='The number of workers to be used by the data loaders')
   parser.add_argument('--checkpoint', default='scheduler,scaler',
                       help='The objects to be saved within the checkpoint file')
-  parser.add_argument('--dataset', required=True,
-                      help='The name of the dataset to be used')
-  parser.add_argument('--dataset_transform',
-                      help='The path to the Python file containing the TRAIN_TRANS ' \
-                      'and TEST_TRANS dataset transformations')
-  parser.add_argument('--dataset_selector',
-                      help='The comma-separated keys to be used to select the dataset items')
-  parser.add_argument('--dataset_kwargs',
-                      help='The comma-separated key=value arguments for the dataset constructor ' \
-                      f'(or the path to a YAML/JSON file containing such configuration)')
-  parser.add_argument('--show_images', type=int,
-                      help='The number of sample images to be shown before starting training')
+
+  ds.add_dataset_args(parser)
+
   parser.add_argument('--optimizer', required=True,
                       help='The configuration for the optimizer (class_path:arg0,...,name0=value0,...)')
   parser.add_argument('--load_optim_state', action=argparse.BooleanOptionalAction, default=True,
