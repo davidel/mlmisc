@@ -2,7 +2,6 @@ import collections
 import itertools
 import math
 import random
-import yaml
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -53,7 +52,7 @@ CONVS_KEY = 'convs'
 
 def load_conv_specs(path):
   cfg = pyu.load_config(cfg_file=path)
-  alog.debug(f'Conv Specs Config:\n{yaml.dump(cfg, default_flow_style=False)}')
+  alog.debug(f'Conv Specs Config:\n{pyu.config_to_string(cfg)}')
 
   conv_specs = []
   for cgroup in cfg[CONVS_KEY]:
@@ -69,8 +68,7 @@ def save_conv_specs(conv_specs, path):
     specs.append([cs._asdict() for cs in convs])
 
   cfg = {CONVS_KEY: specs}
-  with open(path, mode='w') as sfd:
-    yaml.dump(cfg, sfd, default_flow_style=False)
+  pyu.write_config(cfg, path)
 
 
 def _load_params(kwargs, name, default_values, default_weights):
