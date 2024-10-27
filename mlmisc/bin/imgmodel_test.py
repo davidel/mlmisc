@@ -68,8 +68,8 @@ def main(args):
 
       alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
 
-    if bc.hit():
-      break
+      if bc.hit():
+        break
 
 
 if __name__ == '__main__':
