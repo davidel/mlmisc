@@ -2,12 +2,6 @@ import argparse
 import operator
 import os
 
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torchvision
-import torchvision.transforms.v2 as transforms
-
 import mlmisc.auto_module as mlam
 import mlmisc.config as mlco
 import mlmisc.dataset_utils as mldu
@@ -22,6 +16,8 @@ import py_misc_utils.break_control as pybc
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
+import torch
+import torch.nn as nn
 
 
 def create_profiler(prof_config):
@@ -46,11 +42,10 @@ def create_stepfn(tprof):
 def _create_dataset(args):
   train_trans, test_trans = nn.Identity(), nn.Identity()
   if args.dataset_transform:
-    with open(args.dataset_transform, mode='r') as dtf:
+    with gfs.open(args.dataset_transform, mode='r') as dtf:
       code = dtf.read()
 
-    train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'),
-                                          env=globals().copy())
+    train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'))
 
     alog.info(f'Train Dataset Transforms:\n{train_trans}')
     alog.info(f'Test Dataset Transforms:\n{test_trans}')
