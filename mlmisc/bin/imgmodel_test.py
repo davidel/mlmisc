@@ -45,6 +45,8 @@ def main(args):
   train_dataset, test_dataset = ds.create_dataset(args)
 
   classes = test_dataset.extra_arg('classes')
+  if classes is not None:
+    alog.info(f'Dataset Classes: {classes}')
 
   model = load_model(args)
 
@@ -70,8 +72,9 @@ def main(args):
       match_mask = predicted == targets
 
       unmatch_indices = torch.nonzero(~match_mask).flatten().tolist()
-      for c in unmatch_indices:
-        class_misses[class_name(c, classes)] += 1
+      for u in unmatch_indices:
+        cls = targets[u].item()
+        class_misses[class_name(cls, classes)] += 1
 
       num_correct += match_mask.sum().item()
       num_processed += x.shape[0]
