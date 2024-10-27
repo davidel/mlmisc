@@ -49,6 +49,13 @@ def main(args):
     classes = tuple(c[0] for c in classes) if isinstance(classes[0], (list, tuple)) else classes
     alog.info(f'Dataset Classes: {classes}')
 
+  classes_counts = collections.defaultdict(int)
+  for i in range(len(test_dataset)):
+    x, y = test_dataset[i]
+    classes_counts[class_name(y, classes)] += 1
+
+  alog.info(f'Test balance: {classes_counts}')
+
   model = load_model(args)
 
   with pybc.BreakControl() as bc, torch.no_grad(), mlut.Training(model, False):
