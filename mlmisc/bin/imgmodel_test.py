@@ -63,6 +63,8 @@ def main(args):
       _, predicted = torch.max(out, dim=-1)
       match_mask = predicted == y
 
+      alog.info(f'PredShape: {tuple(predicted.shape)}\tTargetShape: {tuple(y.shape)}')
+
       num_correct += match_mask.sum().item()
       num_processed += x.shape[0]
 
