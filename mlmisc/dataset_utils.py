@@ -33,7 +33,7 @@ class Dataset(dsb.Dataset):
   def extra_arg(self, name):
     extra_arg = getattr(self.data, 'extra_arg', None)
 
-    return extra_arg(name) if extra_arg is not None else None
+    return getattr(self.data, name, None) if extra_arg is None else extra_arg(name)
 
   def get_sample(self, i):
     if isinstance(self.data, dict):
@@ -59,41 +59,27 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
 
     ds = dict()
     if sig.parameters.get('train') is not None:
-      ds['train'] = dsclass(root=cache_dir,
-                            train=True,
-                            transform=transform.get('train'),
-                            target_transform=target_transform.get('train'),
-                            **kwargs)
-      ds['test'] = dsclass(root=cache_dir,
-                           train=False,
-                           transform=transform.get('test'),
-                           target_transform=target_transform.get('test'),
-                           **kwargs)
+      train_ds = dsclass(root=cache_dir, train=True, **kwargs)
+      test_ds = dsclass(root=cache_dir, train=False, **kwargs)
     elif sig.parameters.get('split') is not None:
       train_split = kwargs.pop('train_split', 'train')
       test_split = kwargs.pop('test_split', 'test')
 
-      ds['train'] = dsclass(root=cache_dir,
-                            split=train_split,
-                            transform=transform.get('train'),
-                            target_transform=target_transform.get('train'),
-                            **kwargs)
-      ds['test'] = dsclass(root=cache_dir,
-                           split=test_split,
-                           transform=transform.get('test'),
-                           target_transform=target_transform.get('test'),
-                           **kwargs)
+      train_ds = dsclass(root=cache_dir, split=train_split, **kwargs)
+      test_ds = dsclass(root=cache_dir, split=test_split, **kwargs)
     else:
       full_ds = dsclass(root=cache_dir, **kwargs)
-
       ntrain = int(split_pct * len(full_ds))
+      train_ds, test_ds = full_ds[: ntrain], full_ds[ntrain:]
 
-      ds['train'] = Dataset(full_ds[: ntrain],
-                            transform=transform.get('train'),
-                            target_transform=target_transform.get('train'))
-      ds['test'] = Dataset(full_ds[ntrain:],
-                           transform=transform.get('test'),
-                           target_transform=target_transform.get('test'))
+    ds['train'] = Dataset(train_ds,
+                          transform=transform.get('train'),
+                          target_transform=target_transform.get('train'),
+                          **kwargs)
+    ds['test'] = Dataset(test_ds,
+                         transform=transform.get('test'),
+                         target_transform=target_transform.get('test'),
+                         **kwargs)
 
     return ds
 
@@ -164,11 +150,13 @@ def create_dataset(name,
     ds['train'] = Dataset(hfds['train'],
                           select_fn=select_fn,
                           transform=transform.get('train'),
-                          target_transform=target_transform.get('train'))
+                          target_transform=target_transform.get('train'),
+                          **dataset_kwargs)
     ds['test'] = Dataset(hfds['test'],
                          select_fn=select_fn,
                          transform=transform.get('test'),
-                         target_transform=target_transform.get('test'))
+                         target_transform=target_transform.get('test'),
+                         **dataset_kwargs)
 
     return ds
 

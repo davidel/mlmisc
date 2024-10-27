@@ -87,12 +87,8 @@ class Trainer:
     self.save_time.track()
 
   def load_model(self, path, device=None, strict=True):
-    state = ut.load_data(path, strict=strict)
+    model, state = self.load(path, device=device, strict=strict)
     self.load_state(state)
-
-    model = state['model']
-    if device is not None:
-      model = model.to(device)
 
     return model, state
 
@@ -106,6 +102,16 @@ class Trainer:
         loaded.append(name)
 
     return tuple(loaded)
+
+  @classmethod
+  def load(cls, path, device=None, strict=True):
+    state = ut.load_data(path, strict=strict)
+
+    model = state['model']
+    if device is not None:
+      model = model.to(device)
+
+    return model, state
 
   @classmethod
   def load_raw_state(cls, path):

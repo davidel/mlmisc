@@ -41,7 +41,7 @@ def create_stepfn(tprof):
   return stepfn
 
 
-def _replace_args(model_args, model_kwargs, config):
+def replace_args(model_args, model_kwargs, config):
   args, kwargs = [], dict()
   for arg in model_args:
     if isinstance(arg, str) and arg.startswith('$') and arg[1:] in config:
@@ -55,7 +55,7 @@ def _replace_args(model_args, model_kwargs, config):
   return args, kwargs
 
 
-def _create_model(args, trainer, dataset):
+def create_model(args, trainer, dataset):
   module = pymu.import_module(args.model_path, modname='train_module')
 
   model, state = None, dict()
@@ -69,7 +69,7 @@ def _create_model(args, trainer, dataset):
                                         strict=args.strict)
 
   if model is None:
-    model_function, *cmdline_args = args.model_args
+    model_function, *cmdline_args = args.extra_args
 
     model_args, model_kwargs = [], dict()
     for arg in cmdline_args:
@@ -88,7 +88,7 @@ def _create_model(args, trainer, dataset):
 
     config = dict(dataset=dataset, x_shape=x_shape, y_shape=y_shape)
 
-    model_args, model_kwargs = _replace_args(model_args, model_kwargs, config)
+    model_args, model_kwargs = replace_args(model_args, model_kwargs, config)
 
     model_ctor = operator.attrgetter(model_function)(module)
 
@@ -113,14 +113,14 @@ def _create_model(args, trainer, dataset):
   return model, state
 
 
-def _main(args):
+def main(args):
   bs.setup(args)
 
   train_dataset, test_dataset = ds.create_dataset(args)
 
   trainer = mltr.Trainer()
 
-  model, state = _create_model(args, trainer, train_dataset)
+  model, state = create_model(args, trainer, train_dataset)
 
   optimizer = mlco.create_optimizer(model.parameters(), args.optimizer)
   if args.load_optim_state:
@@ -183,6 +183,7 @@ if __name__ == '__main__':
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
   bs.add_parser_arguments(parser)
+  ds.add_parser_arguments(parser)
 
   parser.add_argument('--model_path', required=True,
                       help='The path containing the model definition')
@@ -214,9 +215,6 @@ if __name__ == '__main__':
                       help='The number of workers to be used by the data loaders')
   parser.add_argument('--checkpoint', default='scheduler,scaler',
                       help='The objects to be saved within the checkpoint file')
-
-  ds.add_parser_arguments(parser)
-
   parser.add_argument('--optimizer', required=True,
                       help='The configuration for the optimizer (class_path:arg0,...,name0=value0,...)')
   parser.add_argument('--load_optim_state', action=argparse.BooleanOptionalAction, default=True,
@@ -235,5 +233,5 @@ if __name__ == '__main__':
                       choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
 
-  pyam.main(parser, _main, rem_args='model_args')
+  pyam.main(parser, main, rem_args='extra_args')
 
