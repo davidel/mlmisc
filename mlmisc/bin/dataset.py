@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 
-def add_dataset_args(parser):
+def add_parser_arguments(parser):
   parser.add_argument('--dataset', required=True,
                       help='The name of the dataset to be used')
   parser.add_argument('--dataset_transform',

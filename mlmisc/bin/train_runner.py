@@ -18,6 +18,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import base_setup as bs
 from . import dataset as ds
 
 
@@ -112,21 +113,8 @@ def _create_model(args, trainer, dataset):
   return model, state
 
 
-def _common_main(args):
-  if args.seed is not None:
-    mlut.randseed(args.seed)
-  if args.autograd_debug:
-    torch.autograd.set_detect_anomaly(True)
-  if args.cpu_num_threads is not None:
-    torch.set_num_threads(args.cpu_num_threads)
-  if args.device is None:
-    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  else:
-    args.device = torch.device(args.device)
-
-
 def _main(args):
-  _common_main(args)
+  bs.setup(args)
 
   train_dataset, test_dataset = ds.create_dataset(args)
 
@@ -193,17 +181,11 @@ if __name__ == '__main__':
 
   parser = argparse.ArgumentParser(description='Model Trainer',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+  bs.add_parser_arguments(parser)
+
   parser.add_argument('--model_path', required=True,
                       help='The path containing the model definition')
-  parser.add_argument('--cache_dir',
-                      default=os.path.join(os.getenv('HOME', '.'), '.cache'),
-                      help='The folder used to store cached files')
-  parser.add_argument('--device',
-                      help='The device to be used')
-  parser.add_argument('--seed', type=int,
-                      help='The seed for the random number generators')
-  parser.add_argument('--cpu_num_threads', type=int,
-                      help='The number of threads to dedicate to the PyTorch CPU device')
   parser.add_argument('--checkpoint_path', required=True,
                       help='The path to be used to store the model checkpoint')
   parser.add_argument('--rebuild_model', action=argparse.BooleanOptionalAction, default=False,
@@ -233,7 +215,7 @@ if __name__ == '__main__':
   parser.add_argument('--checkpoint', default='scheduler,scaler',
                       help='The objects to be saved within the checkpoint file')
 
-  ds.add_dataset_args(parser)
+  ds.add_parser_arguments(parser)
 
   parser.add_argument('--optimizer', required=True,
                       help='The configuration for the optimizer (class_path:arg0,...,name0=value0,...)')
@@ -252,8 +234,6 @@ if __name__ == '__main__':
   parser.add_argument('--strict', default='true',
                       choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
-  parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
-                      help='Enable Autograd anomaly detection')
 
   pyam.main(parser, _main, rem_args='model_args')
 
