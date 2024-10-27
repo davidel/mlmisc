@@ -67,7 +67,7 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
   for u in mismatch_indices:
     tclass = class_name(targets[u], classes)
     pclass = class_name(predicted[u], classes)
-    class_misses[tclass][pclass] += 1
+    class_misses[targets[u]][predicted[u]] += 1
 
     imgdata = einops.rearrange(x[u].cpu(), 'c h w -> h w c')
 
@@ -85,6 +85,26 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
       imgpath = os.path.join(spath, f'dsn_{num_processed + u}.jpg')
       with gfs.open(imgpath, mode='wb') as imgfd:
         plt.savefig(imgfd)
+
+
+def emit_class_misses(args, class_misses, classes, max_class):
+  if args.report_path is not None:
+    misses = torch.zeros((max_class, max_class), dtype=torch.long)
+    for ti, pd in class_misses.items():
+      for pi, count in pd.items():
+        misses[ti, pi] = count
+
+    gfs.makedirs(args.report_path, exist_ok=True)
+    rpath = os.path.join(args.report_path, 'class_misses.csv')
+    with gfs.open(rpath, mode='w') as rfd:
+      hdr = ['TARGET_CLASS'] + [class_name(i, classes) for i in range(max_class)]
+      rfd.write(','.join(hdr) + '\n')
+      for ti in range(max_class):
+        row = [class_name(ti, classes)]
+        for pi in range(max_class):
+          row.append(str(misses[ti, pi].item()))
+
+        rfd.write(','.join(row) + '\n')
 
 
 def main(args):
@@ -105,12 +125,14 @@ def main(args):
 
     class_misses = collections.defaultdict(lambda: collections.defaultdict(int))
 
-    num_processed, num_correct = 0, 0
+    num_processed, num_correct, max_class = 0, 0, None
     for i, (x, y) in enumerate(loader):
       if args.device is not None:
         x, y = x.to(args.device), y.to(args.device)
 
       out, _ = model(x)
+
+      max_class = out.shape[-1]
 
       _, predicted = torch.max(out, dim=-1)
       targets, predicted = y.flatten(), predicted.flatten()
@@ -126,6 +148,8 @@ def main(args):
 
       if bc.hit():
         break
+
+    emit_class_misses(args, class_misses, classes, max_class)
 
 
 if __name__ == '__main__':
