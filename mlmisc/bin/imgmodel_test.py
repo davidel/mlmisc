@@ -1,7 +1,9 @@
 import argparse
 import collections
+import einops
 import os
 
+import matplotlib.pyplot as plt
 import mlmisc.load_state_dict as mlsd
 import mlmisc.trainer as mltr
 import mlmisc.utils as mlut
@@ -35,8 +37,48 @@ def load_model(args):
   return model
 
 
+def get_classes(dataset):
+  classes = dataset.extra_arg('classes')
+  if classes:
+    classes = tuple(c[0] for c in classes) if isinstance(classes[0], (list, tuple)) else classes
+    alog.info(f'Dataset Classes: {classes}')
+
+  return classes
+
+
 def class_name(idx, classes):
+  idx = mlut.item(idx)
+
   return classes[idx] if classes else f'CLS{idx:05d}'
+
+
+def show_balance(dsname, dataset, classes):
+  classes_counts = collections.defaultdict(int)
+  for i in range(len(dataset)):
+    x, y = dataset[i]
+    classes_counts[class_name(y, classes)] += 1
+
+  counts = [f'{k}={c}' for k, c in classes_counts.items()]
+  alog.info(f'{dsname} Balance: {", ".join(counts)}')
+
+
+def report_mismatches(x, targets, predicted, mismatch_indices, classes,
+                      class_misses):
+  for u in mismatch_indices:
+    tclass = class_name(targets[u], classes)
+    pclass = class_name(predicted[u], classes)
+    class_misses[tclass][pclass] += 1
+
+    imgdata = einops.rearrange(x[u].cpu(), 'c h w -> h w c')
+
+    plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
+    plt.imshow(shimg, interpolation='bicubic')
+
+    path = None
+    if path is None:
+      plt.show()
+    else:
+      plt.savefig(fpath)
 
 
 def main(args):
@@ -44,18 +86,8 @@ def main(args):
 
   train_dataset, test_dataset = ds.create_dataset(args)
 
-  classes = test_dataset.extra_arg('classes')
-  if classes:
-    classes = tuple(c[0] for c in classes) if isinstance(classes[0], (list, tuple)) else classes
-    alog.info(f'Dataset Classes: {classes}')
-
-  classes_counts = collections.defaultdict(int)
-  for i in range(len(test_dataset)):
-    x, y = test_dataset[i]
-    classes_counts[class_name(y, classes)] += 1
-
-  counts = [f'{k}={c}' for k, c in classes_counts.items()]
-  alog.info(f'Test balance: {", ".join(counts)}')
+  classes = get_classes(test_dataset)
+  show_balance('Test', test_dataset, classes)
 
   model = load_model(args)
 
@@ -65,7 +97,7 @@ def main(args):
                                          shuffle=False,
                                          num_workers=args.num_workers)
 
-    class_misses = collections.defaultdict(int)
+    class_misses = collections.defaultdict(lambda: collections.defaultdict(int))
 
     num_processed, num_correct = 0, 0
     for i, (x, y) in enumerate(loader):
@@ -75,24 +107,17 @@ def main(args):
       out, _ = model(x)
 
       _, predicted = torch.max(out, dim=-1)
-
       targets, predicted = y.flatten(), predicted.flatten()
-
       match_mask = predicted == targets
 
-      unmatch_indices = torch.nonzero(~match_mask).flatten().tolist()
-      for u in unmatch_indices:
-        cls = targets[u].item()
-        class_misses[class_name(cls, classes)] += 1
-
       num_correct += match_mask.sum().item()
-      num_processed += x.shape[0]
+      num_processed += len(match_mask)
 
       alog.info(f'Precision: {100 * num_correct / num_processed:.2f}%')
 
-      misses = num_processed - num_correct
-      ms = [f'{mc}={100 * class_misses[mc] / misses:.2f}%' for mc in sorted(class_misses.keys())]
-      alog.info(f'Class Misses: {", ".join(ms)}')
+      mismatch_indices = torch.nonzero(~match_mask).flatten().tolist()
+      report_mismatches(x, targets.tolist(), predicted.tolist(), mismatch_indices,
+                        classes, class_misses)
 
       if bc.hit():
         break
