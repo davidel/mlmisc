@@ -97,15 +97,15 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
 
 def emit_class_misses(args, class_misses, classes, max_class):
   if args.report_path is not None:
-    mdata = [[class_name(i, classes) for i in range(max_class)]]
-    mdata += [np.zeros(max_class, dtype=int) for _ in range(max_class)]
+    mdata = {'TARGET_CLASS': [class_name(i, classes) for i in range(max_class)]}
+    mdata.update({class_name(i, classes): np.zeros(max_class, dtype=int)
+                  for i in range(max_class)})
     for ti, prd in class_misses.items():
+      tdata = mdata[class_name(ti, classes)]
       for pi, count in prd.items():
-        mdata[ti][pi + 1] = count
+        tdata[pi + 1] = count
 
-    columns = ['TARGET_CLASS'] + [class_name(i, classes) for i in range(max_class)]
-
-    df = pd.DataFrame(data=mdata, columns=columns)
+    df = pd.DataFrame(data=mdata)
 
     gfs.makedirs(args.report_path, exist_ok=True)
     pyp.save_dataframe(df, os.path.join(args.report_path, 'class_misses.csv'))
