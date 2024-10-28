@@ -41,7 +41,9 @@ def get_classes(dataset):
   classes = dataset.extra_arg('classes')
   if classes:
     classes = tuple(c[0] for c in classes) if isinstance(classes[0], (list, tuple)) else classes
-    alog.info(f'Dataset Classes: {classes}')
+    alog.info(f'Dataset Classes:')
+    for i, cls in enumerate(classes):
+      alog.info(f'  {i:04d} = "{cls}"')
 
   return classes
 
@@ -49,7 +51,7 @@ def get_classes(dataset):
 def class_name(idx, classes):
   idx = mlut.item(idx)
 
-  return classes[idx] if classes else f'CLS{idx:05d}'
+  return classes[idx] if classes else f'CLS{idx:04d}'
 
 
 def show_balance(dsname, dataset, classes):
