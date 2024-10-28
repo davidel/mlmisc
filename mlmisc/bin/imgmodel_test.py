@@ -105,10 +105,9 @@ def emit_class_misses(args, class_misses, classes, max_class):
       for pi, count in prd.items():
         tdata[pi + 1] = count
 
-    df = pd.DataFrame(data=mdata)
-
     gfs.makedirs(args.report_path, exist_ok=True)
-    pyp.save_dataframe(df, os.path.join(args.report_path, 'class_misses.csv'))
+    pyp.save_dataframe(pd.DataFrame(data=mdata),
+                       os.path.join(args.report_path, 'class_misses.csv'))
 
 
 def main(args):
