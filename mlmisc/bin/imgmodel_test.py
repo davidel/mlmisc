@@ -7,12 +7,15 @@ import matplotlib.pyplot as plt
 import mlmisc.load_state_dict as mlsd
 import mlmisc.trainer as mltr
 import mlmisc.utils as mlut
+import numpy as np
+import pandas as pd
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
+import py_misc_utils.pd_utils as pyp
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -94,22 +97,18 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
 
 def emit_class_misses(args, class_misses, classes, max_class):
   if args.report_path is not None:
-    misses = torch.zeros((max_class, max_class), dtype=torch.long)
+    mdata = [[class_name(i, classes) for i in range(max_class)]]
+    mdata += [np.zeros(max_class, dtype=int) for _ in range(max_class)]
     for ti, pd in class_misses.items():
       for pi, count in pd.items():
-        misses[ti, pi] = count
+        mdata[ti][pi + 1] = count
+
+    columns = ['TARGET_CLASS'] + [class_name(i, classes) for i in range(max_class)]
+
+    df = pd.DataFrame(data=mdata, columns=columns)
 
     gfs.makedirs(args.report_path, exist_ok=True)
-    rpath = os.path.join(args.report_path, 'class_misses.csv')
-    with gfs.open(rpath, mode='w') as rfd:
-      hdr = ['TARGET_CLASS'] + [class_name(i, classes) for i in range(max_class)]
-      rfd.write(','.join(hdr) + '\n')
-      for ti in range(max_class):
-        row = [class_name(ti, classes)]
-        for pi in range(max_class):
-          row.append(str(misses[ti, pi].item()))
-
-        rfd.write(','.join(row) + '\n')
+    pyp.save_dataframe(df, os.path.join(args.report_path, 'class_misses.csv'))
 
 
 def main(args):
