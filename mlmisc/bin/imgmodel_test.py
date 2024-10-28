@@ -69,22 +69,25 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
     pclass = class_name(predicted[u], classes)
     class_misses[targets[u]][predicted[u]] += 1
 
-    imgdata = einops.rearrange(x[u].cpu(), 'c h w -> h w c')
+    if args.display_mismatches or args.report_path is not None:
+      imgdata = torch.clamp(x[u], 0.0, 1.0)
+      imgdata = einops.rearrange(imgdata.cpu(), 'c h w -> h w c')
 
-    plt.figure(figsize=(8, 6), dpi=128)
+      plt.figure(figsize=(8, 6), dpi=128)
 
-    plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
-    plt.imshow(imgdata, interpolation='bicubic')
+      plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
+      plt.imshow(imgdata, interpolation='bicubic')
 
-    if args.report_path is None:
-      plt.show()
-    else:
-      spath = os.path.join(args.report_path, tclass, pclass)
-      gfs.makedirs(spath, exist_ok=True)
+      if args.report_path is not None:
+        spath = os.path.join(args.report_path, tclass, pclass)
+        gfs.makedirs(spath, exist_ok=True)
 
-      imgpath = os.path.join(spath, f'dsn_{num_processed + u}.jpg')
-      with gfs.open(imgpath, mode='wb') as imgfd:
-        plt.savefig(imgfd)
+        imgpath = os.path.join(spath, f'dsn_{num_processed + u}.jpg')
+        with gfs.open(imgpath, mode='wb') as imgfd:
+          plt.savefig(imgfd)
+
+      if args.display_mismatches:
+        plt.show()
 
 
 def emit_class_misses(args, class_misses, classes, max_class):
@@ -175,6 +178,9 @@ if __name__ == '__main__':
                       help='Which strict mode to use when loading model state dictionaries')
   parser.add_argument('--report_path',
                       help='The path where the report should be generated')
+  parser.add_argument('--display_mismatches', action=argparse.BooleanOptionalAction,
+                      default=False,
+                      help='Whether to display the images which failed detection')
 
   pyam.main(parser, main)
 
