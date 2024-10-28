@@ -101,9 +101,9 @@ def emit_class_misses(args, class_misses, classes, max_class):
     mdata.update({class_name(i, classes): np.zeros(max_class, dtype=int)
                   for i in range(max_class)})
     for ti, prd in class_misses.items():
-      tdata = mdata[class_name(ti, classes)]
       for pi, count in prd.items():
-        tdata[pi + 1] = count
+        xdata = mdata[class_name(pi, classes)]
+        tdata[ti] = count
 
     gfs.makedirs(args.report_path, exist_ok=True)
     pyp.save_dataframe(pd.DataFrame(data=mdata),
