@@ -99,8 +99,8 @@ def emit_class_misses(args, class_misses, classes, max_class):
   if args.report_path is not None:
     mdata = [[class_name(i, classes) for i in range(max_class)]]
     mdata += [np.zeros(max_class, dtype=int) for _ in range(max_class)]
-    for ti, pd in class_misses.items():
-      for pi, count in pd.items():
+    for ti, prd in class_misses.items():
+      for pi, count in prd.items():
         mdata[ti][pi + 1] = count
 
     columns = ['TARGET_CLASS'] + [class_name(i, classes) for i in range(max_class)]
