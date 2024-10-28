@@ -103,7 +103,7 @@ def emit_class_misses(args, class_misses, classes, max_class):
     for ti, prd in class_misses.items():
       for pi, count in prd.items():
         xdata = mdata[class_name(pi, classes)]
-        tdata[ti] = count
+        xdata[ti] = count
 
     gfs.makedirs(args.report_path, exist_ok=True)
     pyp.save_dataframe(pd.DataFrame(data=mdata),
