@@ -14,7 +14,7 @@ import torch
 def load_tokenizer(proto_path):
   alog.debug(f'Loading tokenizer from "{proto_path}"')
 
-  with open(proto_path, mode='rb') as pfd:
+  with gfs.open(proto_path, mode='rb') as pfd:
     proto_data = pfd.read()
 
   tokenizer = spm.SentencePieceProcessor(model_proto=proto_data)
@@ -96,7 +96,7 @@ def create_tokenizer(path, max_vocab_size,
 
 def enum_chunks(path, chunk_size=None):
   chunk_size = pyu.value_or(chunk_size, 32 * 1024 * 1024)
-  with open(path, mode='rb') as fd:
+  with gfs.open(path, mode='rb') as fd:
     rem = b''
     while True:
       alog.debug0(f'Reading from {path} at offset {fd.tell()}')
