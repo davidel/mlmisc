@@ -48,6 +48,9 @@ class SubDataset(torch.utils.data.Dataset):
 
     return extra_arg(name) if extra_arg is not None else None
 
+  def __len__(self):
+    return len(self.indices)
+
   def __getitem__(self, i):
     if isinstance(i, slice):
       return SubDataset(self.data, self.indices[i])
