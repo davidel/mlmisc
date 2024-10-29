@@ -18,13 +18,7 @@ class Dataset(torch.utils.data.Dataset):
     self.kwargs = kwargs
 
   def extra_arg(self, name):
-    xarg = self.kwargs.get(name)
-    if xarg is None:
-      extra_arg = getattr(super(), 'extra_arg', None)
-      if extra_arg is not None:
-        xarg = extra_arg(name)
-
-    return xarg
+    return self.kwargs.get(name)
 
   def __getitem__(self, i):
     if isinstance(i, slice):

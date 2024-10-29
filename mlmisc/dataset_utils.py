@@ -31,9 +31,14 @@ class Dataset(dsb.Dataset):
     self.data = data
 
   def extra_arg(self, name):
-    extra_arg = getattr(self.data, 'extra_arg', None)
+    for source in (super(), self.data):
+      extra_arg = getattr(source, 'extra_arg', None)
+      if extra_arg is not None:
+        xarg = extra_arg(name)
+        if xarg is not None:
+          return xarg
 
-    return getattr(self.data, name, None) if extra_arg is None else extra_arg(name)
+    return getattr(self.data, name, None)
 
   def get_sample(self, i):
     if isinstance(self.data, dict):
