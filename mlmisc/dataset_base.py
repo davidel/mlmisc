@@ -36,6 +36,25 @@ class Dataset(torch.utils.data.Dataset):
     return self.transform(x), self.target_transform(y)
 
 
+class SubDataset(torch.utils.data.Dataset):
+
+  def __init__(self, data, indices):
+    super().__init__()
+    self.data = data
+    self.indices = indices
+
+  def extra_arg(self, name):
+    extra_arg = getattr(self.data, 'extra_arg', None)
+
+    return extra_arg(name) if extra_arg is not None else None
+
+  def __getitem__(self, i):
+    if isinstance(i, slice):
+      return SubDataset(self.data, self.indices[i])
+
+    return self.data[self.indices[i]]
+
+
 def no_transform(x):
   return x
 
@@ -64,5 +83,5 @@ def sliced_dataset(ds, dslice):
   ds_size = len(ds)
   indices = array.array(pyu.array_code(ds_size), range(*dslice.indices(ds_size)))
 
-  return torch.utils.data.Subset(ds, indices)
+  return SubDataset(ds, indices)
 
