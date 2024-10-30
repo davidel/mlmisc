@@ -75,14 +75,14 @@ def is_integer(t):
 
 
 def torch_load(path, **kwargs):
-  with gfs.open(path, mode='rb', local_open=True) as ptfd:
+  with gfs.open_local(path, mode='rb') as ptfd:
     return torch.load(ptfd, weights_only=False, **kwargs)
 
 
 def torch_load_to(dest, path, **kwargs):
   alog.debug(f'Loading tensor data from {path} to tensor/parameter with ' \
              f'shape {tuple(dest.shape)} ...')
-  with gfs.open(path, mode='rb', local_open=True) as ptfd:
+  with gfs.open_local(path, mode='rb') as ptfd:
     t = torch.load(ptfd, weights_only=True, **kwargs)
   dest.data.copy_(getattr(t, 'data', t))
 
