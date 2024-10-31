@@ -76,6 +76,8 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
     else:
       full_ds = dsclass(root=cache_dir, **kwargs)
 
+      # If we split the dataset ourselves, we do not know if the distribution of samples
+      # is uniform within the dataset, so we shuffle indices and create a randomized one.
       shuffled_indices = dsb.shuffled_indices(len(full_ds), seed=ds_seed)
       ntrain = int(split_pct * len(shuffled_indices))
 
