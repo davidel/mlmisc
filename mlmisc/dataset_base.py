@@ -84,7 +84,7 @@ def sliced_dataset(ds, dslice):
   return SubDataset(ds, indices)
 
 
-_DS_SEED = pyu.getenv('DS_SEED', dtype=int, defval=9041934)
+_DS_SEED = pyu.getenv('DS_SEED', dtype=int, defval=997727)
 
 def shuffled_indices(size, seed=None):
   seed = pyu.value_or(seed, _DS_SEED)
