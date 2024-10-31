@@ -40,7 +40,7 @@ class SubDataset(torch.utils.data.Dataset):
   def extra_arg(self, name):
     extra_arg = getattr(self.data, 'extra_arg', None)
 
-    return extra_arg(name) if extra_arg is not None else None
+    return extra_arg(name) if extra_arg is not None else getattr(self.data, name, None)
 
   def __len__(self):
     return len(self.indices)
