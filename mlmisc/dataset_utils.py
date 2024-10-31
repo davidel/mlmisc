@@ -74,8 +74,12 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
       test_ds = dsclass(root=cache_dir, split=test_split, **kwargs)
     else:
       full_ds = dsclass(root=cache_dir, **kwargs)
-      ntrain = int(split_pct * len(full_ds))
-      train_ds, test_ds = full_ds[: ntrain], full_ds[ntrain:]
+
+      shuffled_indices = dsb.shuffled_indices(len(full_ds))
+      ntrain = int(split_pct * len(shuffled_indices))
+
+      train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
+      test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
     ds['train'] = Dataset(train_ds,
                           transform=transform.get('train'),

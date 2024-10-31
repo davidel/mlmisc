@@ -1,4 +1,5 @@
 import array
+import random
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -81,4 +82,16 @@ def sliced_dataset(ds, dslice):
   indices = array.array(pyu.array_code(ds_size), range(*dslice.indices(ds_size)))
 
   return SubDataset(ds, indices)
+
+
+_DS_SEED = pyu.getenv('DS_SEED', dtype=int, defval=9041934)
+
+def shuffled_indices(size, seed=None):
+  seed = pyu.value_or(seed, _DS_SEED)
+
+  rng = random.Random(seed)
+  indices = array.array(pyu.array_code(size), range(size))
+  rng.shuffle(indices)
+
+  return indices
 
