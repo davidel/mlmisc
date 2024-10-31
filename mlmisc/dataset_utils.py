@@ -61,6 +61,7 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
     kwargs = dataset_kwargs.copy()
     if sig.parameters.get('download') is not None and 'download' not in kwargs:
       kwargs.update(download=True)
+    ds_seed = kwargs.pop('ds_seed', None)
 
     ds = dict()
     if sig.parameters.get('train') is not None:
@@ -75,7 +76,7 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
     else:
       full_ds = dsclass(root=cache_dir, **kwargs)
 
-      shuffled_indices = dsb.shuffled_indices(len(full_ds))
+      shuffled_indices = dsb.shuffled_indices(len(full_ds), seed=ds_seed)
       ntrain = int(split_pct * len(shuffled_indices))
 
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
