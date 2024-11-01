@@ -1,3 +1,4 @@
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -9,14 +10,17 @@ class Conv2dMixer(nn.Module):
 
   def __init__(self, in_channels, out_channels, convs_spec,
                act=None,
-               bias=True,
-               proj_ksize=1,
-               proj_bias=True):
-    act = act or nn.Identity
+               bias=None,
+               proj_ksize=None,
+               proj_bias=None):
+    act = pyu.value_or(act, nn.Identity)
+    bias = pyu.value_or(bias, True)
+    proj_ksize = pyu.value_or(proj_ksize, 1)
+    proj_bias = pyu.value_or(proj_bias, True)
+
     convs, total_channels = [], 0
     for chans, ksize in convs_spec:
-      convs.append(nn.Conv2d(in_channels, chans,
-                             kernel_size=ksize,
+      convs.append(nn.Conv2d(in_channels, chans, ksize,
                              padding='same',
                              bias=bias))
       total_channels += chans
@@ -24,8 +28,7 @@ class Conv2dMixer(nn.Module):
     super().__init__()
     self.act = lu.create(act)
     self.convs = ap.ArgsParallel(convs, cat_dim=1)
-    self.conv_proj = nn.Conv2d(total_channels, out_channels,
-                               kernel_size=proj_ksize,
+    self.conv_proj = nn.Conv2d(total_channels, out_channels, proj_ksize,
                                padding='same',
                                bias=proj_bias)
 
