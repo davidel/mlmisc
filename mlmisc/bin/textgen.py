@@ -74,7 +74,7 @@ def _generate(args, model, tokenizer):
 
     gentext = tokenizer.decode(gids.tolist())
 
-    with pygfs.open(args.output_file, mode='w') as ofd:
+    with pygfs.std_open(args.output_file, mode='w') as ofd:
       ofd.write(gentext)
 
 
