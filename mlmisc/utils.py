@@ -63,6 +63,29 @@ def torch_dtype(dtype):
   return getattr(torch, dtype) if isinstance(dtype, str) else dtype
 
 
+def dtype_for_size(size, ns=None, signed=None):
+  # Valid for both "torch" and "numpy" namespaces.
+  ns = pyu.value_or(ns, torch)
+  signed = pyu.value_or(signed, False)
+
+  nbits = math.ceil(math.log2(size))
+  if signed:
+    nbits += 1
+    root = 'int'
+  else:
+    root = 'uint'
+
+  max_nbits = 64
+  n = 8
+  while n <= max_nbits:
+    if nbits <= n:
+      return getattr(ns, f'{root}{n}')
+    n *= 2
+
+  alog.xraise(ValueError,
+              f'Size {size} too big to fit an integer (must fit {max_nbits} bits)')
+
+
 def is_integer(t):
   if isinstance(t, int):
     return True
