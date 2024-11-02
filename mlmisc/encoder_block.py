@@ -1,4 +1,5 @@
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -20,11 +21,11 @@ class EncoderBlock(nn.Module):
                dropout=None,
                act=None,
                norm_mode=None):
-    dim_feedforward = dim_feedforward or (4 * input_dim)
-    attn_dropout = attn_dropout or 0.0
-    dropout = dropout or 0.0
-    act = act or nn.GELU
-    norm_mode = norm_mode or PRE_NORM
+    dim_feedforward = pyu.value_or(dim_feedforward, 4 * input_dim)
+    attn_dropout = pyu.value_or(attn_dropout, 0.0)
+    dropout = pyu.value_or(dropout, 0.0)
+    act = pyu.value_or(act, nn.GELU)
+    norm_mode = pyu.value_or(norm_mode, PRE_NORM)
 
     tas.check(norm_mode in NORM_MODES,
               msg=f'Unknown norm mode "{norm_mode}" (should be one of {NORM_MODES})')
