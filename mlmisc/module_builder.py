@@ -4,6 +4,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import nets_dict as netd
 from . import utils as ut
 
 
@@ -18,9 +19,9 @@ class ModuleBuilder(nn.Module):
   def __init__(self, shape):
     super().__init__()
     self.shape = tuple(shape)
-    self.layers = nn.ModuleList()
+    self.layers = netd.NetsDict()
     self.config = []
-    self.aux_modules = nn.ModuleList()
+    self.aux_modules = netd.NetsDict()
 
   def _pop_add_args(self, kwargs):
     args = pyu.pop_kwargs(kwargs, NetConfig._fields)
@@ -39,16 +40,16 @@ class ModuleBuilder(nn.Module):
           net_args=None):
     # The shape contains no batch dimension!
     self.shape = ut.net_shape(net, self.shape)
-    self.layers.append(net)
+    self.layers.add_net(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
                                  net_args=net_args))
     # If the input functions are modules, store them here so that their parameters
     # can then be saved/loaded from the normal PyTorch state-dict machinery.
     if isinstance(input_fn, nn.Module):
-      self.aux_modules.append(input_fn)
+      self.aux_modules.add_net(input_fn)
     if isinstance(output_fn, nn.Module):
-      self.aux_modules.append(output_fn)
+      self.aux_modules.add_net(output_fn)
 
     return len(self.layers) - 1
 
@@ -94,7 +95,7 @@ class ModuleBuilder(nn.Module):
 
   def forward(self, *args, **kwargs):
     y, results = args, []
-    for net, cfg in zip(self.layers, self.config):
+    for net, cfg in zip(self.layers.values(), self.config):
       net_kwargs = dict()
       if cfg.input_fn is None:
         xx = y
