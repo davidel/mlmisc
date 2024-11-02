@@ -10,7 +10,7 @@ class NetsDict(nn.ModuleDict):
 
   def __init__(self, *args, **kwargs):
     super().__init__()
-    self._name_gen = pyu.RevGen(fmt='{name}.{ver}')
+    self._name_gen = pyu.RevGen()
     self._expand_modules(args, kwargs)
 
   def _net_name(self, net):
