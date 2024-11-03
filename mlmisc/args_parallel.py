@@ -2,10 +2,10 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import args_base as ab
+from . import nets_dict as netd
 
 
-class ArgsParallel(ab.ArgsBase):
+class ArgsParallel(netd.NetsDict):
 
   def __init__(self, *args, **kwargs):
     cat_dim, stack_dim = pyu.pop_kwargs(kwargs, 'cat_dim, stack_dim')

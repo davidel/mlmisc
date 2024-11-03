@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 
-from . import args_base as ab
+from . import nets_dict as netd
 
 
-class ArgsSequential(ab.ArgsBase):
+class ArgsSequential(netd.NetsDict):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
