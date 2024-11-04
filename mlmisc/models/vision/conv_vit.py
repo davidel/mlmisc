@@ -6,7 +6,6 @@ import py_misc_utils.utils as pyu
 import torch
 
 from ... import args_sequential as aseq
-from ... import conv_utils as cu
 from ... import encoder_block as eb
 from ... import utils as ut
 

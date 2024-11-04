@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 
 from ... import args_sequential as aseq
+from ... import conv_utils as cu
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
 from ... import net_base as nb

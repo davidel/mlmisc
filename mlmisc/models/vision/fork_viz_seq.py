@@ -5,7 +5,6 @@ import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
-from ... import conv_utils as cu
 from ... import fork_attention as fa
 from ... import layer_utils as lu
 from ... import module_builder as mb
