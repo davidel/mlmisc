@@ -20,7 +20,7 @@ def get_post_feed(post_feed):
   elif callable(post_feed):
     return post_feed
 
-  return post_feed or lambda x, y: y
+  return post_feed or (lambda x, y: y)
 
 
 class ForkAttention(nn.Module):
