@@ -28,14 +28,7 @@ class ConvViT(vb.ViTBase):
     dropout = pyu.value_or(dropout, 0.1)
     act = pyu.value_or(act, 'gelu')
 
-    if isinstance(convs, str):
-      convs = cu.convs_from_string(convs)
-
-    cstack = cu.build_conv_stack(convs, shape=shape)
-    patcher = aseq.ArgsSequential(
-      cstack,
-      einpt.Rearrange('b c h w -> b (h w) c'),
-    )
+    patcher = vb.build_conv_patcher(convs, shape, embed_size, act)
 
     net = aseq.ArgsSequential(
       [eb.EncoderBlock(embed_size, num_heads,

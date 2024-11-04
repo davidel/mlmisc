@@ -27,15 +27,7 @@ class CrossVizSeq(vb.ViTBase):
     result_tiles = pyu.value_or(result_tiles, 2)
     act = pyu.value_or(act, 'gelu')
 
-    if isinstance(convs, str):
-      convs = cu.convs_from_string(convs)
-
-    patcher = cu.build_conv_stack(convs, shape=shape)
-    patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
-    patcher.linear(embed_size)
-    patcher.add(lu.create(act))
-
-    alog.debug(f'Input shape {shape}, patcher shape {patcher.shape}')
+    patcher = vb.build_conv_patcher(convs, shape, embed_size, act)
 
     net = mb.ModuleBuilder((patcher.shape[0] + result_tiles, patcher.shape[1]))
     result_ids = []

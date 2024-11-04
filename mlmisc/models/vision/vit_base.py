@@ -13,6 +13,20 @@ from ... import net_base as nb
 from ... import utils as ut
 
 
+def build_conv_patcher(convs, shape, embed_size, act):
+  if isinstance(convs, str):
+    convs = cu.convs_from_string(convs)
+
+  patcher = cu.build_conv_stack(convs, shape=shape)
+  patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
+  patcher.linear(embed_size)
+  patcher.add(lu.create(act))
+
+  alog.debug(f'Input shape {shape}, patcher shape {patcher.shape}')
+
+  return patcher
+
+
 class ViTBase(nb.NetBase):
 
   def __init__(self, patcher, net, ishape, embed_size, num_classes,
