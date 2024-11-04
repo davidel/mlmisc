@@ -6,6 +6,7 @@ import torch.nn as nn
 from . import args_sequential as aseq
 from . import attention as atn
 from . import layer_utils as lu
+from . import utils as ut
 
 
 PRE_NORM = 'pre'
@@ -55,4 +56,7 @@ class EncoderBlock(nn.Module):
       x = self.norm2(x + self.linear_net(x))
 
     return x
+
+  def extra_repr(self):
+    return ut.extra_repr(norm_mode=self.norm_mode)
 
