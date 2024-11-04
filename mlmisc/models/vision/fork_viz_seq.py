@@ -30,7 +30,7 @@ class ForkVizSeq(vb.ViTBase):
     for i in range(num_layers):
       net.add(fa.ForkAttention(*net.shape, post_feed='x+y'))
       net.add(lu.create(act))
-      rid = net.layernorm()
+      net.layernorm()
 
     super().__init__(patcher, net, shape, embed_size, num_classes,
                      result_tiles=result_tiles,
