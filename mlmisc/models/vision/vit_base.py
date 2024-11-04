@@ -1,4 +1,5 @@
 import einops
+import einops.layers.torch as einpt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.num_utils as pynu
