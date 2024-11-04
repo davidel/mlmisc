@@ -27,7 +27,7 @@ class ForkVizSeq(vb.ViTBase):
     patcher = vb.build_conv_patcher(convs, shape, embed_size, act)
 
     net = mb.ModuleBuilder((patcher.shape[0] + result_tiles, patcher.shape[1]))
-    for i in range(num_layers):
+    for _ in range(num_layers):
       net.add(fa.ForkAttention(*net.shape, post_feed='x+y'))
       net.add(lu.create(act))
       net.layernorm()

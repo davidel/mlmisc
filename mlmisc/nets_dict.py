@@ -28,16 +28,16 @@ class NetsDict(nn.ModuleDict):
         for name, net in arg.items():
           self.add_net(net, name=name)
         net_args = []
-      elif isinstance(arg, (list, tuple)):
+      elif isinstance(arg, (list, tuple, nn.ModuleList)):
         net_args = arg
 
     for net in net_args:
       if isinstance(net, (list, tuple)):
         tas.check_eq(len(net), 2,
                      msg=f'In case of list/tuple argument, it must contain two elements')
-        name, enet = net
+        name, net = net
 
-        self.add_net(enet, name=name)
+        self.add_net(net, name=name)
       else:
         self.add_net(net)
     for name, net in kwargs.items():
