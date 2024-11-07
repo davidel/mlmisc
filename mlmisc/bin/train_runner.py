@@ -20,6 +20,7 @@ import torch.nn as nn
 
 from . import base_setup as bs
 from . import dataset as ds
+from .lrsched import wrapper as lrw
 
 
 def create_profiler(prof_config):
@@ -128,6 +129,11 @@ def main(args):
 
   if args.lr_scheduler:
     scheduler = mlco.create_lr_scheduler(optimizer, args.lr_scheduler)
+
+    if args.wrap_lr_scheduler:
+      wrap_kwargs = pyu.parse_config(args.wrap_lr_scheduler)
+      scheduler = lrw.wrap(scheduler, **wrap_kwargs)
+
     if args.load_lrsched_state:
       trainer.load_aux_state(state, scheduler=scheduler)
   else:
@@ -222,6 +228,8 @@ if __name__ == '__main__':
   parser.add_argument('--lr_scheduler',
                       help='The configuration for the learning rate scheduler ' \
                       '(class_path:arg0,...,name0=value0,...)')
+  parser.add_argument('--wrap_lr_scheduler',
+                      help='The configuration for the learning rate scheduler wrapper')
   parser.add_argument('--load_lrsched_state', action=argparse.BooleanOptionalAction, default=True,
                       help='Whether to load the learning rate scheduler state')
   parser.add_argument('--tb_path',
