@@ -13,44 +13,44 @@ class Dataset(torch.utils.data.Dataset):
 
   def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
     super().__init__()
-    self.select_fn = select_fn or ident_select
-    self.transform = transform or no_transform
-    self.target_transform = target_transform or no_transform
-    self.kwargs = kwargs
+    self._select_fn = select_fn or ident_select
+    self._transform = transform or no_transform
+    self._target_transform = target_transform or no_transform
+    self._kwargs = kwargs
 
   def extra_arg(self, name):
-    return self.kwargs.get(name)
+    return self._kwargs.get(name)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
       return sliced_dataset(self, i)
 
-    data = self.get_sample(i)
-    x, y = self.select_fn(data)
+    data = self._get_sample(i)
+    x, y = self._select_fn(data)
 
-    return self.transform(x), self.target_transform(y)
+    return self._transform(x), self._target_transform(y)
 
 
 class SubDataset(torch.utils.data.Dataset):
 
   def __init__(self, data, indices):
     super().__init__()
-    self.data = data
-    self.indices = indices
+    self._data = data
+    self._indices = indices
 
   def extra_arg(self, name):
-    extra_arg = getattr(self.data, 'extra_arg', None)
+    extra_arg = getattr(self._data, 'extra_arg', None)
 
-    return extra_arg(name) if extra_arg is not None else getattr(self.data, name, None)
+    return extra_arg(name) if extra_arg is not None else getattr(self._data, name, None)
 
   def __len__(self):
-    return len(self.indices)
+    return len(self._indices)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
-      return SubDataset(self.data, self.indices[i])
+      return SubDataset(self._data, self._indices[i])
 
-    return self.data[self.indices[i]]
+    return self._data[self._indices[i]]
 
 
 def no_transform(x):

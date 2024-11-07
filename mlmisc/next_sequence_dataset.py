@@ -16,24 +16,24 @@ class NextSequenceDataset(dsb.Dataset):
     super().__init__(transform=transform,
                      target_transform=target_transform,
                      **kwargs)
-    self.data = data
-    self.context_size = context_size - pad_size
-    self.pad = pad
+    self._data = data
+    self._context_size = context_size - pad_size
+    self._pad = pad
 
   def extra_arg(self, name):
-    extra_arg = getattr(self.data, 'extra_arg', None)
+    extra_arg = getattr(self._data, 'extra_arg', None)
 
     return extra_arg(name) if extra_arg is not None else None
 
   def __len__(self):
-    return max(len(self.data) - self.context_size, 0)
+    return max(len(self._data) - self._context_size, 0)
 
   def get_sample(self, i):
-    offset = i + self.context_size
-    x, y = self.data[i: offset], self.data[i + 1: offset + 1]
+    offset = i + self._context_size
+    x, y = self._data[i: offset], self._data[i + 1: offset + 1]
 
-    if self.pad is not None:
-      x = F.pad(x, self.pad['pad'], value=self.pad['value'])
+    if self._pad is not None:
+      x = F.pad(x, self._pad['pad'], value=self._pad['value'])
 
     return x, y
 

@@ -16,25 +16,25 @@ class TokensDataset(dsb.Dataset):
     super().__init__(transform=transform,
                      target_transform=target_transform,
                      **kwargs)
-    self.data = data
-    self.window_size = window_size
-    self.mode = mode
+    self._data = data
+    self._window_size = window_size
+    self._mode = mode
 
   def __len__(self):
-    return max(len(self.data) - 2 * self.window_size, 0)
+    return max(len(self._data) - 2 * self._window_size, 0)
 
   def get_sample(self, i):
-    mid, eow = i + self.window_size, i + 2 * self.window_size + 1
+    mid, eow = i + self._window_size, i + 2 * self._window_size + 1
 
-    wnd = torch.cat((self.data[i: mid], self.data[mid + 1: eow]))
-    tok = self.data[mid: mid + 1]
+    wnd = torch.cat((self._data[i: mid], self._data[mid + 1: eow]))
+    tok = self._data[mid: mid + 1]
 
-    if self.mode == 'cbow':
+    if self._mode == 'cbow':
       x, y = wnd, tok
-    elif self.mode == 'skipgram':
+    elif self._mode == 'skipgram':
       x, y = tok, wnd
     else:
-      alog.xraise(ValueError, f'Invalid mode: {self.mode}')
+      alog.xraise(ValueError, f'Invalid mode: {self._mode}')
 
     return x, y
 

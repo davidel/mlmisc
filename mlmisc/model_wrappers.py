@@ -21,25 +21,23 @@ class ModelHolder(nn.Module):
     frozen = pyu.value_or(frozen, True)
 
     super().__init__()
-    self.frozen = frozen
+    self._frozen = frozen
     # Storing model inside an object prevents nn.Module machinery to save its
     # weights when checkpointing, which is what we want when they are frozen.
-    self.ctx = pyu.make_object(model=model, **kwargs)
+    self._ctx = pyu.make_object(model=model, **kwargs)
     if not frozen:
       self.model = model
 
   def to(self, *args, **kwargs):
-    xself = super().to(*args, **kwargs)
-    if xself.frozen:
-      xself.ctx.model = xself.ctx.model.to(*args, **kwargs)
-    else:
-      xself.ctx.model = xself.model
+    super().to(*args, **kwargs)
+    if self._frozen:
+      self._ctx.model.to(*args, **kwargs)
 
-    return xself
+    return self
 
   def model_ctx(self):
-    return pycm.CtxManagerWrapper(torch.set_grad_enabled(not self.frozen),
-                                  wrap_obj=self.ctx.model)
+    return pycm.CtxManagerWrapper(torch.set_grad_enabled(not self._frozen),
+                                  wrap_obj=self._ctx.model)
 
 
 class TorchVision(ModelHolder):
@@ -110,15 +108,15 @@ class HugginFaceModel(ModelHolder):
     super().__init__(model, frozen=frozen, processor=processor)
 
   def config(self):
-    return self.ctx.model.config
+    return self._ctx.model.config
 
   def processor(self):
-    return self.ctx.processor
+    return self._ctx.processor
 
   def forward(self, *args, processor_kwargs=None, **kwargs):
     with self.model_ctx() as model:
       if processor_kwargs is not None:
-        model_kwargs = self.ctx.processor(*args, **processor_kwargs)
+        model_kwargs = self._ctx.processor(*args, **processor_kwargs)
         model_kwargs.update(kwargs)
         model_args = ()
       else:

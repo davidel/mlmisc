@@ -28,29 +28,29 @@ class Dataset(dsb.Dataset):
                      transform=transform,
                      target_transform=target_transform,
                      **kwargs)
-    self.data = data
+    self._data = data
 
   def extra_arg(self, name):
-    for source in (super(), self.data):
+    for source in (super(), self._data):
       extra_arg = getattr(source, 'extra_arg', None)
       if extra_arg is not None:
         xarg = extra_arg(name)
         if xarg is not None:
           return xarg
 
-    return getattr(self.data, name, None)
+    return getattr(self._data, name, None)
 
   def get_sample(self, i):
-    if isinstance(self.data, dict):
-      return {k: v[i] for k, v in self.data.items()}
+    if isinstance(self._data, dict):
+      return {k: v[i] for k, v in self._data.items()}
 
-    return self.data[i]
+    return self._data[i]
 
   def __len__(self):
-    if isinstance(self.data, dict):
-      return min(len(v) if hasattr(v, '__len__') else 1 for v in self.data.values())
+    if isinstance(self._data, dict):
+      return min(len(v) if hasattr(v, '__len__') else 1 for v in self._data.values())
 
-    return len(self.data)
+    return len(self._data)
 
 
 def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,

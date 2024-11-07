@@ -15,35 +15,35 @@ class ReduceOnPlateau:
     patience = kwargs.get('patience', 10)
     patience_span = patience_span or 0.1
 
-    self.sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, **kwargs)
-    self.sched_batches = int(num_batches * patience_span / patience)
-    self.batchno = 0
-    self.losses = []
+    self._sched = optim.lr_scheduler.ReduceLROnPlateau(optimizer, **kwargs)
+    self._sched_batches = int(num_batches * patience_span / patience)
+    self._batchno = 0
+    self._losses = []
 
   def state_dict(self):
     state = {k: getattr(self, k) for k in self.STATE_FIELDS}
-    state['sched'] = self.sched.state_dict()
+    state['sched'] = self._sched.state_dict()
 
     return state
 
   def load_state_dict(self, state):
-    self.sched.load_state_dict(state.pop('sched'))
+    self._sched.load_state_dict(state.pop('sched'))
     self.__dict__.update(state)
 
   def get_last_lr(self):
-    return self.sched.get_last_lr()
+    return self._sched.get_last_lr()
 
   def print_lr(self, *args, **kwargs):
-    return self.sched.print_lr(*args, **kwargs)
+    return self._sched.print_lr(*args, **kwargs)
 
   def train_step(self, batch_loss):
-    self.losses.append(ut.item(batch_loss))
-    self.batchno += 1
-    if self.batchno >= self.sched_batches:
-      self.sched.step(np.mean(self.losses))
-      self.batchno = 0
-      self.losses = []
-      alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".3e")}')
+    self._losses.append(ut.item(batch_loss))
+    self._batchno += 1
+    if self._batchno >= self._sched_batches:
+      self._sched.step(np.mean(self._losses))
+      self._batchno = 0
+      self._losses = []
+      alog.debug(f'Last LR is {pyu.format(self._sched.get_last_lr(), ".3e")}')
 
   def epoch_step(self, val_loss):
     loss = float('nan') if val_loss is None else ut.item(val_loss)

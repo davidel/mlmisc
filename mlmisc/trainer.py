@@ -16,18 +16,18 @@ from .lrsched import wrapper as lrw
 class TimeTracker:
 
   def __init__(self, total=0):
-    self.stamp = None
+    self._stamp = None
     self.total = total if isinstance(total, datetime.timedelta) else datetime.timedelta(seconds=total)
 
   def start(self):
-    self.stamp = time.time()
+    self._stamp = time.time()
 
-    return self.stamp
+    return self._stamp
 
   def track(self):
     now = time.time()
-    self.total += datetime.timedelta(seconds=now - self.stamp)
-    self.stamp = now
+    self.total += datetime.timedelta(seconds=now - self._stamp)
+    self._stamp = now
 
     return now
 

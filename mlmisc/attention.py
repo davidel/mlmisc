@@ -17,7 +17,7 @@ class Attention(nn.Module):
     dropout = pyu.value_or(dropout, 0.0)
 
     super().__init__()
-    self.num_heads = num_heads
+    self._num_heads = num_heads
     self.k_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
     self.q_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
     self.v_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)
@@ -35,9 +35,9 @@ class Attention(nn.Module):
     # (B, T, C) -> (B, T, H * C)
     values = self.v_prj(v)
 
-    keys = einops.rearrange(keys, 'b t (h c) -> b h t c', h=self.num_heads)
-    queries = einops.rearrange(queries, 'b t (h c) -> b h t c', h=self.num_heads)
-    values = einops.rearrange(values, 'b t (h c) -> b h t c', h=self.num_heads)
+    keys = einops.rearrange(keys, 'b t (h c) -> b h t c', h=self._num_heads)
+    queries = einops.rearrange(queries, 'b t (h c) -> b h t c', h=self._num_heads)
+    values = einops.rearrange(values, 'b t (h c) -> b h t c', h=self._num_heads)
 
     # (B, H, T, C) @ (B, H, C, T) => (B, H, T, T)
     att = queries @ einops.rearrange(keys, 'b h t c -> b h c t')
@@ -57,7 +57,7 @@ class Attention(nn.Module):
     return out
 
   def extra_repr(self):
-    return ut.extra_repr(num_heads=self.num_heads,
+    return ut.extra_repr(num_heads=self._num_heads,
                          embed_size=self.unifyheads.out_features,
                          attn_dropout=self.attn_drop.p,
                          dropout=self.resid_drop.p)

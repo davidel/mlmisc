@@ -25,29 +25,29 @@ def load_tokenizer(proto_path):
 class FpTokenizerWrapper:
 
   def __init__(self, tokenizer):
-    self.tokenizer = tokenizer
+    self._tokenizer = tokenizer
 
   def vocab_size(self):
-    return self.tokenizer.vocab_size
+    return self._tokenizer.vocab_size
 
   def bos_id(self):
-    return self.tokenizer.bos_token_id
+    return self._tokenizer.bos_token_id
 
   def eos_id(self):
-    return self.tokenizer.eos_token_id
+    return self._tokenizer.eos_token_id
 
   def unk_id(self):
-    return self.tokenizer.unk_token_id
+    return self._tokenizer.unk_token_id
 
   def encode(self, data):
     edata = data if isinstance(data, str) else data.decode()
 
-    return self.tokenizer.encode(edata,
-                                 add_special_tokens=False,
-                                 verbose=False)
+    return self._tokenizer.encode(edata,
+                                  add_special_tokens=False,
+                                  verbose=False)
 
   def decode(self, data):
-    return self.tokenizer.decode(data)
+    return self._tokenizer.decode(data)
 
 
 def from_pretrained(module_path, model_name, cache_dir=None):

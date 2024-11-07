@@ -23,8 +23,8 @@ class TilesPod(nn.Module):
     self.reset()
 
   def reset(self):
-    self.idx = 0
-    self.used = 0
+    self._idx = 0
+    self._used = 0
 
   def get_indices(self, n, use_random=False):
     count, msize, _ = self.weight.shape
@@ -34,12 +34,12 @@ class TilesPod(nn.Module):
     else:
       indices, left = [], n
       while left > 0:
-        size = min(left, count - self.idx)
-        indices.extend(range(self.idx, self.idx + size))
-        self.idx = (self.idx + size) % count
+        size = min(left, count - self._idx)
+        indices.extend(range(self._idx, self._idx + size))
+        self._idx = (self._idx + size) % count
         left -= size
 
-    self.used += n
+    self._used += n
 
     return torch.tensor(indices, dtype=torch.long)
 
@@ -62,26 +62,26 @@ class TilesPod(nn.Module):
   def stats(self):
     count, msize, _ = self.weight.shape
 
-    return dict(msize=msize, count=count, used=self.used, nparams=self.weight.numel())
+    return dict(msize=msize, count=count, used=self._used, nparams=self.weight.numel())
 
 
 class MosaicManager:
 
   def __init__(self, mods_budget, dtype=None, div_factor=None, init=None):
-    self.mods_budget = mods_budget
-    self.dtype = dtype
-    self.init = init
-    self.div_factor = div_factor or 16
-    self.mods = dict()
+    self._mods_budget = mods_budget
+    self._dtype = dtype
+    self._init = init
+    self._div_factor = div_factor or 16
+    self._mods = dict()
 
   def reset(self):
-    for mod in self.mods.values():
+    for mod in self._mods.values():
       mod.reset()
 
   def module_size(self, idim, odim, msize=None):
     if msize is None:
-      msize = round(max(idim, odim) / self.div_factor)
-      sizes = sorted(self.mods_budget.keys())
+      msize = round(max(idim, odim) / self._div_factor)
+      sizes = sorted(self._mods_budget.keys())
       x = bisect.bisect_left(sizes, msize)
       msize = sizes[min(x, len(sizes) - 1)]
 
@@ -90,21 +90,21 @@ class MosaicManager:
     return msize
 
   def get(self, n):
-    mod = self.mods.get(n)
+    mod = self._mods.get(n)
     if mod is None:
-      budget = self.mods_budget.get(n)
+      budget = self._mods_budget.get(n)
       tas.check_is_not_none(budget,
                             msg=f'Unlisted module size {n}: ' \
-                            f'available={list(self.mods_budget.keys())}')
+                            f'available={list(self._mods_budget.keys())}')
 
-      mod = TilesPod(n, budget, dtype=self.dtype, init=self.init)
-      self.mods[n] = mod
+      mod = TilesPod(n, budget, dtype=self._dtype, init=self._init)
+      self._mods[n] = mod
 
     return mod
 
   def stats(self):
     stats = dict()
-    for n, mod in self.mods.items():
+    for n, mod in self._mods.items():
       stats[n] = mod.stats()
 
     return stats
@@ -129,12 +129,12 @@ class Mosaic(nn.Module):
     rem = idim % msize
 
     super().__init__()
-    self.odim = odim
+    self._odim = odim
     self.post = lu.create(post or nn.Identity)
     if rem != 0:
-      self.pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
+      self._pad = lambda x: F.pad(x, (0, msize - rem), value=pad_value)
     else:
-      self.pad = lambda x: x
+      self._pad = lambda x: x
     self.mod, parts = mmgr.build_modules(msize, icount, ocount,
                                          use_random=use_random)
     self.register_buffer('parts', parts)
@@ -142,30 +142,30 @@ class Mosaic(nn.Module):
       bound = 1.0 / math.sqrt(odim)
       weight = torch.empty(odim, dtype=mmgr.dtype).uniform_(-bound, bound)
       self.bias = nn.Parameter(weight)
-      self.bias_fn = lambda x: x + self.bias
+      self._bias_fn = lambda x: x + self.bias
     else:
-      self.bias_fn = lambda x: x
-    self.fc_mat = None
+      self._bias_fn = lambda x: x
+    self._fc_mat = None
 
   def _get_fc_mat(self):
     if self.training:
-      self.fc_mat = None
+      self._fc_mat = None
       fc_mat = self.mod.build_mosaic(self.parts)
     else:
-      fc_mat = self.fc_mat
+      fc_mat = self._fc_mat
       if fc_mat is None:
         with torch.no_grad():
-          self.fc_mat = fc_mat = self.mod.build_mosaic(self.parts)
+          self._fc_mat = fc_mat = self.mod.build_mosaic(self.parts)
 
     return fc_mat
 
   def forward(self, x):
     fc_mat = self._get_fc_mat()
 
-    x = self.pad(x)
+    x = self._pad(x)
     x = x @ fc_mat
-    x = x[..., : self.odim]
-    x = self.post(self.bias_fn(x))
+    x = x[..., : self._odim]
+    x = self.post(self._bias_fn(x))
 
     return x
 

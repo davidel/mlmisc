@@ -25,16 +25,16 @@ from . import load_state_dict as lsd
 class Training:
 
   def __init__(self, net, training):
-    self.net = net
-    self.training = training
+    self._net = net
+    self._training = training
 
   def __enter__(self):
-    self.prev_training = self.net.training
-    self.net.train(self.training)
+    self._prev_training = self._net.training
+    self._net.train(self._training)
     return self
 
   def __exit__(self, *exc):
-    self.net.train(self.prev_training)
+    self._net.train(self._prev_training)
     return False
 
 
