@@ -25,7 +25,7 @@ class Dataset(torch.utils.data.Dataset):
     if isinstance(i, slice):
       return sliced_dataset(self, i)
 
-    data = self._get_sample(i)
+    data = self.get_sample(i)
     x, y = self._select_fn(data)
 
     return self._transform(x), self._target_transform(y)
