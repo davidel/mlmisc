@@ -8,7 +8,7 @@ import torch
 LoadResult = collections.namedtuple(
   'LoadResult',
   'missing_keys, unexpected_keys, exception',
-  defaults=(None,),
+  defaults=((), (), None,),
 )
 
 VALID_STRICTS = {
@@ -37,9 +37,7 @@ def load_state_dict(module, state, strict=None, **kwargs):
                           unexpected_keys=lsd_res.unexpected_keys)
     except Exception as ex:
       alog.warning(f'{ex}')
-      result = LoadResult(missing_keys=(),
-                          unexpected_keys=(),
-                          exception=ex)
+      result = LoadResult(exception=ex)
   else:
     alog.xraise(ValueError, f'Wrong argument value for "strict": {strict}')
 

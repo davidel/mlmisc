@@ -132,6 +132,7 @@ def main(args):
 
     if args.wrap_lr_scheduler:
       wrap_kwargs = pyu.parse_config(args.wrap_lr_scheduler)
+      alog.info(f'Wrapping LR Scheduler: {wrap_kwargs}')
       scheduler = lrw.wrap(scheduler, **wrap_kwargs)
 
     if args.load_lrsched_state:

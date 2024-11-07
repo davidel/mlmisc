@@ -15,6 +15,12 @@ class NoOp:
   def get_last_lr(self):
     pass
 
+  def state_dict(self, *args, **kwargs):
+    return dict()
+
+  def load_state_dict(self, *args, **kwargs):
+    return lsd.LoadResult()
+
 
 class Wrapper:
 
