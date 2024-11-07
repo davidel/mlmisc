@@ -4,6 +4,8 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.optim as optim
 
+from .. import utils as ut
+
 
 class ReduceOnPlateau:
 
@@ -35,7 +37,7 @@ class ReduceOnPlateau:
     return self.sched.print_lr(*args, **kwargs)
 
   def train_step(self, batch_loss):
-    self.losses.append(batch_loss)
+    self.losses.append(ut.item(batch_loss))
     self.batchno += 1
     if self.batchno >= self.sched_batches:
       self.sched.step(np.mean(self.losses))
@@ -44,7 +46,7 @@ class ReduceOnPlateau:
       alog.debug(f'Last LR is {pyu.format(self.sched.get_last_lr(), ".3e")}')
 
   def epoch_step(self, val_loss):
-    loss = float('nan') if val_loss is None else val_loss
+    loss = float('nan') if val_loss is None else ut.item(val_loss)
     alog.debug(f'Scheduler step called with {loss:.4f} validation loss')
 
   def step(self):

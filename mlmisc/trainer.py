@@ -44,13 +44,13 @@ class LrScheduler:
     if self.scheduler is not None:
       train_step = getattr(self.scheduler, 'train_step', None)
       if train_step is not None:
-        return train_step(ut.item(loss))
+        return train_step(loss)
 
   def epoch_step(self, loss):
     if self.scheduler is not None:
       epoch_step = getattr(self.scheduler, 'epoch_step', None)
       if epoch_step is not None:
-        return epoch_step(ut.item(loss))
+        return epoch_step(loss)
       else:
         self.scheduler.step()
         alog.debug(f'Scheduler step: lr={pyu.format(self.scheduler.get_last_lr(), ".3e")}')
