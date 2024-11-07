@@ -18,7 +18,7 @@ def _load_class(obj_path):
     module = pymu.import_module(m.group(1))
     return pymu.module_getter(m.group(2))(module)
 
-  return pymu.import_module_names(obj_path)
+  return pymu.import_module_names(obj_path)[0]
 
 
 def create_object(name, config_data, *args, **kwargs):
