@@ -81,6 +81,9 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
       shuffled_indices = dsb.shuffled_indices(len(full_ds), seed=ds_seed)
       ntrain = int(split_pct * len(shuffled_indices))
 
+      alog.info(f'Loading torchvision "{name}" dataset whose API does not support splits. ' \
+                f'Shuffling indices and using {split_pct:.2f} split')
+
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
