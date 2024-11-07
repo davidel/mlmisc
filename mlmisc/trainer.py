@@ -10,6 +10,7 @@ import torch.nn as nn
 
 from . import debug_utils as du
 from . import utils as ut
+from .lrsched import wrapper as lrw
 
 
 class TimeTracker:
@@ -33,30 +34,6 @@ class TimeTracker:
   @property
   def seconds(self):
     return self.total.total_seconds()
-
-
-class LrScheduler:
-
-  def __init__(self, scheduler):
-    self.scheduler = scheduler
-
-  def train_step(self, loss):
-    if self.scheduler is not None:
-      train_step = getattr(self.scheduler, 'train_step', None)
-      if train_step is not None:
-        return train_step(loss)
-
-  def epoch_step(self, loss):
-    if self.scheduler is not None:
-      epoch_step = getattr(self.scheduler, 'epoch_step', None)
-      if epoch_step is not None:
-        return epoch_step(loss)
-      else:
-        self.scheduler.step()
-        alog.debug(f'Scheduler step: lr={pyu.format(self.scheduler.get_last_lr(), ".3e")}')
-
-  def get_last_lr(self):
-    return self.scheduler.get_last_lr() if self.scheduler is not None else None
 
 
 class Trainer:
@@ -309,7 +286,7 @@ class Trainer:
                   amp_dtype=None):
     tctx = pyu.make_object(**{k: v for k, v in locals().items() if k != 'self'})
 
-    wrapped_scheduler = LrScheduler(scheduler)
+    wrapped_scheduler = lrw.wrap(scheduler)
 
     tstep, tval, tsave = [self.train_time.start()] * 3
     train_losses, val_losses, last_stepno = array.array('f'), array.array('f'), -1

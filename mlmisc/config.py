@@ -1,17 +1,8 @@
-import operator
-import os
 import re
 
-import numpy as np
 import py_misc_utils.alog as alog
-import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
-import torch
-import torch.nn as nn
-import torch.optim as optim
-
-from .lrsched import reduce_on_plateau as rop
 
 
 def _config_split(config_data):
@@ -21,25 +12,23 @@ def _config_split(config_data):
   return parts[0], mod_config
 
 
-def _load_class(obj_name):
-  m = re.match(r'(.*),([^\.]+)$', obj_name)
+def _load_class(obj_path):
+  m = re.match(r'(.*),([^\.]+)$', obj_path)
   if m:
     module = pymu.import_module(m.group(1))
-    obj_name = m.group(2)
-  else:
-    module = pyiu.current_module()
+    return pymu.module_getter(m.group(2))(module)
 
-  return operator.attrgetter(obj_name)(module)
+  return pymu.import_module_names(obj_path)
 
 
 def create_object(name, config_data, *args, **kwargs):
-  obj_name, (obj_config, obj_args) = _config_split(config_data)
+  obj_path, (obj_config, obj_args) = _config_split(config_data)
 
   kwargs.update(obj_config)
 
-  alog.debug(f'Creating {obj_name} {name} with: ({len(args)} API args) {obj_args} {kwargs}')
+  alog.debug(f'Creating {obj_path} {name} with: ({len(args)} API args) {obj_args} {kwargs}')
 
-  obj_class = _load_class(obj_name)
+  obj_class = _load_class(obj_path)
 
   return obj_class(*(args + obj_args), **kwargs)
 
