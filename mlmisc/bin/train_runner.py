@@ -20,7 +20,7 @@ import torch.nn as nn
 
 from . import base_setup as bs
 from . import dataset as ds
-from .lrsched import wrapper as lrw
+from ..lrsched import wrapper as lrw
 
 
 def create_profiler(prof_config):
