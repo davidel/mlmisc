@@ -66,12 +66,15 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
     ds = dict()
     if sig.parameters.get('train') is not None:
       train_ds = dsclass(root=cache_dir, train=True, **kwargs)
+
+      kwargs.pop('download', None)
       test_ds = dsclass(root=cache_dir, train=False, **kwargs)
     elif sig.parameters.get('split') is not None:
       train_split = kwargs.pop('train_split', 'train')
-      test_split = kwargs.pop('test_split', 'test')
-
       train_ds = dsclass(root=cache_dir, split=train_split, **kwargs)
+
+      kwargs.pop('download', None)
+      test_split = kwargs.pop('test_split', 'test')
       test_ds = dsclass(root=cache_dir, split=test_split, **kwargs)
     else:
       full_ds = dsclass(root=cache_dir, **kwargs)
