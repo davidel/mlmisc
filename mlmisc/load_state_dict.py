@@ -66,5 +66,5 @@ def save_obj_state(obj, state, state_fields=None, no_state_fields=None, key=None
 
 def load_obj_state(obj, state, key=None):
   key = pyu.value_or(key, pyu.cname(obj))
-  obj.__dict__.update(state.pop(key, dict())
+  obj.__dict__.update(state.pop(key, dict()))
 
