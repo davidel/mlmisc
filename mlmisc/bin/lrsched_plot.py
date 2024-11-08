@@ -39,7 +39,8 @@ def main(args):
     with gfs.open(args.plotfile, mode='wb') as imgfd:
       plt.savefig(imgfd)
 
-  plt.show()
+  if args.show:
+    plt.show()
 
 
 if __name__ == '__main__':
@@ -66,6 +67,9 @@ if __name__ == '__main__':
                       help='The aspect ratio to be used to generate the image')
   parser.add_argument('--plotfile',
                       help='The path to the file where the plot image should be saved')
+  parser.add_argument('--show', action=argparse.BooleanOptionalAction,
+                      default=False,
+                      help='Show the image of screen')
 
   pyam.main(parser, main)
 
