@@ -1,12 +1,10 @@
 import argparse
-import os
 
 import matplotlib.pyplot as plt
 import mlmisc.config as mlco
 import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
-import py_misc_utils.assert_checks as tas
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.utils as pyu
 import torch
@@ -27,9 +25,8 @@ def main(args):
     scheduler.step()
     lrs.append(mlut.get_lr(optimizer))
 
-  img_h = 6
-  img_w = int(img_h * args.aspect)
-  fig, ax = plt.subplots(figsize=(img_w, img_h), dpi=args.dpi)
+  img_w = int(args.img_h * args.aspect)
+  fig, ax = plt.subplots(figsize=(img_w, args.img_h), dpi=args.dpi)
 
   ax.plot(tuple(range(args.num_steps)), lrs)
 
@@ -61,6 +58,8 @@ if __name__ == '__main__':
                       help='The number of steps to plot')
   parser.add_argument('--dpi', type=int, default=128,
                       help='The DPI to be used to generate the image')
+  parser.add_argument('--img_h', type=int, default=6,
+                      help='The height of the plot image')
   parser.add_argument('--grid', default='dotted',
                       help='The style of the plot grid')
   parser.add_argument('--aspect', type=float, default=4 / 3,
