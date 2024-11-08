@@ -190,7 +190,7 @@ class Trainer:
 
       self._metric_log(tctx.tb_writer, epoch, name_fmt.format(ts.name), value)
 
-  def _show_stats(self, model, scheduler, num_batches, tctx):
+  def _show_stats(self, model, num_batches, tctx):
     percentiles = (0.5, 0.9, 0.95, 0.99)
 
     pstats = du.get_parameters_stats(model, percentiles=percentiles)
@@ -203,7 +203,7 @@ class Trainer:
     self._log_tensor_stats('PARA.{}', pstats.stats, epoch, tctx)
     self._log_tensor_stats('GRAD.{}', gstats.stats, epoch, tctx)
 
-    if current_lr := scheduler.get_last_lr():
+    if current_lr := ut.get_lr(tctx.optimizer, reduce=False):
       alog.debug(f'Current LR: {pyu.format(current_lr, ".3e")}')
       for name, lr in pyu.name_values('lr', current_lr):
         self._metric_log(tctx.tb_writer, epoch, name, lr)
@@ -307,7 +307,7 @@ class Trainer:
 
       if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
         self.train_time.track()
-        self._show_stats(model, wrapped_scheduler, sd.num_batches, tctx)
+        self._show_stats(model, sd.num_batches, tctx)
         vloss = self._run_validation(sd.stepno, sd.num_batches, tctx)
         if vloss is not None:
           val_losses.append(vloss)

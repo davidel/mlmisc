@@ -298,14 +298,15 @@ def create_graph(x, path=None, params=None, model=None, format='svg'):
   return dot
 
 
-def get_lr(optimizer):
+def get_lr(optimizer, reduce=None):
   lrs = []
   for pgrp in optimizer.param_groups:
     lr = pgrp.get('lr')
     if lr is not None:
       lrs.append(lr)
 
-  return np.mean(lrs) if lrs else None
+  if lrs:
+    return tuple(lrs) if reduce is False else np.mean(lrs)
 
 
 def reset_lr(optimizer, lr):
