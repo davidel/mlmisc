@@ -4,7 +4,7 @@ import py_misc_utils.utils as pyu
 from .. import load_state_dict as lsd
 
 
-class NoOp:
+class NoOpScheduler:
 
   def train_step(self, loss):
     pass
@@ -19,10 +19,10 @@ class NoOp:
     return dict()
 
   def load_state_dict(self, *args, **kwargs):
-    return lsd.LoadResult()
+    pass
 
 
-class Wrapper:
+class SchedWrapper:
 
   NO_STATE = '_scheduler'
 
@@ -36,12 +36,12 @@ class Wrapper:
     else:
       train_step = getattr(self._scheduler, 'train_step', None)
       if train_step is not None:
-        return train_step(loss)
+        train_step(loss)
 
   def epoch_step(self, loss):
     epoch_step = getattr(self._scheduler, 'epoch_step', None)
     if epoch_step is not None:
-      return epoch_step(loss)
+      epoch_step(loss)
     elif not self._is_train_step:
       self.step()
       alog.debug(f'Scheduler step: lr={pyu.format(self._scheduler.get_last_lr(), ".3e")}')
@@ -66,7 +66,12 @@ class Wrapper:
 
 def wrap(scheduler, **kwargs):
   if scheduler is not None:
-    return Wrapper(scheduler, **kwargs) if not isinstance(scheduler, Wrapper) else scheduler
+    # No need to double-wrap if the scheduler already supports the train_step() and
+    # epoch_step() APIs.
+    if not isinstance(scheduler, SchedWrapper):
+      return SchedWrapper(scheduler, **kwargs)
+    else:
+      return scheduler
 
-  return NoOp()
+  return NoOpScheduler()
 
