@@ -284,7 +284,7 @@ class Trainer:
                   step_fn=None,
                   scaler=None,
                   amp_dtype=None):
-    tctx = pyu.make_object(**{k: v for k, v in locals().items() if k != 'self'})
+    tctx = pyu.locals_capture(locals())
 
     wrapped_scheduler = lrw.wrap(scheduler)
 
