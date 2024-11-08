@@ -44,7 +44,7 @@ class SchedWrapper:
       epoch_step(loss)
     elif not self._is_train_step:
       self.step()
-      alog.debug(f'Scheduler step: lr={pyu.format(self._scheduler.get_last_lr(), ".3e")}')
+      alog.debug(f'Scheduler step: lr={pyu.format(self.get_last_lr(), ".3e")}')
 
   def step(self):
     self._scheduler.step()
@@ -61,7 +61,7 @@ class SchedWrapper:
   def load_state_dict(self, state, *args, **kwargs):
     lsd.load_obj_state(self, state)
 
-    return self._scheduler.load_state_dict(state, *args, **kwargs)
+    self._scheduler.load_state_dict(state, *args, **kwargs)
 
 
 def wrap(scheduler, **kwargs):
