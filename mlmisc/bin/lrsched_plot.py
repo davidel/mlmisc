@@ -12,6 +12,12 @@ import torch.nn as nn
 import torch.optim as optim
 
 
+def format_scheduler(lr_scheduler):
+  cpath, params = lr_scheduler.split(':', maxsplit=1)
+
+  return '\n'.join((cpath, params))
+
+
 def main(args):
   # Dummy net and trivial SGD optimizer to feed to the LR scheduler.
   net = nn.Linear(8, 8)
@@ -33,7 +39,7 @@ def main(args):
 
   ax.set(xlabel='Step Number',
          ylabel='Learning Rate',
-         title=f'LR Plot for : {args.lr_scheduler}')
+         title=f'LR Plot\n{format_scheduler(args.lr_scheduler)}')
   ax.grid(linestyle=args.grid)
 
   if args.plotfile:
