@@ -16,6 +16,7 @@ def main(args):
   # Dummy net and trivial SGD optimizer to feed to the LR scheduler.
   net = nn.Linear(8, 8)
   optimizer = optim.SGD(net.parameters(), lr=args.init_lr)
+  optimizer.zero_grad()
 
   scheduler = mlco.create_lr_scheduler(optimizer, args.lr_scheduler)
 
