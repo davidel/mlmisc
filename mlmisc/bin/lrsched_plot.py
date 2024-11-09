@@ -39,7 +39,7 @@ def main(args):
 
   ax.set(xlabel='Step Number',
          ylabel='Learning Rate',
-         title=f'LR Plot\n{format_scheduler(args.lr_scheduler)}')
+         title=format_scheduler(args.lr_scheduler))
   ax.grid(linestyle=args.grid)
 
   if args.plotfile:
