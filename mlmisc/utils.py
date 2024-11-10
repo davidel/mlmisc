@@ -87,12 +87,16 @@ def dtype_for_size(size, ns=None, signed=None):
 
 
 def is_integer(t):
-  if isinstance(t, int):
+  if isinstance(t, int) or t is int:
     return True
   if isinstance(t, torch.Tensor):
     return not (t.is_floating_point() or t.is_complex())
+  if isinstance(t, torch.dtype):
+    return not (t.is_floating_point or t.is_complex)
   if isinstance(t, np.ndarray):
     return np.issubdtype(t.dtype, np.integer)
+  if pyu.moduleof(t) == 'numpy.dtypes':
+    return np.issubdtype(t, np.integer)
 
   return False
 

@@ -188,6 +188,8 @@ def get_class_weights(data,
                       output_filter=None,
                       max_samples=None):
   cdtype = pyu.value_or(cdtype, torch.int32)
+  tas.check(cdtype,
+            msg=f'Targets should be class integers instead of {cdtype}')
   # By default assume target is the second entry in the dataset return tuple.
   output_filter = pyu.value_or(output_filter, lambda x: x[1])
 
@@ -202,9 +204,6 @@ def get_class_weights(data,
     target[i] = ut.item(y)
 
   cvalues, class_counts = torch.unique(target, return_counts=True)
-
-  tas.check(ut.is_integer(cvalues),
-            msg=f'Targets should be class integers instead of {cvalues.dtype}')
 
   weight = 1.0 / class_counts
   weight = weight / torch.sum(weight)
