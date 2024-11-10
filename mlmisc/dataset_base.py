@@ -13,9 +13,9 @@ class Dataset(torch.utils.data.Dataset):
 
   def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
     super().__init__()
-    self._select_fn = select_fn or ident_select
-    self._transform = transform or no_transform
-    self._target_transform = target_transform or no_transform
+    self._select_fn = pyu.value_or(select_fn, ident_select)
+    self._transform = pyu.value_or(transform, no_transform)
+    self._target_transform = pyu.value_or(target_transform, no_transform)
     self._kwargs = kwargs
 
   def extra_arg(self, name):
