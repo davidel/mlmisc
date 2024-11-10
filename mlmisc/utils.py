@@ -13,6 +13,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
+import py_misc_utils.np_utils as pyn
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -86,17 +87,17 @@ def dtype_for_size(size, ns=None, signed=None):
               f'Size {size} too big to fit an integer (must fit {max_nbits} bits)')
 
 
+def torch_is_integer_dtype(dtype):
+  return not (dtype.is_floating_point or dtype.is_complex)
+
+
 def is_integer(t):
-  if isinstance(t, int) or t is int:
+  if isinstance(t, int):
     return True
   if isinstance(t, torch.Tensor):
-    return not (t.is_floating_point() or t.is_complex())
-  if isinstance(t, torch.dtype):
-    return not (t.is_floating_point or t.is_complex)
+    return torch_is_integer_dtype(t.dtype)
   if isinstance(t, np.ndarray):
-    return np.issubdtype(t.dtype, np.integer)
-  if pyu.moduleof(t) == 'numpy.dtypes':
-    return np.issubdtype(t, np.integer)
+    return pyn.is_integer(t.dtype)
 
   return False
 
