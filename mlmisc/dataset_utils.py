@@ -57,8 +57,10 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
   ds_path = os.path.join(cache_dir, *name.split('/'))
 
   if gfs.exists(ds_path):
+    alog.debug(f'Dataset "{name}" already cached at {ds_path}')
     download = dataset_kwargs.pop('download', None)
     if download == 'force':
+      alog.info(f'Forcing download of dataset "{name}" into {ds_path}')
       gfs.rmtree(ds_path)
       gfs.makedirs(ds_path)
       dataset_kwargs['download'] = True
