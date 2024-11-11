@@ -53,7 +53,22 @@ class Dataset(dsb.Dataset):
     return len(self._data)
 
 
-def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
+def _get_dataset_path(name, cache_dir, dataset_kwargs):
+  ds_path = os.path.join(cache_dir, *name.split('/'))
+
+  if gfs.exists(ds_path):
+    download = dataset_kwargs.pop('download', None)
+    if download == 'force':
+      gfs.rmtree(ds_path)
+      gfs.makedirs(ds_path)
+      dataset_kwargs['download'] = True
+    elif download is not None:
+      dataset_kwargs['download'] = False
+
+  return ds_path
+
+
+def _try_torchvision(name, ds_path, transform, target_transform, split_pct,
                      dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
@@ -65,20 +80,20 @@ def _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
 
     ds = dict()
     if sig.parameters.get('train') is not None:
-      train_ds = dsclass(root=cache_dir, train=True, **kwargs)
+      train_ds = dsclass(root=ds_path, train=True, **kwargs)
 
       kwargs.pop('download', None)
-      test_ds = dsclass(root=cache_dir, train=False, **kwargs)
+      test_ds = dsclass(root=ds_path, train=False, **kwargs)
     elif sig.parameters.get('split') is not None:
       train_split = kwargs.pop('train_split', 'train')
       test_split = kwargs.pop('test_split', 'test')
 
-      train_ds = dsclass(root=cache_dir, split=train_split, **kwargs)
+      train_ds = dsclass(root=ds_path, split=train_split, **kwargs)
 
       kwargs.pop('download', None)
-      test_ds = dsclass(root=cache_dir, split=test_split, **kwargs)
+      test_ds = dsclass(root=ds_path, split=test_split, **kwargs)
     else:
-      full_ds = dsclass(root=cache_dir, **kwargs)
+      full_ds = dsclass(root=ds_path, **kwargs)
 
       # If we split the dataset ourselves, we do not know if the distribution of samples
       # is uniform within the dataset, so we shuffle indices and create a randomized one.
@@ -118,7 +133,7 @@ def _norm_transforms(transform):
   return dict(train=transform, test=transform)
 
 
-def _try_module(name, cache_dir, split_pct, dataset_kwargs):
+def _try_module(name, ds_path, split_pct, dataset_kwargs):
   parts = name.split(':', maxsplit=1)
   if len(parts) == 2:
     modpath, ctor_fn = parts
@@ -130,7 +145,7 @@ def _try_module(name, cache_dir, split_pct, dataset_kwargs):
     ctor = pymu.module_getter(ctor_fn)(module)
 
     kwargs = pyu.dict_setmissing(dataset_kwargs,
-                                 cache_dir=cache_dir,
+                                 cache_dir=ds_path,
                                  split_pct=split_pct)
 
     ds = ctor(**kwargs)
@@ -152,18 +167,20 @@ def create_dataset(name,
   split_pct = split_pct or 0.9
   dataset_kwargs = dataset_kwargs or {}
 
-  ds = _try_module(name, cache_dir, split_pct, dataset_kwargs)
+  ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
+
+  ds = _try_module(name, ds_path, split_pct, dataset_kwargs)
   if ds is not None:
     return ds
 
   if name.find('/') < 0:
-    ds = _try_torchvision(name, cache_dir, transform, target_transform, split_pct,
+    ds = _try_torchvision(name, ds_path, transform, target_transform, split_pct,
                           dataset_kwargs)
     if ds is not None:
       return ds
 
   if name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
-    hfds = dsets.load_dataset(name, cache_dir=cache_dir, **dataset_kwargs)
+    hfds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
 
     ds = dict()
     ds['train'] = Dataset(hfds['train'],
