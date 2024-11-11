@@ -233,7 +233,7 @@ ReduceConvParams = collections.namedtuple(
   'ReduceConvParams',
   'error, stride, kernel_size, channels, wndsize')
 
-def conv_flat_reduce(shape, out_features, force):
+def conv_flat_reduce(shape, out_features, force=None):
   shape = typ.Shape2d(*shape)
   min_size = min(shape.h, shape.w)
   params = []
@@ -258,7 +258,7 @@ def conv_flat_reduce(shape, out_features, force):
       break
 
   if params:
-    if force:
+    if pyu.value_or(force, False):
       # When "forcing" we are going to add a marshaling linear layer, so it is better
       # to end up with an higher flattened size, and turn it down, instead of the
       # contrary. Hence we look for "error" >= 0, if any. otherwise we pick the less

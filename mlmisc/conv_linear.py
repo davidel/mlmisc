@@ -68,7 +68,7 @@ class ConvLinear(nn.Module):
     force = pyu.value_or(force, False)
 
     shape, pad = calc_best_shape(in_features, in_channels, min_dim_size)
-    conv_params = cu.conv_flat_reduce(shape, out_features, force)
+    conv_params = cu.conv_flat_reduce(shape, out_features, force=force)
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
 
