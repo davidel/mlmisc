@@ -234,18 +234,21 @@ ReduceConvParams = collections.namedtuple(
   'error, stride, kernel_size, channels, wndsize')
 
 def conv_flat_reduce(shape, out_features, force):
-  shape = typ.Shape2d(shape)
+  shape = typ.Shape2d(*shape)
+  min_size = min(shape.h, shape.w)
   params = []
   for stride in itertools.count(1):
     param_count = len(params)
     for channels in itertools.count(1):
       kernel_size = int(math.sqrt(out_features / channels))
-      kernel_size = min(shape.w, kernel_size)
+      kernel_size = min(min_size, kernel_size)
       if kernel_size < 2 * stride + 1:
         break
 
-      wndsize = conv_wndsize(shape.w, kernel_size, stride)
-      error = channels * wndsize**2 - out_features
+      wndsize_h = conv_wndsize(shape.h, kernel_size, stride)
+      wndsize_w = conv_wndsize(shape.w, kernel_size, stride)
+      wndsize = (wndsize_h, wndsize_w)
+      error = channels * wndsize_h * wndsize_w - out_features
       params.append(ReduceConvParams(error, stride, kernel_size, channels, wndsize))
 
       alog.debug(f'Conv Params: error={error} stride={stride} kernel_size={kernel_size} ' \
