@@ -62,7 +62,7 @@ class ConvLinear(nn.Module):
                bias=None,
                act=None,
                force=None):
-    in_channels = pyu.value_or(in_channels, range(1, 4))
+    in_channels = pyu.value_or(in_channels, tuple(range(1, 4)))
     min_dim_size = pyu.value_or(min_dim_size, 6)
     bias = pyu.value_or(bias, True)
     force = pyu.value_or(force, False)
@@ -101,7 +101,7 @@ class ConvLinear(nn.Module):
     y = y.reshape(y.shape[0], *self.shape)
     y = self.conv(y)
     if self.bias is not None:
-      y += self.bias
+      y = y + self.bias
 
     return y
 
