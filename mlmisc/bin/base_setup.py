@@ -27,7 +27,7 @@ def setup(args):
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
   if args.device is None:
-    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    args.device = mlut.get_device()
   else:
     args.device = torch.device(args.device)
 

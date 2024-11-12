@@ -140,7 +140,7 @@ def main(args):
   else:
     scheduler = None
 
-  if args.amp_dtype and args.device.type == 'cuda':
+  if args.amp_dtype and mlut.is_cuda_device(args.device):
     alog.info(f'Enabling AMP scaler for device {args.device} and type {args.amp_dtype}')
     scaler = torch.amp.GradScaler()
     trainer.load_aux_state(state, scaler=scaler)
@@ -173,6 +173,9 @@ def main(args):
                           step_fn=step_fn,
                           scaler=scaler,
                           amp_dtype=amp_dtype)
+
+      if args.show_cuda_memory and mlut.is_cuda_device(args.device):
+        alog.info(f'CUDA Memory:\n{torch.cuda.memory_summary(device=args.device)}')
 
       if bc.hit():
         break
@@ -241,6 +244,8 @@ if __name__ == '__main__':
   parser.add_argument('--strict', default='true',
                       choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
+  parser.add_argument('--show_cuda_memory', action=argparse.BooleanOptionalAction, default=False,
+                      help='Whether to log the current CUDA memory usage')
 
   pyam.main(parser, main, rem_args='extra_args')
 

@@ -46,6 +46,10 @@ def get_device(kind=None):
   return torch.device(kind)
 
 
+def is_cuda_device(device):
+  return device.type == 'cuda'
+
+
 def randseed(seed):
   rseed = pyu.randseed(seed)
   torch.manual_seed(rseed)
