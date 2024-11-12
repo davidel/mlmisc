@@ -44,8 +44,8 @@ class ModuleBuilder(nn.Module):
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
                                  net_args=net_args))
-    # If the input functions are modules, store them here so that their parameters
-    # can then be saved/loaded from the normal PyTorch state-dict machinery.
+    # If the input/output functions are modules, store them here so that their
+    # parameters can then be saved/loaded from the normal PyTorch state-dict machinery.
     if isinstance(input_fn, nn.Module):
       self.aux_modules.add_net(input_fn)
     if isinstance(output_fn, nn.Module):
