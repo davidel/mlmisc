@@ -15,8 +15,7 @@ from . import vit_base as vb
 
 class ForkVizSeq(vb.ViTBase):
 
-  def __init__(self, shape, embed_size, num_classes, num_layers,
-               convs=None,
+  def __init__(self, shape, embed_size, num_classes, num_layers, convs,
                result_tiles=None,
                act=None,
                weight=None,
