@@ -128,3 +128,11 @@ def inputfn(result_ids, back=2):
 
   return input_fn
 
+
+def inputsum(rid):
+
+  def input_fn(x, results):
+    return x + results[rid]
+
+  return input_fn
+
