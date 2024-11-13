@@ -141,3 +141,11 @@ def inputsum(rid):
 
   return input_fn
 
+
+def inputtuple(rid):
+
+  def inputfn(x, result):
+    return x, result[rid]
+
+  return inputfn
+
