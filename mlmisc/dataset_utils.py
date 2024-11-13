@@ -120,10 +120,10 @@ def _try_torchvision(name, ds_path, transform, target_transform, split_pct,
     return ds
 
 
-def keys_selector(keys):
+def items_selector(items):
 
   def select_fn(x):
-    return [x[k] for k in keys]
+    return [x[i] for i in items]
 
   return select_fn
 

@@ -12,8 +12,10 @@ def add_parser_arguments(parser):
   parser.add_argument('--dataset_transform',
                       help='The path to the Python file containing the TRAIN_TRANS ' \
                       'and TEST_TRANS dataset transformations')
-  parser.add_argument('--dataset_selector',
+  parser.add_argument('--dataset_key_selector',
                       help='The comma-separated keys to be used to select the dataset items')
+  parser.add_argument('--dataset_index_selector',
+                      help='The comma-separated integer indices to be used to select the dataset items')
   parser.add_argument('--dataset_kwargs',
                       help='The comma-separated key=value arguments for the dataset constructor ' \
                       f'(or the path to a YAML/JSON file containing such configuration)')
@@ -22,18 +24,27 @@ def add_parser_arguments(parser):
 
 
 def create_dataset(args):
-  train_trans, test_trans = nn.Identity(), nn.Identity()
+  train_trans = test_trans = tgt_train_trans = tgt_test_trans = nn.Identity()
   if args.dataset_transform:
     with gfs.open(args.dataset_transform, mode='r') as dtf:
       code = dtf.read()
 
-    train_trans, test_trans = pyu.compile(code, ('TRAIN_TRANS', 'TEST_TRANS'))
+    syms = 'TRAIN_TRANS,TEST_TRANS,TGT_TRAIN_TRANS,TGT_TEST_TRANS'
+    train_trans, test_trans, tgt_train_trans, tgt_test_trans = pyu.compile(code, syms)
+
+    tgt_train_trans = tgt_train_trans or nn.Identity()
+    tgt_test_trans = tgt_test_trans or nn.Identity()
 
     alog.info(f'Train Dataset Transforms:\n{train_trans}')
+    alog.info(f'Train Dataset Target Transforms:\n{tgt_train_trans}')
     alog.info(f'Test Dataset Transforms:\n{test_trans}')
+    alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans}')
 
-  if args.dataset_selector:
-    select_fn = mldu.keys_selector(pyu.comma_split(args.dataset_selector))
+  if args.dataset_key_selector:
+    select_fn = mldu.items_selector(pyu.comma_split(args.dataset_key_selector))
+  elif args.dataset_index_selector:
+    indices = [int(i) for i in pyu.comma_split(args.dataset_index_selector)]
+    select_fn = mldu.items_selector(indices)
   else:
     select_fn = None
 
@@ -44,6 +55,7 @@ def create_dataset(args):
                               cache_dir=cache_dir,
                               select_fn=select_fn,
                               transform=dict(train=train_trans, test=test_trans),
+                              target_transform=dict(train=tgt_train_trans, test=tgt_test_trans),
                               dataset_kwargs=dataset_kwargs)
 
   train_dataset = dsets['train']
