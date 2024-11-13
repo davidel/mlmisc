@@ -13,6 +13,7 @@ NetConfig = collections.namedtuple(
   'input_fn, output_fn, net_args'
 )
 
+_ADD_FIELDS = NetConfig._fields + ('in_shapes',)
 
 class ModuleBuilder(nn.Module):
 
@@ -24,9 +25,9 @@ class ModuleBuilder(nn.Module):
     self.aux_modules = netd.NetsDict()
 
   def _pop_add_args(self, kwargs):
-    args = pyu.pop_kwargs(kwargs, NetConfig._fields)
+    args = pyu.pop_kwargs(kwargs, _ADD_FIELDS)
 
-    return {name: value for name, value in zip(NetConfig._fields, args)}
+    return {name: value for name, value in zip(_ADD_FIELDS, args)}
 
   def __len__(self):
     return len(self.layers)
@@ -37,9 +38,13 @@ class ModuleBuilder(nn.Module):
   def add(self, net,
           input_fn=None,
           output_fn=None,
-          net_args=None):
+          net_args=None,
+          in_shapes=None):
     # The shape contains no batch dimension!
-    self.shape = ut.net_shape(net, self.shape)
+    if in_shapes is None:
+      self.shape = ut.net_shape(net, self.shape)
+    else:
+      self.shape = ut.net_shape(net, *in_shapes)
     self.layers.add_net(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,
