@@ -47,14 +47,17 @@ def gen_image(img):
   return img
 
 
-def show_images(results, targets):
+def show_images(inputs, results, targets):
   for i in range(len(results)):
-    yimg, timg = gen_image(results[i]), gen_image(targets[i])
+    iimg = gen_image(inputs[i])
+    yimg = gen_image(results[i])
+    timg = gen_image(targets[i])
 
-    fig, axs = plt.subplots(1, 2, figsize=(8, 6), dpi=128)
+    fig, axs = plt.subplots(1, 3, figsize=(8, 6), dpi=128)
 
-    axs[0].imshow(yimg, interpolation='bicubic')
-    axs[1].imshow(timg, interpolation='bicubic')
+    axs[0].imshow(iimg, interpolation='bicubic')
+    axs[1].imshow(yimg, interpolation='bicubic')
+    axs[2].imshow(timg, interpolation='bicubic')
 
     plt.show()
 
@@ -80,7 +83,7 @@ def main(args):
 
       out, _ = model(x)
 
-      show_images(out, y)
+      show_images(x, out, y)
 
       samples += x.shape[0]
       if bc.hit() or samples >= args.max_samples:
