@@ -70,7 +70,7 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
   return ds_path
 
 
-def _try_torchvision(name, ds_path, transform, target_transform, split_pct,
+def _try_torchvision(name, ds_path, select_fn, transform, target_transform, split_pct,
                      dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
@@ -109,10 +109,12 @@ def _try_torchvision(name, ds_path, transform, target_transform, split_pct,
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
     ds['train'] = Dataset(train_ds,
+                          select_fn=select_fn,
                           transform=transform.get('train'),
                           target_transform=target_transform.get('train'),
                           **kwargs)
     ds['test'] = Dataset(test_ds,
+                         select_fn=select_fn,
                          transform=transform.get('test'),
                          target_transform=target_transform.get('test'),
                          **kwargs)
@@ -135,7 +137,8 @@ def _norm_transforms(transform):
   return dict(train=transform, test=transform)
 
 
-def _try_module(name, ds_path, split_pct, dataset_kwargs):
+def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct,
+                dataset_kwargs):
   parts = name.split(':', maxsplit=1)
   if len(parts) == 2:
     modpath, ctor_fn = parts
@@ -150,9 +153,25 @@ def _try_module(name, ds_path, split_pct, dataset_kwargs):
                                  cache_dir=ds_path,
                                  split_pct=split_pct)
 
-    ds = ctor(**kwargs)
+    mds = ctor(**kwargs)
+    if isinstance(mds, (list, tuple)):
+      train_ds, test_ds = mds
+    else:
+      train_ds, test_ds = mds['train'], mds['test']
 
-    return dict(train=ds[0], test=ds[1]) if isinstance(ds, (list, tuple)) else ds
+    ds = dict()
+    ds['train'] = Dataset(train_ds,
+                          select_fn=select_fn,
+                          transform=transform.get('train'),
+                          target_transform=target_transform.get('train'),
+                          **kwargs)
+    ds['test'] = Dataset(test_ds,
+                         select_fn=select_fn,
+                         transform=transform.get('test'),
+                         target_transform=target_transform.get('test'),
+                         **kwargs)
+
+    return ds
 
 
 def create_dataset(name,
@@ -163,21 +182,22 @@ def create_dataset(name,
                    split_pct=None,
                    dataset_kwargs=None):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
-  select_fn = select_fn or dsb.ident_select
+  select_fn = pyu.value_or(select_fn, dsb.ident_select)
   transform = _norm_transforms(transform)
   target_transform = _norm_transforms(target_transform)
-  split_pct = split_pct or 0.9
-  dataset_kwargs = dataset_kwargs or {}
+  split_pct = pyu.value_or(split_pct, 0.9)
+  dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
   ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
 
-  ds = _try_module(name, ds_path, split_pct, dataset_kwargs)
+  ds = _try_module(name, ds_path, select_fn, transform, target_transform, split_pct,
+                   dataset_kwargs)
   if ds is not None:
     return ds
 
   if name.find('/') < 0:
-    ds = _try_torchvision(name, ds_path, transform, target_transform, split_pct,
-                          dataset_kwargs)
+    ds = _try_torchvision(name, ds_path, select_fn, transform, target_transform,
+                          split_pct, dataset_kwargs)
     if ds is not None:
       return ds
 
