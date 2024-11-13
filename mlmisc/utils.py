@@ -337,6 +337,7 @@ def image_pad_concat(*imgs, channels_dim=None):
   padded_imgs = []
   for img in imgs:
     pad = []
+    # Enumerate generating the W[,H[,D]] pad sequence for 1,2,3D images.
     for i, dim in enumerate(range(-1, channels_dim, -1)):
       diff = max_dims[i] - img.shape[dim]
       pad.append(diff // 2)
