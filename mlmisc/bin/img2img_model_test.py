@@ -53,8 +53,8 @@ def show_images(results, targets):
 
     fig, axs = plt.subplots(1, 2, figsize=(8, 6), dpi=128)
 
-    axs[0][0].imshow(yimg, interpolation='bicubic')
-    axs[0][1].imshow(timg, interpolation='bicubic')
+    axs[0].imshow(yimg, interpolation='bicubic')
+    axs[1].imshow(timg, interpolation='bicubic')
 
     plt.show()
 
