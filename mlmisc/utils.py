@@ -121,10 +121,10 @@ def torch_load_to(dest, path, **kwargs):
   return dest
 
 
-def net_shape(net, *shapes, device=None, dtype=None):
+def net_shape(net, *shapes, device=None, dtype=None, **kwargs):
   with torch.no_grad(), Training(net, False):
     # Add and remove the artificial batch dimension.
-    args, kwargs = [], dict()
+    args = []
     for shape in shapes:
       if len(shape) == 2 and isinstance(shape[0], str):
         name, shape = shape
