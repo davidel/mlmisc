@@ -55,8 +55,13 @@ def show_images(inputs, results, targets):
 
     fig, axs = plt.subplots(1, 3, figsize=(8, 6), dpi=128)
 
+    axs[0].set_tile('Input')
     axs[0].imshow(iimg, interpolation='bicubic')
+
+    axs[1].set_tile('Output')
     axs[1].imshow(yimg, interpolation='bicubic')
+
+    axs[2].set_tile('Original')
     axs[2].imshow(timg, interpolation='bicubic')
 
     plt.show()
