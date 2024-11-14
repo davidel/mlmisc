@@ -82,7 +82,7 @@ def create_model(args, trainer, dataset):
       else:
         alog.xraise(ValueError, f'Syntax error: {arg}')
 
-    x, y = dataset[0]
+    x, y = pyu.seqfirst(dataset)
     x_shape = tuple(getattr(x, 'shape', ()))
     y_shape = tuple(getattr(y, 'shape', ()))
     alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')
