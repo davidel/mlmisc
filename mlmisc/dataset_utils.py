@@ -82,7 +82,8 @@ class IterableDataset(dsb.IterableDataset):
 
 
 def get_dataset_base(dataset):
-  return Dataset if hasattr(dataset, '__getitem__') else IterableDataset
+  return (Dataset if hasattr(dataset, '__getitem__') and hasattr(dataset, '__len__')
+          else IterableDataset)
 
 
 def _get_dataset_path(name, cache_dir, dataset_kwargs):
