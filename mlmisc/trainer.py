@@ -124,9 +124,10 @@ class Trainer:
       f'save={self.save_time.total}'
 
   def _val_loss(self, tctx):
+    shuffle = not isinstance(tctx.val_data, torch.utils.data.IterableDataset)
     loader = torch.utils.data.DataLoader(tctx.val_data,
                                          batch_size=tctx.batch_size or 1,
-                                         shuffle=True,
+                                         shuffle=shuffle,
                                          num_workers=tctx.num_workers)
 
     alog.info(f'Running validation on {len(loader)} batches')
@@ -219,9 +220,10 @@ class Trainer:
     self.save_model(tctx.model, tctx.model_path, **cargs)
 
   def _step(self, tctx):
+    shuffle = not isinstance(tctx.train_data, torch.utils.data.IterableDataset)
     loader = torch.utils.data.DataLoader(tctx.train_data,
                                          batch_size=tctx.batch_size,
-                                         shuffle=True,
+                                         shuffle=shuffle,
                                          num_workers=tctx.num_workers)
 
     num_batches = len(loader)
