@@ -76,9 +76,10 @@ def main(args):
 
   with pybc.BreakControl() as bc, torch.no_grad(), mlut.Training(model, False):
     batch_size = min(args.batch_size, args.max_samples)
+    shuffle = not isinstance(test_dataset, torch.utils.data.IterableDataset)
     loader = torch.utils.data.DataLoader(test_dataset,
                                          batch_size=batch_size,
-                                         shuffle=True,
+                                         shuffle=shuffle,
                                          num_workers=args.num_workers)
 
     samples = 0
