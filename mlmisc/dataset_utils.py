@@ -87,10 +87,10 @@ def _get_dataset_base(dataset):
 
 
 def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
-                        **kwargs):
+                        dataset_kwargs, train_kwargs, test_kwargs):
   ds_base = _get_dataset_base(train_ds)
   ds = dict()
-  train_kwargs = kwargs.copy()
+  train_kwargs = dataset_kwargs.copy()
   train_kwargs.update(train_kwargs.pop('train', dict()))
   ds['train'] = ds_base(train_ds,
                         select_fn=select_fn,
@@ -98,7 +98,7 @@ def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transfor
                         target_transform=target_transform.get('train'),
                         **train_kwargs)
 
-  test_kwargs = kwargs.copy()
+  test_kwargs = dataset_kwargs.copy()
   test_kwargs.update(test_kwargs.pop('test', dict()))
   ds['test'] = ds_base(test_ds,
                        select_fn=select_fn,
@@ -163,9 +163,7 @@ def _try_torchvision(name, ds_path, select_fn, transform, target_transform, spli
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
-
-    return _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
-                               **kwargs)
+    return dict(train=train_ds, test=test_ds)
 
 
 def items_selector(items):
@@ -205,8 +203,7 @@ def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct
     else:
       train_ds, test_ds = mds['train'], mds['test']
 
-    return _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
-                               **kwargs)
+    return dict(train=train_ds, test=test_ds)
 
 
 def create_dataset(name,
@@ -225,24 +222,23 @@ def create_dataset(name,
 
   ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
 
+  train_kwargs = dataset_kwargs.pop('train', dict())
+  test_kwargs = dataset_kwargs.pop('test', dict())
+
   ds = _try_module(name, ds_path, select_fn, transform, target_transform, split_pct,
                    dataset_kwargs)
-  if ds is not None:
-    return ds
-
-  if name.find('/') < 0:
+  if ds is None and name.find('/') < 0:
     ds = _try_torchvision(name, ds_path, select_fn, transform, target_transform,
                           split_pct, dataset_kwargs)
-    if ds is not None:
-      return ds
 
-  if name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
-    hfds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
+  if ds is None and name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
+    ds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
 
-    return _build_dataset_dict(hfds['train'], hfds['test'], select_fn, transform,
-                              target_transform, **kwargs)
+  if ds is None:
+    alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
 
-  alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
+  return _build_dataset_dict(ds['train'], ds['test'], select_fn, transform,
+                             target_transform, dataset_kwargs, train_kwargs, test_kwargs)
 
 
 def get_class_weights(data,
