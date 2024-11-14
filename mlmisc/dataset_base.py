@@ -9,10 +9,9 @@ import torch
 from . import utils as ut
 
 
-class Dataset(torch.utils.data.Dataset):
+class DatasetBase:
 
   def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
-    super().__init__()
     self._select_fn = pyu.value_or(select_fn, ident_select)
     self._transform = pyu.value_or(transform, no_transform)
     self._target_transform = pyu.value_or(target_transform, no_transform)
@@ -21,14 +20,50 @@ class Dataset(torch.utils.data.Dataset):
   def extra_arg(self, name):
     return self._kwargs.get(name)
 
+  def process_sample(self, data):
+    x, y = self._select_fn(data)
+
+    return self._transform(x), self._target_transform(y)
+
+
+class Dataset(torch.utils.data.Dataset, DatasetBase):
+
+  def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
+    torch.utils.data.Dataset.__init__(self)
+    DatasetBase.__init__(self,
+                         select_fn=select_fn,
+                         transform=transform,
+                         target_transform=target_transform,
+                         **kwargs)
+
   def __getitem__(self, i):
     if isinstance(i, slice):
       return sliced_dataset(self, i)
 
     data = self.get_sample(i)
-    x, y = self._select_fn(data)
 
-    return self._transform(x), self._target_transform(y)
+    return self.process_sample(data)
+
+
+class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
+
+  def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
+    torch.utils.data.IterableDataset.__init__(self)
+    DatasetBase.__init__(self,
+                         select_fn=select_fn,
+                         transform=transform,
+                         target_transform=target_transform,
+                         **kwargs)
+
+  def generate(self):
+    for data in self.enum_samples():
+      yield self.process_sample(data)
+
+  def __iter__(self):
+    return iter(self.generate())
+
+  def __len__(self):
+    return self.extra_arg('size')
 
 
 class SubDataset(torch.utils.data.Dataset):
