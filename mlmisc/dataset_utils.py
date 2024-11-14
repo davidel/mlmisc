@@ -53,6 +53,38 @@ class Dataset(dsb.Dataset):
     return len(self._data)
 
 
+class IterableDataset(dsb.IterableDataset):
+
+  def __init__(self, data,
+               select_fn=None,
+               transform=None,
+               target_transform=None,
+               **kwargs):
+    super().__init__(select_fn=select_fn,
+                     transform=transform,
+                     target_transform=target_transform,
+                     **kwargs)
+    self._data = data
+
+  def extra_arg(self, name):
+    for source in (super(), self._data):
+      extra_arg = getattr(source, 'extra_arg', None)
+      if extra_arg is not None:
+        xarg = extra_arg(name)
+        if xarg is not None:
+          return xarg
+
+    return getattr(self._data, name, None)
+
+  def enum_samples(seld):
+    for data in self._data:
+      yield data
+
+
+def get_dataset_base(dataset):
+  return Dataset if hasattr(dataset, '__getitem__') else IterableDataset
+
+
 def _get_dataset_path(name, cache_dir, dataset_kwargs):
   ds_path = os.path.join(cache_dir, *name.split('/'))
 
@@ -108,12 +140,13 @@ def _try_torchvision(name, ds_path, select_fn, transform, target_transform, spli
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
-    ds['train'] = Dataset(train_ds,
+    ds_base = get_dataset_base(train_ds)
+    ds['train'] = ds_base(train_ds,
                           select_fn=select_fn,
                           transform=transform.get('train'),
                           target_transform=target_transform.get('train'),
                           **kwargs)
-    ds['test'] = Dataset(test_ds,
+    ds['test'] = ds_base(test_ds,
                          select_fn=select_fn,
                          transform=transform.get('test'),
                          target_transform=target_transform.get('test'),
@@ -160,12 +193,13 @@ def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct
       train_ds, test_ds = mds['train'], mds['test']
 
     ds = dict()
-    ds['train'] = Dataset(train_ds,
+    ds_base = get_dataset_base(train_ds)
+    ds['train'] = ds_base(train_ds,
                           select_fn=select_fn,
                           transform=transform.get('train'),
                           target_transform=target_transform.get('train'),
                           **kwargs)
-    ds['test'] = Dataset(test_ds,
+    ds['test'] = ds_base(test_ds,
                          select_fn=select_fn,
                          transform=transform.get('test'),
                          target_transform=target_transform.get('test'),
@@ -205,12 +239,13 @@ def create_dataset(name,
     hfds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
 
     ds = dict()
-    ds['train'] = Dataset(hfds['train'],
+    ds_base = get_dataset_base(hfds['train'])
+    ds['train'] = ds_base(hfds['train'],
                           select_fn=select_fn,
                           transform=transform.get('train'),
                           target_transform=target_transform.get('train'),
                           **dataset_kwargs)
-    ds['test'] = Dataset(hfds['test'],
+    ds['test'] = ds_base(hfds['test'],
                          select_fn=select_fn,
                          transform=transform.get('test'),
                          target_transform=target_transform.get('test'),
