@@ -81,9 +81,32 @@ class IterableDataset(dsb.IterableDataset):
       yield data
 
 
-def get_dataset_base(dataset):
+def _get_dataset_base(dataset):
   return (Dataset if hasattr(dataset, '__getitem__') and hasattr(dataset, '__len__')
           else IterableDataset)
+
+
+def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
+                        **kwargs):
+  ds_base = _get_dataset_base(train_ds)
+  ds = dict()
+  train_kwargs = kwargs.copy()
+  train_kwargs.update(train_kwargs.pop('train', dict()))
+  ds['train'] = ds_base(train_ds,
+                        select_fn=select_fn,
+                        transform=transform.get('train'),
+                        target_transform=target_transform.get('train'),
+                        **train_kwargs)
+
+  test_kwargs = kwargs.copy()
+  test_kwargs.update(test_kwargs.pop('test', dict()))
+  ds['test'] = ds_base(test_ds,
+                       select_fn=select_fn,
+                       transform=transform.get('test'),
+                       target_transform=target_transform.get('test'),
+                       **test_kwargs)
+
+  return ds
 
 
 def _get_dataset_path(name, cache_dir, dataset_kwargs):
@@ -113,7 +136,6 @@ def _try_torchvision(name, ds_path, select_fn, transform, target_transform, spli
       kwargs.update(download=True)
     ds_seed = kwargs.pop('ds_seed', None)
 
-    ds = dict()
     if sig.parameters.get('train') is not None:
       train_ds = dsclass(root=ds_path, train=True, **kwargs)
 
@@ -141,19 +163,9 @@ def _try_torchvision(name, ds_path, select_fn, transform, target_transform, spli
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
 
-    ds_base = get_dataset_base(train_ds)
-    ds['train'] = ds_base(train_ds,
-                          select_fn=select_fn,
-                          transform=transform.get('train'),
-                          target_transform=target_transform.get('train'),
-                          **kwargs)
-    ds['test'] = ds_base(test_ds,
-                         select_fn=select_fn,
-                         transform=transform.get('test'),
-                         target_transform=target_transform.get('test'),
-                         **kwargs)
 
-    return ds
+    return _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
+                               **kwargs)
 
 
 def items_selector(items):
@@ -193,20 +205,8 @@ def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct
     else:
       train_ds, test_ds = mds['train'], mds['test']
 
-    ds = dict()
-    ds_base = get_dataset_base(train_ds)
-    ds['train'] = ds_base(train_ds,
-                          select_fn=select_fn,
-                          transform=transform.get('train'),
-                          target_transform=target_transform.get('train'),
-                          **kwargs)
-    ds['test'] = ds_base(test_ds,
-                         select_fn=select_fn,
-                         transform=transform.get('test'),
-                         target_transform=target_transform.get('test'),
-                         **kwargs)
-
-    return ds
+    return _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
+                               **kwargs)
 
 
 def create_dataset(name,
@@ -239,20 +239,8 @@ def create_dataset(name,
   if name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
     hfds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
 
-    ds = dict()
-    ds_base = get_dataset_base(hfds['train'])
-    ds['train'] = ds_base(hfds['train'],
-                          select_fn=select_fn,
-                          transform=transform.get('train'),
-                          target_transform=target_transform.get('train'),
-                          **dataset_kwargs)
-    ds['test'] = ds_base(hfds['test'],
-                         select_fn=select_fn,
-                         transform=transform.get('test'),
-                         target_transform=target_transform.get('test'),
-                         **dataset_kwargs)
-
-    return ds
+    return _build_dataset_dict(hfds['train'], hfds['test'], select_fn, transform,
+                              target_transform, **kwargs)
 
   alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
 
