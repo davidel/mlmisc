@@ -90,21 +90,21 @@ def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transfor
                         dataset_kwargs, train_kwargs, test_kwargs):
   ds_base = _get_dataset_base(train_ds)
   ds = dict()
-  train_kwargs = dataset_kwargs.copy()
-  train_kwargs.update(train_kwargs.pop('train', dict()))
+  kwargs = dataset_kwargs.copy()
+  kwargs.update(train_kwargs)
   ds['train'] = ds_base(train_ds,
                         select_fn=select_fn,
                         transform=transform.get('train'),
                         target_transform=target_transform.get('train'),
-                        **train_kwargs)
+                        **kwargs)
 
-  test_kwargs = dataset_kwargs.copy()
-  test_kwargs.update(test_kwargs.pop('test', dict()))
+  kwargs = dataset_kwargs.copy()
+  kwargs.update(test_kwargs)
   ds['test'] = ds_base(test_ds,
                        select_fn=select_fn,
                        transform=transform.get('test'),
                        target_transform=target_transform.get('test'),
-                       **test_kwargs)
+                       **kwargs)
 
   return ds
 
