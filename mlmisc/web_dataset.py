@@ -176,6 +176,7 @@ def expand_files(url):
 
 
 def create(train=None, test=None, **kwargs):
+  alog.debug(f'WDS: train={train} test={test} kwargs={kwargs}')
   ds = dict()
   if train:
     ds['train'] = WebDataset(**train)
