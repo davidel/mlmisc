@@ -175,13 +175,12 @@ def expand_files(url):
   return [url]
 
 
-def create(train=None, test=None, **kwargs):
-  alog.debug(f'WDS: train={train} test={test} kwargs={kwargs}')
+def create(wds_train=None, wds_test=None, **kwargs):
   ds = dict()
-  if train:
-    ds['train'] = WebDataset(**train)
-  if test:
-    ds['test'] = WebDataset(**test)
+  if wds_train:
+    ds['train'] = WebDataset(**wds_train)
+  if wds_test:
+    ds['test'] = WebDataset(**wds_test)
 
   return ds
 
