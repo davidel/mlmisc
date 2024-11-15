@@ -240,10 +240,10 @@ def create_dataset(name,
   if ds is None and name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
     ds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
 
-    if (is_random_access_dataset(ds['train']) and
+    if (not is_random_access_dataset(ds['train']) and
         (sbsize := train_kwargs.get('shuffle', 0)) > 0):
       ds['train'] = ds['train'].shuffle(buffer_size=sbsize)
-    if (is_random_access_dataset(ds['test']) and
+    if (not is_random_access_dataset(ds['test']) and
         (sbsize := test_kwargs.get('shuffle', 0)) > 0):
       ds['test'] = ds['test'].shuffle(buffer_size=sbsize)
 
