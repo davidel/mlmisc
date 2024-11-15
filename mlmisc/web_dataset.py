@@ -93,22 +93,17 @@ class StreamFile:
     return iobuf.getvalue()
 
 
-class WebDataset(dsb.IterableDataset):
+class WebDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, url, select_fn=None,
-               transform=None,
-               target_transform=None,
+  def __init__(self, url,
                shuffle=None,
                **kwargs):
-    super().__init__(select_fn=select_fn,
-                     transform=transform,
-                     target_transform=target_transform,
-                     **kwargs)
-
     files = expand_files(url)
     if shuffle in (True, None):
       random.shuffle(files)
 
+    super().__init__()
+    self._kwargs = kwargs
     self._files = files
 
   def _decode(self, data):
@@ -129,7 +124,7 @@ class WebDataset(dsb.IterableDataset):
 
     return ddata
 
-  def enum_samples(self):
+  def generate(self):
     index = 0
     stream = None
     try:
@@ -147,7 +142,6 @@ class WebDataset(dsb.IterableDataset):
             data = dict()
 
           ctid = tid
-
           data[text[1:]] = tar.extractfile(tinfo).read()
 
         if data:
@@ -159,7 +153,11 @@ class WebDataset(dsb.IterableDataset):
         index += 1
     finally:
       if stream is not None:
+        alog.debug(f'Closing stream: {self._files[index]}')
         stream.stop()
+
+  def __iter__(self):
+    return iter(self.generate())
 
 
 def expand_files(url):
