@@ -192,11 +192,9 @@ def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct
   parts = name.split(':', maxsplit=1)
   if len(parts) == 2:
     modpath, ctor_fn = parts
-    modpath = gfs.normpath(modpath)
     try:
       module = pymu.import_module(modpath)
     except ImportError:
-      alog.debug(f'Unable to import module: {modpath}')
       return
 
     ctor = pymu.module_getter(ctor_fn)(module)
