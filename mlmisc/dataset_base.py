@@ -66,6 +66,33 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
     return self.extra_arg('size')
 
 
+class ShufflerDataset(torch.utils.data.IterableDataset):
+
+  def __init__(self, data, buffer_size=None):
+    buffer_size = pyu.value_or(buffer_size, 1000)
+
+    super().__init__()
+    self._data = data
+    self._buffer_size = buffer_size
+
+  def generate(self):
+    stacked = []
+    for data in self._data:
+      if self._buffer_size > len(stacked):
+        stacked.append(data)
+      else:
+        idx = random.randrange(self._buffer_size)
+        yield stacked[idx]
+        stacked[idx] = data
+
+    random.shuffle(stacked)
+    for data in stacked:
+      yield data
+
+  def __iter__(self):
+    return iter(self.generate())
+
+
 class SubDataset(torch.utils.data.Dataset):
 
   def __init__(self, data, indices):
