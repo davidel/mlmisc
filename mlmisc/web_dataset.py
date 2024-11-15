@@ -42,16 +42,19 @@ class StreamFile:
     self._thread.start()
 
   def _feed(self):
-    for chunk in self._response.iter_content(chunk_size=self._chunk_size):
-      with self._lock:
-        self._buffers.append(chunk)
-        self._rcond.notify()
+    try:
+      for chunk in self._response.iter_content(chunk_size=self._chunk_size):
+        with self._lock:
+          self._buffers.append(chunk)
+          self._rcond.notify()
 
-        while len(self._buffers) > self._max_buffers and not self._stopped:
-          self._wcond.wait()
+          while len(self._buffers) > self._max_buffers and not self._stopped:
+            self._wcond.wait()
 
-        if self._stopped:
-          break
+          if self._stopped:
+            break
+    except requests.exceptions.ChunkedEncodingError as ex:
+      alog.debug(f'While reading HTTP content: {ex}')
 
     with self._lock:
       self._stopped = True
