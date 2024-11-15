@@ -81,9 +81,15 @@ class IterableDataset(dsb.IterableDataset):
       yield data
 
 
+def is_random_access_dataset(dataset):
+  if isinstance(dataset, (torch.utils.data.IterableDataset, dsets.IterableDataset)):
+    return False
+
+  return hasattr(dataset, '__getitem__') and hasattr(dataset, '__len__')
+
+
 def _get_dataset_base(dataset):
-  return (Dataset if hasattr(dataset, '__getitem__') and hasattr(dataset, '__len__')
-          else IterableDataset)
+  return Dataset if is_random_access_dataset(dataset) else IterableDataset
 
 
 def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
@@ -233,6 +239,13 @@ def create_dataset(name,
 
   if ds is None and name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
     ds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
+
+    if (is_random_access_dataset(ds['train']) and
+        (sbsize := train_kwargs.get('shuffle', 0)) > 0):
+      ds['train'] = ds['train'].shuffle(buffer_size=sbsize)
+    if (is_random_access_dataset(ds['test']) and
+        (sbsize := test_kwargs.get('shuffle', 0)) > 0):
+      ds['test'] = ds['test'].shuffle(buffer_size=sbsize)
 
   if ds is None:
     alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
