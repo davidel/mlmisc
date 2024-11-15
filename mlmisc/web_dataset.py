@@ -175,7 +175,7 @@ def expand_files(url):
   return [url]
 
 
-def create(train=None, test=None):
+def create(train=None, test=None, **kwargs):
   ds = dict()
   if train:
     ds['train'] = WebDataset(**train)
