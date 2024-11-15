@@ -174,3 +174,13 @@ def expand_files(url):
 
   return [url]
 
+
+def create(train=None. test=None):
+  ds = dict()
+  if train:
+    ds['train'] = WebDataset(**train)
+  if test:
+    ds['test'] = WebDataset(**test)
+
+  return ds
+
