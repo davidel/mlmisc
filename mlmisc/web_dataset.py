@@ -52,6 +52,13 @@ class StreamFile:
 
           if self._closed:
             break
+
+        if pyu.refcount(self) <= 2:
+          # If only 2 references are left (one for this function, and one for the
+          # bound function passed as target= to the Thread() constructor, it means
+          # there are no more users of this stream (and nobody called close()), so
+          # we can stop reading.
+          break
     except Exception as ex:
       alog.warning(f'While reading HTTP content: {ex}')
       exception = ex
