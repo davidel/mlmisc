@@ -20,16 +20,14 @@ from . import utils as ut
 
 class StreamFile:
 
-  def __init__(self, url, auth=None, chunk_size=1024 * 8, max_buffers=32, **kwargs):
+  def __init__(self, url, auth=None, chunk_size=1024 * 128, **kwargs):
     self._url = url
     self._auth = auth
     self._chunk_size = chunk_size
-    self._max_buffers = max_buffers
     self._lock = threading.Lock()
     self._rcond = threading.Condition(self._lock)
-    self._wcond = threading.Condition(self._lock)
     self._buffers = collections.deque()
-    self._stopped = False
+    self._closed = False
 
     headers = dict()
     if auth:
@@ -37,61 +35,65 @@ class StreamFile:
 
     self._response = requests.get(url, headers=headers, stream=True)
     self._response.raise_for_status()
+    self._exception = None
 
     self._thread = threading.Thread(target=self._feed)
     self._thread.start()
 
   def _feed(self):
+    exception = None
     try:
       for chunk in self._response.iter_content(chunk_size=self._chunk_size):
         with self._lock:
           self._buffers.append(chunk)
           self._rcond.notify()
 
-          while len(self._buffers) > self._max_buffers and not self._stopped:
-            self._wcond.wait()
-
-          if self._stopped:
+          if self._closed:
             break
-    except requests.exceptions.ChunkedEncodingError as ex:
-      alog.debug(f'While reading HTTP content: {ex}')
+    except Exception as ex:
+      alog.warning(f'While reading HTTP content: {ex}')
+      exception = ex
 
     with self._lock:
-      self._stopped = True
+      self._closed = True
+      self._exception = exception
       self._rcond.notify()
 
-  def stop(self):
+  def close(self):
     with self._lock:
-      self._stopped = True
+      self._closed = True
       self._rcond.notify()
-      self._wcond.notify()
 
     self._thread.join()
     self._thread = None
+
+  def wait_data(self):
+    while not self._buffers and not self._closed:
+      self._rcond.wait()
+
+    if self._exception:
+      raise self._exception
+
+    return len(self._buffers) > 0
 
   def read(self, size):
     iobuf = io.BytesIO()
     while size > 0:
       with self._lock:
-        while not self._buffers and not self._stopped:
-          self._rcond.wait()
-
-        if self._buffers:
-          buf = self._buffers[0]
-          if size >= len(buf):
-            iobuf.write(buf)
-
-            self._buffers.popleft()
-            self._wcond.notify()
-
-            size -= len(buf)
-          else:
-            iobuf.write(buf[: size])
-            self._buffers[0] = buf[size:]
-            size = 0
-
-        if self._stopped:
+        if not self.wait_data():
           break
+
+        buf = self._buffers[0]
+        if size >= len(buf):
+          iobuf.write(buf)
+
+          self._buffers.popleft()
+
+          size -= len(buf)
+        else:
+          iobuf.write(buf[: size])
+          self._buffers[0] = buf[size:]
+          size = 0
 
     return iobuf.getvalue()
 
@@ -151,13 +153,13 @@ class WebDataset(torch.utils.data.IterableDataset):
           yield self._decode(data)
 
         alog.debug(f'Closing stream: {self._files[index]}')
-        stream.stop()
+        stream.close()
         stream = None
         index += 1
     finally:
       if stream is not None:
         alog.debug(f'Closing stream: {self._files[index]}')
-        stream.stop()
+        stream.close()
 
   def __iter__(self):
     return iter(self.generate())
