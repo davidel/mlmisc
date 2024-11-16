@@ -17,7 +17,6 @@ import py_misc_utils.utils as pyu
 import torch
 
 from . import dataset_base as dsb
-from . import utils as ut
 
 
 class StreamFile:
@@ -84,28 +83,23 @@ class StreamFile:
     if self._exception:
       raise self._exception
 
-    return len(self._buffers) > 0
+    return self._buffers[0] if self._buffers else None
 
   def read(self, size):
     iobuf = io.BytesIO()
     while size > 0:
       with self._lock:
-        if not self.wait_data():
+        if (buf := self.wait_data()) is None:
           break
 
-        buf = self._buffers[0]
         if size >= len(buf):
           iobuf.write(buf)
-
           self._buffers.popleft()
-
           size -= len(buf)
         else:
           iobuf.write(buf[: size])
           self._buffers[0] = buf[size:]
           size = 0
-
-        del buf
 
     return iobuf.getvalue()
 
