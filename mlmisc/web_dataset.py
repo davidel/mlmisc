@@ -116,8 +116,9 @@ class WebDataset(torch.utils.data.IterableDataset):
     self._kwargs = kwargs
     self._files = tuple(files)
 
-  def _decode(self, data):
+  def _decode(self, data, tid):
     ddata = dict()
+    ddata['__key__'] = tid
     for k, v in data.items():
       if k in {'jpg', 'png', 'jpeg'}:
         ddata[k] = pyimg.from_bytes(v)
@@ -148,17 +149,20 @@ class WebDataset(torch.utils.data.IterableDataset):
 
         ctid, data = None, dict()
         for tinfo in tar:
-          tid, text = os.path.splitext(tinfo.name)
+          dpos = tinfo.name.find('.')
+          if dpos > 0:
+            tid = tinfo.name[: dpos]
+            ext = tinfo.name[dpos:]
 
-          if tid != ctid and data:
-            yield self._decode(data)
-            data = dict()
+            if tid != ctid and data:
+              yield self._decode(data, tid)
+              data = dict()
 
-          ctid = tid
-          data[text[1:]] = tar.extractfile(tinfo).read()
+            ctid = tid
+            data[text[1:]] = tar.extractfile(tinfo).read()
 
         if data:
-          yield self._decode(data)
+          yield self._decode(data, ctid)
 
         alog.debug(f'Closing stream: {self._files[index]}')
         stream.close()
