@@ -95,6 +95,8 @@ class StreamFile:
           self._buffers[0] = buf[size:]
           size = 0
 
+        del buf
+
     return iobuf.getvalue()
 
 
