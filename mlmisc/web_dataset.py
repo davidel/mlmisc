@@ -115,13 +115,11 @@ class WebDataset(torch.utils.data.IterableDataset):
   def __init__(self, url,
                shuffle=None,
                **kwargs):
-    files = expand_files(url)
-    if shuffle in (True, None):
-      random.shuffle(files)
-
     super().__init__()
+    self._url = url
+    self._shuffle = shuffle
     self._kwargs = kwargs
-    self._files = tuple(files)
+    self._files = tuple(expand_files(url))
 
   def _decode(self, data, tid):
     ddata = dict()
@@ -150,11 +148,18 @@ class WebDataset(torch.utils.data.IterableDataset):
     return ddata
 
   def generate(self):
+    if self._shuffle in (True, None):
+      files = list(self._files)
+      random.shuffle(files)
+      files = tuple(files)
+    else:
+      files = self._files
+
     index, stream = 0, None
     try:
-      while index < len(self._files):
-        alog.debug(f'Opening new stream: {self._files[index]}')
-        stream = StreamFile(self._files[index], **self._kwargs)
+      while index < len(files):
+        alog.debug(f'Opening new stream: {files[index]}')
+        stream = StreamFile(files[index], **self._kwargs)
         tar = tarfile.open(mode='r|', fileobj=stream)
 
         ctid, data = None, dict()
@@ -174,13 +179,13 @@ class WebDataset(torch.utils.data.IterableDataset):
         if data:
           yield self._decode(data, ctid)
 
-        alog.debug(f'Closing stream: {self._files[index]}')
+        alog.debug(f'Closing stream: {files[index]}')
         stream.close()
         stream = None
         index += 1
     finally:
       if stream is not None:
-        alog.debug(f'Closing stream: {self._files[index]}')
+        alog.debug(f'Closing stream: {files[index]}')
         stream.close()
 
   def __iter__(self):
