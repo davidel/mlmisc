@@ -65,8 +65,9 @@ class StreamFile:
       self._closed = True
       self._rcond.notify()
 
-    self._thread.join()
-    self._thread = None
+    if self._thread is not None:
+      self._thread.join()
+      self._thread = None
 
   def wait_data(self):
     while not self._buffers and not self._closed:
