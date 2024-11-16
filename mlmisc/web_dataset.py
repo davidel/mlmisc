@@ -120,19 +120,22 @@ class WebDataset(torch.utils.data.IterableDataset):
     ddata = dict()
     ddata['__key__'] = tid
     for k, v in data.items():
-      if k in {'jpg', 'png', 'jpeg'}:
+      dpos = k.rfind('.')
+      fmt = k[dpos + 1:] if dpos >= 0 else k
+
+      if fmt in {'jpg', 'png', 'jpeg'}:
         ddata[k] = pyimg.from_bytes(v)
-      elif k == 'json':
+      elif fmt == 'json':
         ddata[k] = json.loads(v)
-      elif k in {'pth', 'pt'}:
+      elif fmt in {'pth', 'pt'}:
         ddata[k] = torch.load(io.BytesIO(v), weights_only=True)
-      elif k in {'npy', 'npz'}:
+      elif fmt in {'npy', 'npz'}:
         ddata[k] = np.load(io.BytesIO(v), allow_pickle=False)
-      elif k in {'cls', 'cls2', 'index'}:
+      elif fmt in {'cls', 'cls2', 'index'}:
         ddata[k] = int(v)
-      elif k in {'yaml', 'yml'}:
+      elif fmt in {'yaml', 'yml'}:
         ddata[k] = yaml.safe_load(io.BytesIO(v))
-      elif k == 'mp':
+      elif fmt == 'mp':
         ddata[k] = msgpack.unpackb(v)
       else:
         ddata[k] = v
