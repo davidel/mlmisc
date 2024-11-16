@@ -7,6 +7,7 @@ import re
 import requests
 import tarfile
 import threading
+import yaml
 
 import msgpack
 import numpy as np
@@ -122,12 +123,14 @@ class WebDataset(torch.utils.data.IterableDataset):
         ddata[k] = pyimg.from_bytes(v)
       elif k == 'json':
         ddata[k] = json.loads(v)
-      elif k == 'pth':
+      elif k in {'pth', 'pt'}:
         ddata[k] = torch.load(io.BytesIO(v), weights_only=True)
       elif k in {'npy', 'npz'}:
         ddata[k] = np.load(io.BytesIO(v), allow_pickle=False)
       elif k in {'cls', 'cls2', 'index'}:
         ddata[k] = int(v)
+      elif k in {'yaml', 'yml'}:
+        ddata[k] = yaml.safe_load(io.BytesIO(v))
       elif k == 'mp':
         ddata[k] = msgpack.unpackb(v)
       else:
