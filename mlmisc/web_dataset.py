@@ -45,7 +45,7 @@ class StreamFile:
     try:
       for chunk in self._response.iter_content(chunk_size=self._chunk_size):
         with self._lock:
-          self._buffers.append(chunk)
+          self._buffers.append(memoryview(chunk))
           self._rcond.notify()
 
           if self._closed:
@@ -109,7 +109,7 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     super().__init__()
     self._kwargs = kwargs
-    self._files = files
+    self._files = tuple(files)
 
   def _decode(self, data):
     ddata = dict()
@@ -130,8 +130,7 @@ class WebDataset(torch.utils.data.IterableDataset):
     return ddata
 
   def generate(self):
-    index = 0
-    stream = None
+    index, stream = 0, None
     try:
       while index < len(self._files):
         alog.debug(f'Opening new stream: {self._files[index]}')
