@@ -159,7 +159,7 @@ class WebDataset(torch.utils.data.IterableDataset):
               data = dict()
 
             ctid = tid
-            data[text[1:]] = tar.extractfile(tinfo).read()
+            data[ext] = tar.extractfile(tinfo).read()
 
         if data:
           yield self._decode(data, ctid)
