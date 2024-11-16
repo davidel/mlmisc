@@ -74,7 +74,7 @@ class Trainer:
     for name, obj in kwargs.items():
       ostate = state.get(name)
       if ostate is not None:
-        alog.debug(f'Loading "{name}" state')
+        alog.debug0(f'Loading "{name}" state')
         obj.load_state_dict(ostate)
         loaded.append(name)
 
@@ -195,17 +195,17 @@ class Trainer:
     percentiles = (0.5, 0.9, 0.95, 0.99)
 
     pstats = du.get_parameters_stats(model, percentiles=percentiles)
-    du.show_tensors_stats(pstats, dict(value_stats=alog.DEBUG))
+    du.show_tensors_stats(pstats, dict(value_stats=alog.DEBUG0))
 
     gstats = du.get_grads_stats(model, percentiles=percentiles)
-    du.show_tensors_stats(gstats, dict(value_stats=alog.DEBUG))
+    du.show_tensors_stats(gstats, dict(value_stats=alog.DEBUG0))
 
     epoch = self._epoch(num_batches * tctx.batch_size)
     self._log_tensor_stats('PARA.{}', pstats.stats, epoch, tctx)
     self._log_tensor_stats('GRAD.{}', gstats.stats, epoch, tctx)
 
     if current_lr := ut.get_lr(tctx.optimizer, reduce=False):
-      alog.debug(f'Current LR: {pyu.format(current_lr, ".3e")}')
+      alog.debug0(f'Current LR: {pyu.format(current_lr, ".3e")}')
       for name, lr in pyu.name_values('lr', current_lr):
         self._metric_log(tctx.tb_writer, epoch, name, lr)
 

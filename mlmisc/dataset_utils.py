@@ -119,7 +119,7 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
   ds_path = os.path.join(cache_dir, *name.split('/'))
 
   if gfs.exists(ds_path):
-    alog.debug(f'Dataset "{name}" already cached at {ds_path}')
+    alog.debug0(f'Dataset "{name}" already cached at {ds_path}')
     download = dataset_kwargs.pop('download', None)
     if download == 'force':
       alog.info(f'Forcing download of dataset "{name}" into {ds_path}')
@@ -288,7 +288,7 @@ def get_class_weights(data,
     fweight[cvalues] = weight
     weight = fweight
 
-  alog.debug(f'Data class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
+  alog.debug0(f'Data class weight: { {c: f"{n:.2e}" for c, n in enumerate(weight)} }')
 
   return weight
 
@@ -301,7 +301,7 @@ def show_images(dataset, n, path=None):
                  msg=f'Incorrect shape for image (should be (C, H, W)): {tuple(img.shape)}')
 
     shimg = torch.permute(img, (1, 2, 0))
-    alog.debug(f'Image: shape={tuple(shimg.shape)} label={label}')
+    alog.debug0(f'Image: shape={tuple(shimg.shape)} label={label}')
 
     plt.title(f'Label = {label}')
     plt.imshow(shimg, interpolation='bicubic')

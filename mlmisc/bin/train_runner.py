@@ -26,7 +26,7 @@ from ..lrsched import wrapper as lrw
 def create_profiler(prof_config):
   if prof_config:
     pcfg = pyu.parse_dict(prof_config)
-    alog.debug(f'Profiler Config: {pcfg}')
+    alog.debug0(f'Profiler Config: {pcfg}')
 
     profiler = mltp.create_profiler(pcfg)
   else:
@@ -62,7 +62,7 @@ def create_model(args, trainer, dataset):
   model, state = None, dict()
   if gfs.exists(args.checkpoint_path):
     if args.rebuild_model:
-      alog.debug(f'Loading raw state from {args.checkpoint_path}')
+      alog.debug0(f'Loading raw state from {args.checkpoint_path}')
       state = trainer.load_raw_state(args.checkpoint_path)
       trainer.load_state(state)
     else:
