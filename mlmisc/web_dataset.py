@@ -152,7 +152,7 @@ class WebDataset(torch.utils.data.IterableDataset):
           dpos = tinfo.name.find('.')
           if dpos > 0:
             tid = tinfo.name[: dpos]
-            ext = tinfo.name[dpos:]
+            ext = tinfo.name[dpos + 1:]
 
             if tid != ctid and data:
               yield self._decode(data, tid)
