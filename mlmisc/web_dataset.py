@@ -112,14 +112,12 @@ class StreamFile:
 
 class WebDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, url,
-               shuffle=None,
-               **kwargs):
+  def __init__(self, url, shuffle=None, **kwargs):
     super().__init__()
     self._url = url
     self._shuffle = shuffle
     self._kwargs = kwargs
-    self._files = tuple(expand_files(url))
+    self._urls = tuple(expand_urls(url))
 
   def _decode(self, data, tid):
     ddata = dict()
@@ -147,19 +145,22 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     return ddata
 
-  def generate(self):
+  def enum_urls(self):
     if self._shuffle in (True, None):
-      files = list(self._files)
-      random.shuffle(files)
-      files = tuple(files)
+      urls = list(self._urls)
+      random.shuffle(urls)
     else:
-      files = self._files
+      urls = self._urls
 
-    index, stream = 0, None
-    try:
-      while index < len(files):
-        alog.debug(f'Opening new stream: {files[index]}')
-        stream = StreamFile(files[index], **self._kwargs)
+    for url in urls:
+      yield url
+
+  def generate(self):
+    for url in self.enum_urls():
+      alog.debug(f'Opening new stream: {url}')
+      stream = StreamFile(url, **self._kwargs)
+
+      try:
         tar = tarfile.open(mode='r|', fileobj=stream)
 
         ctid, data = None, dict()
@@ -178,31 +179,25 @@ class WebDataset(torch.utils.data.IterableDataset):
 
         if data:
           yield self._decode(data, ctid)
-
-        alog.debug(f'Closing stream: {files[index]}')
-        stream.close()
-        stream = None
-        index += 1
-    finally:
-      if stream is not None:
-        alog.debug(f'Closing stream: {files[index]}')
+      finally:
+        alog.debug(f'Closing stream: {url}')
         stream.close()
 
   def __iter__(self):
     return iter(self.generate())
 
 
-def expand_files(url):
+def expand_urls(url):
   m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
   if m:
     isize = len(m.group(2))
     start = int(m.group(2))
     end = int(m.group(3))
-    files = []
+    urls = []
     for i in range(start, end + 1):
-      files.append(m.group(1) + f'{i:0{isize}d}' + m.group(4))
+      urls.append(m.group(1) + f'{i:0{isize}d}' + m.group(4))
 
-    return files
+    return urls
 
   return [url]
 
