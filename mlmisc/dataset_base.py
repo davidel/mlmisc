@@ -9,32 +9,42 @@ import torch
 from . import utils as ut
 
 
+class Pipeline:
+
+  def __init__(self, init=None):
+    self._elems = list(init) if init else []
+
+  def __len__(self):
+    return len(self._elems)
+
+  def add(self, elem):
+    self._elems.append(elem)
+
+  def __call__(self, x):
+    for elem in self._elems:
+      x = elem(x)
+
+    return x
+
+
 class DatasetBase:
 
-  def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
-    self._select_fn = pyu.value_or(select_fn, ident_select)
-    self._transform = pyu.value_or(transform, no_transform)
-    self._target_transform = pyu.value_or(target_transform, no_transform)
+  def __init__(self, pipeline=None, **kwargs):
+    self._pipeline = pyu.value_or(pipeline, lambda x: x)
     self._kwargs = kwargs
 
   def extra_arg(self, name):
     return self._kwargs.get(name)
 
   def process_sample(self, data):
-    x, y = self._select_fn(data)
-
-    return self._transform(x), self._target_transform(y)
+    return self._pipeline(data)
 
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
 
-  def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
+  def __init__(self, pipeline=None, **kwargs):
     torch.utils.data.Dataset.__init__(self)
-    DatasetBase.__init__(self,
-                         select_fn=select_fn,
-                         transform=transform,
-                         target_transform=target_transform,
-                         **kwargs)
+    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
@@ -47,13 +57,9 @@ class Dataset(torch.utils.data.Dataset, DatasetBase):
 
 class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
 
-  def __init__(self, select_fn=None, transform=None, target_transform=None, **kwargs):
+  def __init__(self, pipeline=None, **kwargs):
     torch.utils.data.IterableDataset.__init__(self)
-    DatasetBase.__init__(self,
-                         select_fn=select_fn,
-                         transform=transform,
-                         target_transform=target_transform,
-                         **kwargs)
+    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def generate(self):
     for data in self.enum_samples():
@@ -115,10 +121,6 @@ class SubDataset(torch.utils.data.Dataset):
     return self._data[self._indices[i]]
 
 
-def no_transform(x):
-  return x
-
-
 def to_transform(**kwargs):
   def transform(x):
     return x.to(**kwargs)
@@ -126,8 +128,24 @@ def to_transform(**kwargs):
   return transform
 
 
-def ident_select(x):
-  return x
+def transformer(transform, target_transform):
+  transform = transform or (lambda x: x)
+  target_transform = target_transform or (lambda x: x)
+
+  def transformer_fn(x):
+    x, y = x
+
+    return transform(x), target_transform(y)
+
+  return transformer_fn
+
+
+def items_selector(items):
+
+  def select_fn(x):
+    return [x[i] for i in items]
+
+  return select_fn
 
 
 def guess_select(x):

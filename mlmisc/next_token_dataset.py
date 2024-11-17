@@ -7,15 +7,12 @@ from . import dataset_base as dsb
 class NextTokenDataset(dsb.Dataset):
 
   def __init__(self, data, context_size,
+               pipeline=None,
                pad=None,
-               transform=None,
-               target_transform=None,
                **kwargs):
     pad_size = sum(pad['pad']) if pad is not None else 0
 
-    super().__init__(transform=transform,
-                     target_transform=target_transform,
-                     **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
     self._context_size = context_size - pad_size
     self._pad = pad

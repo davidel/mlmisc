@@ -1,3 +1,4 @@
+import mlmisc.dataset_base as mldb
 import mlmisc.dataset_utils as mldu
 import py_misc_utils.alog as alog
 import py_misc_utils.gen_fs as gfs
@@ -48,10 +49,10 @@ def create_dataset(args):
 
     select_fn = pyu.compile(code, 'SELECTOR')
   elif args.dataset_key_selector:
-    select_fn = mldu.items_selector(pyu.comma_split(args.dataset_key_selector))
+    select_fn = mldb.items_selector(pyu.comma_split(args.dataset_key_selector))
   elif args.dataset_index_selector:
     indices = [int(i) for i in pyu.comma_split(args.dataset_index_selector)]
-    select_fn = mldu.items_selector(indices)
+    select_fn = mldb.items_selector(indices)
   else:
     select_fn = None
 

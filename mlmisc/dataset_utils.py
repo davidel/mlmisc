@@ -19,15 +19,8 @@ from . import utils as ut
 
 class Dataset(dsb.Dataset):
 
-  def __init__(self, data,
-               select_fn=None,
-               transform=None,
-               target_transform=None,
-               **kwargs):
-    super().__init__(select_fn=select_fn,
-                     transform=transform,
-                     target_transform=target_transform,
-                     **kwargs)
+  def __init__(self, data, pipeline=None, **kwargs):
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
 
   def extra_arg(self, name):
@@ -55,15 +48,8 @@ class Dataset(dsb.Dataset):
 
 class IterableDataset(dsb.IterableDataset):
 
-  def __init__(self, data,
-               select_fn=None,
-               transform=None,
-               target_transform=None,
-               **kwargs):
-    super().__init__(select_fn=select_fn,
-                     transform=transform,
-                     target_transform=target_transform,
-                     **kwargs)
+  def __init__(self, data, pipeline=None, **kwargs):
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
 
   def extra_arg(self, name):
@@ -92,25 +78,17 @@ def _get_dataset_base(dataset):
   return Dataset if is_random_access_dataset(dataset) else IterableDataset
 
 
-def _build_dataset_dict(train_ds, test_ds, select_fn, transform, target_transform,
-                        dataset_kwargs, train_kwargs, test_kwargs):
+def _build_dataset_dict(train_ds, test_ds, pipelines, dataset_kwargs,
+                        train_kwargs, test_kwargs):
   ds_base = _get_dataset_base(train_ds)
   ds = dict()
   kwargs = dataset_kwargs.copy()
   kwargs.update(train_kwargs)
-  ds['train'] = ds_base(train_ds,
-                        select_fn=select_fn,
-                        transform=transform.get('train'),
-                        target_transform=target_transform.get('train'),
-                        **kwargs)
+  ds['train'] = ds_base(train_ds, pipeline=pipelines.train, **kwargs)
 
   kwargs = dataset_kwargs.copy()
   kwargs.update(test_kwargs)
-  ds['test'] = ds_base(test_ds,
-                       select_fn=select_fn,
-                       transform=transform.get('test'),
-                       target_transform=target_transform.get('test'),
-                       **kwargs)
+  ds['test'] = ds_base(test_ds, pipeline=pipelines.test, **kwargs)
 
   return ds
 
@@ -132,8 +110,7 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
   return ds_path
 
 
-def _try_torchvision(name, ds_path, select_fn, transform, target_transform, split_pct,
-                     dataset_kwargs):
+def _try_torchvision(name, ds_path, split_pct, dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
     sig = inspect.signature(dsclass)
@@ -172,23 +149,41 @@ def _try_torchvision(name, ds_path, select_fn, transform, target_transform, spli
     return dict(train=train_ds, test=test_ds)
 
 
-def items_selector(items):
+def build_pipelines(select_fn=None,
+                    transform=None,
+                    target_transform=None):
+  train, test = dsb.Pipeline(), dsb.Pipeline()
 
-  def select_fn(x):
-    return [x[i] for i in items]
+  if select_fn is not None:
+    train.add(select_fn)
+    test.add(select_fn)
 
-  return select_fn
+  train_transform = train_target_transform = None
+  test_transform = test_target_transform = None
+  if transform:
+    if isinstance(transform, dict):
+      train_transform = transform['train']
+      test_transform = transform['test']
+    else:
+      train_transform = test_transform = transform
+
+  if target_transform:
+    if isinstance(target_transform, dict):
+      train_target_transform = target_transform['train']
+      test_target_transform = target_transform['test']
+    else:
+      train_target_transform = test_target_transform = target_transform
 
 
-def _norm_transforms(transform):
-  if isinstance(transform, dict):
-    return transform
+  if train_transform or train_target_transform:
+    train.add(dsb.transformer(train_transform, train_target_transform))
+  if test_transform or test_target_transform:
+    test.add(dsb.transformer(test_transform, test_target_transform))
 
-  return dict(train=transform, test=transform)
+  return pyu.make_object(train=train, test=test)
 
 
-def _try_module(name, ds_path, select_fn, transform, target_transform, split_pct,
-                dataset_kwargs):
+def _try_module(name, ds_path, split_pct, dataset_kwargs):
   parts = name.split(':', maxsplit=1)
   if len(parts) == 2:
     modpath, ctor_fn = parts
@@ -220,9 +215,6 @@ def create_dataset(name,
                    split_pct=None,
                    dataset_kwargs=None):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
-  select_fn = pyu.value_or(select_fn, dsb.ident_select)
-  transform = _norm_transforms(transform)
-  target_transform = _norm_transforms(target_transform)
   split_pct = pyu.value_or(split_pct, 0.9)
   dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
@@ -231,11 +223,9 @@ def create_dataset(name,
   train_kwargs = dataset_kwargs.pop('train', dict())
   test_kwargs = dataset_kwargs.pop('test', dict())
 
-  ds = _try_module(name, ds_path, select_fn, transform, target_transform, split_pct,
-                   dataset_kwargs)
+  ds = _try_module(name, ds_path, split_pct, dataset_kwargs)
   if ds is None and name.find('/') < 0:
-    ds = _try_torchvision(name, ds_path, select_fn, transform, target_transform,
-                          split_pct, dataset_kwargs)
+    ds = _try_torchvision(name, ds_path, split_pct, dataset_kwargs)
 
   if ds is None and name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
     ds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
@@ -250,8 +240,12 @@ def create_dataset(name,
   if ds is None:
     alog.xraise(ValueError, f'Unable to create dataset: "{name}"')
 
-  return _build_dataset_dict(ds['train'], ds['test'], select_fn, transform,
-                             target_transform, dataset_kwargs, train_kwargs, test_kwargs)
+  pipelines = build_pipelines(select_fn=select_fn,
+                              transform=transform,
+                              target_transform=target_transform)
+
+  return _build_dataset_dict(ds['train'], ds['test'], pipelines, dataset_kwargs,
+                             train_kwargs, test_kwargs)
 
 
 def get_class_weights(data,
