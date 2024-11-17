@@ -50,18 +50,13 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     return ddata
 
-  def enum_urls(self):
+  def generate(self):
     if self._shuffle in (True, None):
-      urls = list(self._urls)
-      random.shuffle(urls)
+      urls = random.sample(self._urls, len(self._urls))
     else:
       urls = self._urls
 
     for url in urls:
-      yield url
-
-  def generate(self):
-    for url in self.enum_urls():
       alog.debug(f'Opening new stream: {url}')
       stream = pysu.StreamUrl(url, **self._kwargs)
 
