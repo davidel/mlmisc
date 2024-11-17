@@ -128,14 +128,14 @@ def to_transform(**kwargs):
   return transform
 
 
-def transformer(transform, target_transform):
-  transform = transform or (lambda x: x)
-  target_transform = target_transform or (lambda x: x)
+def transformer(sample=None, target=None):
+  sample = sample or (lambda x: x)
+  target = target or (lambda x: x)
 
   def transformer_fn(x):
     x, y = x
 
-    return transform(x), target_transform(y)
+    return sample(x), target(y)
 
   return transformer_fn
 
@@ -148,13 +148,17 @@ def items_selector(items):
   return select_fn
 
 
-def guess_select(x):
-  if isinstance(x, (list, tuple)):
-    return x[: 2]
-  if isinstance(x, dict):
-    return tuple(x.values())[: 2]
+def guess_select():
 
-  return x
+  def select_fn(x):
+    if isinstance(x, (list, tuple)):
+      return x[: 2]
+    if isinstance(x, dict):
+      return tuple(x.values())[: 2]
+
+    return x
+
+  return select_fn
 
 
 def sliced_dataset(ds, dslice):

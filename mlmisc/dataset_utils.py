@@ -176,9 +176,9 @@ def build_pipelines(select_fn=None,
 
 
   if train_transform or train_target_transform:
-    train.add(dsb.transformer(train_transform, train_target_transform))
+    train.add(dsb.transformer(sample=train_transform, target=train_target_transform))
   if test_transform or test_target_transform:
-    test.add(dsb.transformer(test_transform, test_target_transform))
+    test.add(dsb.transformer(sample=test_transform, target=test_target_transform))
 
   return pyu.make_object(train=train, test=test)
 
