@@ -1,4 +1,3 @@
-import collections
 import io
 import json
 import os
@@ -6,7 +5,6 @@ import random
 import re
 import requests
 import tarfile
-import threading
 import yaml
 
 import msgpack
@@ -19,87 +17,39 @@ import torch
 from . import dataset_base as dsb
 
 
+def next_chunk(resp_iter):
+  try:
+    return memoryview(next(resp_iter))
+  except StopIteration:
+    pass
+
+
 class StreamFile:
 
   def __init__(self, url, auth=None, chunk_size=1024 * 128, **kwargs):
-    self._url = url
-    self._auth = auth
-    self._chunk_size = chunk_size
-    self._lock = threading.Lock()
-    self._rcond = threading.Condition(self._lock)
-    self._buffers = collections.deque()
-    self._closed = False
-
     headers = dict()
     if auth:
       headers['Authorization'] = auth
 
+    self._url = url
+    self._auth = auth
+    self._chunk_size = chunk_size
     self._response = requests.get(url, headers=headers, stream=True)
     self._response.raise_for_status()
-    self._exception = None
-
-    self._thread = threading.Thread(target=self._feed)
-    self._thread.start()
-
-  def _feed(self):
-    exception = None
-    try:
-      for chunk in self._response.iter_content(chunk_size=self._chunk_size):
-        with self._lock:
-          self._buffers.append(memoryview(chunk))
-          self._rcond.notify()
-
-          if self._closed:
-            break
-
-        if pyu.refcount(self) <= 2:
-          # If only 2 references are left (one for this function, and one for the
-          # bound function passed as target= to the Thread() constructor, it means
-          # there are no more users of this stream (and nobody called close()), so
-          # we can stop reading.
-          break
-    except Exception as ex:
-      alog.warning(f'While reading HTTP content: {ex}')
-      exception = ex
-
-    with self._lock:
-      self._closed = True
-      self._exception = exception
-      self._rcond.notify()
-
-  def close(self):
-    with self._lock:
-      self._closed = True
-      self._rcond.notify()
-
-    if self._thread is not None:
-      self._thread.join()
-      self._thread = None
-
-  def wait_data(self):
-    while not self._buffers and not self._closed:
-      self._rcond.wait()
-
-    if self._exception:
-      raise self._exception
-
-    return self._buffers[0] if self._buffers else None
+    self._resp_iter = self._response.iter_content(chunk_size=self._chunk_size)
+    self._buffer = next_chunk(self._resp_iter)
 
   def read(self, size):
     iobuf = io.BytesIO()
-    while size > 0:
-      with self._lock:
-        if (buf := self.wait_data()) is None:
-          break
-
-        if size >= len(buf):
-          iobuf.write(buf)
-          self._buffers.popleft()
-          size -= len(buf)
-        else:
-          iobuf.write(buf[: size])
-          self._buffers[0] = buf[size:]
-          size = 0
+    while self._buffer is not None and size > 0:
+      if size >= len(self._buffer):
+        iobuf.write(self._buffer)
+        size -= len(self._buffer)
+        self._buffer = next_chunk(self._resp_iter)
+      else:
+        iobuf.write(self._buffer[: size])
+        self._buffer = self._buffer[size:]
+        break
 
     return iobuf.getvalue()
 
