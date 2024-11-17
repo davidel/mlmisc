@@ -104,28 +104,24 @@ class WebDataset(torch.utils.data.IterableDataset):
       alog.debug(f'Opening new stream: {url}')
       stream = StreamFile(url, **self._kwargs)
 
-      try:
-        tar = tarfile.open(mode='r|', fileobj=stream)
+      tar = tarfile.open(mode='r|', fileobj=stream)
 
-        ctid, data = None, dict()
-        for tinfo in tar:
-          dpos = tinfo.name.find('.')
-          if dpos > 0:
-            tid = tinfo.name[: dpos]
-            ext = tinfo.name[dpos + 1:]
+      ctid, data = None, dict()
+      for tinfo in tar:
+        dpos = tinfo.name.find('.')
+        if dpos > 0:
+          tid = tinfo.name[: dpos]
+          ext = tinfo.name[dpos + 1:]
 
-            if tid != ctid and data:
-              yield self._decode(data, tid)
-              data = dict()
+          if tid != ctid and data:
+            yield self._decode(data, tid)
+            data = dict()
 
-            ctid = tid
-            data[ext] = tar.extractfile(tinfo).read()
+          ctid = tid
+          data[ext] = tar.extractfile(tinfo).read()
 
-        if data:
-          yield self._decode(data, ctid)
-      finally:
-        alog.debug(f'Closing stream: {url}')
-        stream.close()
+      if data:
+        yield self._decode(data, ctid)
 
   def __iter__(self):
     return iter(self.generate())
