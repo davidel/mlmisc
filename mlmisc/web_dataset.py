@@ -1,9 +1,7 @@
 import io
 import json
-import os
 import random
 import re
-import requests
 import tarfile
 import yaml
 
@@ -11,47 +9,10 @@ import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.img_utils as pyimg
-import py_misc_utils.utils as pyu
+import py_misc_utils.stream_url as pysu
 import torch
 
 from . import dataset_base as dsb
-
-
-def next_chunk(resp_iter):
-  try:
-    return memoryview(next(resp_iter))
-  except StopIteration:
-    pass
-
-
-class StreamFile:
-
-  def __init__(self, url, auth=None, chunk_size=1024 * 128, **kwargs):
-    headers = dict()
-    if auth:
-      headers['Authorization'] = auth
-
-    self._url = url
-    self._auth = auth
-    self._chunk_size = chunk_size
-    self._response = requests.get(url, headers=headers, stream=True)
-    self._response.raise_for_status()
-    self._resp_iter = self._response.iter_content(chunk_size=self._chunk_size)
-    self._buffer = next_chunk(self._resp_iter)
-
-  def read(self, size):
-    iobuf = io.BytesIO()
-    while self._buffer is not None and size > 0:
-      if size >= len(self._buffer):
-        iobuf.write(self._buffer)
-        size -= len(self._buffer)
-        self._buffer = next_chunk(self._resp_iter)
-      else:
-        iobuf.write(self._buffer[: size])
-        self._buffer = self._buffer[size:]
-        break
-
-    return iobuf.getvalue()
 
 
 class WebDataset(torch.utils.data.IterableDataset):
@@ -102,7 +63,7 @@ class WebDataset(torch.utils.data.IterableDataset):
   def generate(self):
     for url in self.enum_urls():
       alog.debug(f'Opening new stream: {url}')
-      stream = StreamFile(url, **self._kwargs)
+      stream = pysu.StreamUrl(url, **self._kwargs)
 
       tar = tarfile.open(mode='r|', fileobj=stream)
 
