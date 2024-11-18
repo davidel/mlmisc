@@ -101,10 +101,13 @@ def expand_urls(url):
   return [url]
 
 
-def create(url, shuffle=True, split_pct=0.9, total_samples=None, **kwargs):
+def create(url, shuffle=True, split_pct=0.9, total_samples=None, ds_seed=None,
+           **kwargs):
   urls = expand_urls(url)
   if shuffle:
-    urls = random.sample(urls, len(urls))
+    # Stable shuffling, given same seed.
+    indices = dsb.shuffled_indices(len(urls), seed=ds_seed)
+    urls = tuple(urls[i] for i in indices)
 
   ntrain = int(split_pct * len(urls))
   train_urls = urls[: ntrain]
