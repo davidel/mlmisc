@@ -10,6 +10,7 @@ import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.stream_url as pysu
+import py_misc_utils.utils as pyu
 import torch
 
 from . import dataset_base as dsb
@@ -17,7 +18,9 @@ from . import dataset_base as dsb
 
 class WebDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, urls, shuffle=True, size=None, **kwargs):
+  def __init__(self, urls, shuffle=None, size=None, **kwargs):
+    shuffle = pyu.value_or(shuffle, True)
+
     super().__init__()
     self._shuffle = shuffle
     self._size = size
@@ -51,7 +54,7 @@ class WebDataset(torch.utils.data.IterableDataset):
     return ddata
 
   def generate(self):
-    if self._shuffle in (True, None):
+    if self._shuffle:
       urls = random.sample(self._urls, len(self._urls))
     else:
       urls = self._urls
@@ -101,8 +104,11 @@ def expand_urls(url):
   return [url]
 
 
-def create(url, shuffle=True, split_pct=0.9, total_samples=None, ds_seed=None,
+def create(url, shuffle=None, split_pct=None, total_samples=None, ds_seed=None,
            **kwargs):
+  shuffle = pyu.value_or(shuffle, True)
+  split_pct = pyu.value_or(split_pct, 0.9)
+             
   urls = expand_urls(url)
   if shuffle:
     # Stable shuffling, given same seed.
