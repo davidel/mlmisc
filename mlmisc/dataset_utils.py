@@ -66,6 +66,11 @@ class IterableDataset(dsb.IterableDataset):
     for data in self._data:
       yield data
 
+  def __len__(self):
+    data_length = getattr(self._data, '__len__', None)
+
+    return data_length() if data_length is not None else len(super())
+
 
 def is_random_access_dataset(dataset):
   if isinstance(dataset, (torch.utils.data.IterableDataset, dsets.IterableDataset)):

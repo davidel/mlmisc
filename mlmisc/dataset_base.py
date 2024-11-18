@@ -98,6 +98,9 @@ class ShufflerDataset(torch.utils.data.IterableDataset):
   def __iter__(self):
     return iter(self.generate())
 
+  def __len__(self):
+    return len(self._data)
+
 
 class SubDataset(torch.utils.data.Dataset):
 

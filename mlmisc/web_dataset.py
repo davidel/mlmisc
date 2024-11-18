@@ -17,12 +17,12 @@ from . import dataset_base as dsb
 
 class WebDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, url, shuffle=None, **kwargs):
+  def __init__(self, urls, shuffle=True, size=None, **kwargs):
     super().__init__()
-    self._url = url
     self._shuffle = shuffle
+    self._size = size
     self._kwargs = kwargs
-    self._urls = tuple(expand_urls(url))
+    self._urls = tuple(expand_urls(urls)) if isinstance(urls, str) else tuple(urls)
 
   def _decode(self, data, tid):
     ddata = dict()
@@ -82,6 +82,9 @@ class WebDataset(torch.utils.data.IterableDataset):
   def __iter__(self):
     return iter(self.generate())
 
+  def __len__(self):
+    return self._size
+
 
 def expand_urls(url):
   m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
@@ -98,12 +101,27 @@ def expand_urls(url):
   return [url]
 
 
-def create(wds_train=None, wds_test=None, **kwargs):
+def create(url, shuffle=True, split_pct=0.9, total_samples=None, **kwargs):
+  urls = expand_urls(url)
+  if shuffle:
+    urls = random.sample(urls, len(urls))
+
+  ntrain = int(split_pct * len(urls))
+  train_urls = urls[: ntrain]
+  test_urls = urls[ntrain:]
+
+  if total_samples is not None:
+    samples_per_shard = total_samples // len(urls)
+    train_size = samples_per_shard * len(train_urls)
+    test_size = samples_per_shard * len(test_urls)
+  else:
+    train_size = test_size = None
+
   ds = dict()
   if wds_train:
-    ds['train'] = WebDataset(**wds_train)
+    ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   if wds_test:
-    ds['test'] = WebDataset(**wds_test)
+    ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
 
   return ds
 
