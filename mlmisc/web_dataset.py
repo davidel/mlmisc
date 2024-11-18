@@ -106,8 +106,7 @@ def create(url, shuffle=True, split_pct=0.9, total_samples=None, ds_seed=None,
   urls = expand_urls(url)
   if shuffle:
     # Stable shuffling, given same seed.
-    indices = dsb.shuffled_indices(len(urls), seed=ds_seed)
-    urls = tuple(urls[i] for i in indices)
+    urls = dsb.shuffled_data(urls, seed=ds_seed)
 
   ntrain = int(split_pct * len(urls))
   train_urls = urls[: ntrain]

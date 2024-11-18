@@ -182,3 +182,9 @@ def shuffled_indices(size, seed=None):
 
   return indices
 
+
+def shuffled_data(data, seed=None):
+  indices = shuffled_indices(len(data), seed=seed)
+
+  return type(data)(data[i] for i in indices)
+
