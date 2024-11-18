@@ -118,10 +118,8 @@ def create(url, shuffle=True, split_pct=0.9, total_samples=None, **kwargs):
     train_size = test_size = None
 
   ds = dict()
-  if wds_train:
-    ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
-  if wds_test:
-    ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
+  ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
+  ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
 
   return ds
 
