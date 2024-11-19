@@ -104,15 +104,20 @@ def expand_urls(url):
   return [url]
 
 
-def create(url, shuffle=None, split_pct=None, total_samples=None, ds_seed=None,
+def create(url,
+           shuffle=None,
+           split_pct=None,
+           total_samples=None,
+           seed=None,
+           shuffle_buffer_size=None,
            **kwargs):
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
-             
+
   urls = expand_urls(url)
   if shuffle:
     # Stable shuffling, given same seed.
-    urls = dsb.shuffled_data(urls, seed=ds_seed)
+    urls = dsb.shuffled_data(urls, seed=seed)
 
   ntrain = int(split_pct * len(urls))
   train_urls = urls[: ntrain]
@@ -128,6 +133,9 @@ def create(url, shuffle=None, split_pct=None, total_samples=None, ds_seed=None,
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
+  if shuffle:
+    ds['train'] = dsb.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
+    ds['test'] = dsb.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
 
   return ds
 

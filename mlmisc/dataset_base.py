@@ -75,7 +75,7 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
 class ShufflerDataset(torch.utils.data.IterableDataset):
 
   def __init__(self, data, buffer_size=None):
-    buffer_size = pyu.value_or(buffer_size, 1000)
+    buffer_size = pyu.value_or(buffer_size, 1024)
 
     super().__init__()
     self._data = data
@@ -164,17 +164,17 @@ def guess_select():
   return select_fn
 
 
-def sliced_dataset(ds, dslice):
-  ds_size = len(ds)
-  indices = array.array(pyu.array_code(ds_size), range(*dslice.indices(ds_size)))
+def sliced_dataset(dataset, dslice):
+  indices = array.array(pyu.array_code(len(dataset)),
+                        range(*dslice.indices(len(dataset))))
 
-  return SubDataset(ds, indices)
+  return SubDataset(dataset, indices)
 
 
-_DS_SEED = pyu.getenv('DS_SEED', dtype=int, defval=997727)
+_DATASET_SEED = pyu.getenv('DATASET_SEED', dtype=int, defval=997727)
 
 def shuffled_indices(size, seed=None):
-  seed = pyu.value_or(seed, _DS_SEED)
+  seed = pyu.value_or(seed, _DATASET_SEED)
 
   rng = random.Random(seed)
   indices = array.array(pyu.array_code(size), range(size))
