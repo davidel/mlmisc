@@ -22,6 +22,7 @@ import torch.nn as nn
 
 from . import base_setup as bs
 from . import dataset as ds
+from . import plot_setup as ps
 
 
 def load_model(args):
@@ -78,7 +79,8 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
       imgdata = torch.clamp(x[u], 0.0, 1.0)
       imgdata = einops.rearrange(imgdata.cpu(), 'c h w -> h w c')
 
-      plt.figure(figsize=(8, 6), dpi=128)
+      plt.figure(**ps.plot_args(args))
+      ps.plot_setup(plt)
 
       plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
       plt.imshow(imgdata, interpolation='bicubic')
@@ -112,6 +114,7 @@ def emit_class_misses(args, class_misses, classes, max_class):
 
 def main(args):
   bs.setup(args)
+  ps.setup(args)
 
   train_dataset, test_dataset = ds.create_dataset(args)
 
@@ -164,6 +167,7 @@ if __name__ == '__main__':
 
   bs.add_parser_arguments(parser)
   ds.add_parser_arguments(parser)
+  ps.add_parser_arguments(parser, skip_output=True)
 
   parser.add_argument('--model_path', required=True,
                       help='The path containing the model definition')

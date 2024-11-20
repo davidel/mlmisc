@@ -22,6 +22,7 @@ import torch.nn as nn
 
 from . import base_setup as bs
 from . import dataset as ds
+from . import plot_setup as ps
 
 
 def load_model(args):
@@ -53,22 +54,26 @@ def show_images(inputs, results, targets):
     yimg = gen_image(results[i])
     timg = gen_image(targets[i])
 
-    fig, axs = plt.subplots(1, 3, figsize=(8, 6), dpi=128)
+    fig, axs = plt.subplots(1, 3, **ps.plot_args(args))
 
+    ps.plot_setup(axs[0])
     axs[0].set_title('Input')
     axs[0].imshow(iimg, interpolation='bicubic')
 
+    ps.plot_setup(axs[1])
     axs[1].set_title('Output')
     axs[1].imshow(yimg, interpolation='bicubic')
 
+    ps.plot_setup(axs[2])
     axs[2].set_title('Original')
     axs[2].imshow(timg, interpolation='bicubic')
 
-    plt.show()
+    ps.plot(args)
 
 
 def main(args):
   bs.setup(args)
+  ps.setup(args)
 
   train_dataset, test_dataset = ds.create_dataset(args)
 
@@ -105,6 +110,7 @@ if __name__ == '__main__':
 
   bs.add_parser_arguments(parser)
   ds.add_parser_arguments(parser)
+  ps.add_parser_arguments(parser)
 
   parser.add_argument('--model_path', required=True,
                       help='The path containing the model definition')

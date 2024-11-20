@@ -11,6 +11,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from . import plot_setup as ps
+
 
 def format_scheduler(lr_scheduler):
   cpath, params = lr_scheduler.split(':', maxsplit=1)
@@ -19,6 +21,8 @@ def format_scheduler(lr_scheduler):
 
 
 def main(args):
+  ps.setup(args)
+
   # Dummy net and trivial SGD optimizer to feed to the LR scheduler.
   net = nn.Linear(8, 8)
   optimizer = optim.SGD(net.parameters(), lr=args.init_lr)
@@ -32,22 +36,15 @@ def main(args):
     scheduler.step()
     lrs.append(mlut.get_lr(optimizer))
 
-  img_w = int(args.img_h * args.aspect)
-  fig, ax = plt.subplots(figsize=(img_w, args.img_h), dpi=args.dpi)
+  fig, ax = plt.subplots(**ps.plot_args(args))
 
+  ps.plot_setup(ax)
   ax.plot(tuple(range(args.num_steps)), lrs)
 
   ax.set(xlabel='Step Number',
          ylabel='Learning Rate',
          title=format_scheduler(args.lr_scheduler))
-  ax.grid(linestyle=args.grid)
-
-  if args.plotfile:
-    with gfs.open(args.plotfile, mode='wb') as imgfd:
-      plt.savefig(imgfd)
-
-  if args.show:
-    plt.show()
+  ps.plot(args)
 
 
 if __name__ == '__main__':
@@ -57,6 +54,8 @@ if __name__ == '__main__':
   parser = argparse.ArgumentParser(description='LR Scheduler Plotter',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
+  ps.add_parser_arguments(parser)
+
   parser.add_argument('--lr_scheduler', required=True,
                       help='The configuration for the learning rate scheduler ' \
                       '(class_path:arg0,...,name0=value0,...)')
@@ -64,19 +63,6 @@ if __name__ == '__main__':
                       help='The LR used to initialize the optimizer')
   parser.add_argument('--num_steps', type=int, default=100,
                       help='The number of steps to plot')
-  parser.add_argument('--dpi', type=int, default=128,
-                      help='The DPI to be used to generate the image')
-  parser.add_argument('--img_h', type=int, default=6,
-                      help='The height of the plot image')
-  parser.add_argument('--grid', default='dotted',
-                      help='The style of the plot grid')
-  parser.add_argument('--aspect', type=float, default=4 / 3,
-                      help='The aspect ratio to be used to generate the image')
-  parser.add_argument('--plotfile',
-                      help='The path to the file where the plot image should be saved')
-  parser.add_argument('--show', action=argparse.BooleanOptionalAction,
-                      default=False,
-                      help='Show the image of screen')
 
   pyam.main(parser, main)
 
