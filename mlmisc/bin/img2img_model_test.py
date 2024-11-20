@@ -48,7 +48,7 @@ def gen_image(img):
   return img
 
 
-def show_images(inputs, results, targets):
+def show_images(args, inputs, results, targets):
   for i in range(len(results)):
     iimg = gen_image(inputs[i])
     yimg = gen_image(results[i])
@@ -94,7 +94,7 @@ def main(args):
 
       out, _ = model(x)
 
-      show_images(x, out, y)
+      show_images(args, x, out, y)
 
       samples += x.shape[0]
       if bc.hit() or samples >= args.max_samples:
