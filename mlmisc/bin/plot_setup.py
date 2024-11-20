@@ -29,7 +29,7 @@ def plot_args(args):
   return dict(figsize=(img_w, args.img_h), dpi=args.dpi)
 
 
-def plot_setup(ax):
+def plot_setup(args, ax):
   if args.grid:
     ax.grid(linestyle=args.grid)
 

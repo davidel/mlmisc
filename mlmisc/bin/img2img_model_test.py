@@ -56,15 +56,15 @@ def show_images(args, inputs, results, targets):
 
     fig, axs = plt.subplots(1, 3, **ps.plot_args(args))
 
-    ps.plot_setup(axs[0])
+    ps.plot_setup(args, axs[0])
     axs[0].set_title('Input')
     axs[0].imshow(iimg, interpolation='bicubic')
 
-    ps.plot_setup(axs[1])
+    ps.plot_setup(args, axs[1])
     axs[1].set_title('Output')
     axs[1].imshow(yimg, interpolation='bicubic')
 
-    ps.plot_setup(axs[2])
+    ps.plot_setup(args, axs[2])
     axs[2].set_title('Original')
     axs[2].imshow(timg, interpolation='bicubic')
 

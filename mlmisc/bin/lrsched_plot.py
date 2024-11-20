@@ -38,7 +38,7 @@ def main(args):
 
   fig, ax = plt.subplots(**ps.plot_args(args))
 
-  ps.plot_setup(ax)
+  ps.plot_setup(args, ax)
   ax.plot(tuple(range(args.num_steps)), lrs)
 
   ax.set(xlabel='Step Number',

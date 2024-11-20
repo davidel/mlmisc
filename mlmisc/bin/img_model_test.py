@@ -80,7 +80,7 @@ def report_mismatches(args, x, targets, predicted, mismatch_indices, classes,
       imgdata = einops.rearrange(imgdata.cpu(), 'c h w -> h w c')
 
       plt.figure(**ps.plot_args(args))
-      ps.plot_setup(plt)
+      ps.plot_setup(args, plt)
 
       plt.title(f'Correct="{tclass}" Predicted="{pclass}"')
       plt.imshow(imgdata, interpolation='bicubic')
