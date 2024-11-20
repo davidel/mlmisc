@@ -1,5 +1,7 @@
 import py_misc_utils.alog as alog
 import py_misc_utils.utils as pyu
+import torch
+import torch.nn as nn
 
 from . import image_pad_concat as ipc
 from . import module_builder as mb
