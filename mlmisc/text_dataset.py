@@ -4,6 +4,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.http_cache as pyhc
+import py_misc_utils.uncompress as pyunc
 import py_misc_utils.utils as pyu
 import torch
 
@@ -65,9 +66,8 @@ def create(content_path, context_size,
 
   datasets_dir = os.path.join(cache_dir, 'datasets')
 
-  with pyhc.LocalFile(content_path,
-                      cache_dir=cache_dir,
-                      uncompress=True) as datafile:
+  local_content_path = gfs.as_local(content_path, cache_storage=cache_dir)
+  with pyunc.Uncompress(local_content_path) as datafile:
     ds_name = os.path.splitext(os.path.basename(datafile))[0]
 
     if module_path is None:
