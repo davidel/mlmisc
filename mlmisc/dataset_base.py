@@ -9,24 +9,6 @@ import torch
 from . import utils as ut
 
 
-class Pipeline:
-
-  def __init__(self, init=None):
-    self._elems = list(init) if init else []
-
-  def __len__(self):
-    return len(self._elems)
-
-  def add(self, elem):
-    self._elems.append(elem)
-
-  def __call__(self, x):
-    for elem in self._elems:
-      x = elem(x)
-
-    return x
-
-
 class DatasetBase:
 
   def __init__(self, pipeline=None, **kwargs):

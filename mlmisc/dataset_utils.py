@@ -9,6 +9,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
+import py_misc_utils.pipeline as pypl
 import py_misc_utils.utils as pyu
 import torch
 import torchvision
@@ -157,7 +158,7 @@ def _try_torchvision(name, ds_path, split_pct, dataset_kwargs):
 def build_pipelines(select_fn=None,
                     transform=None,
                     target_transform=None):
-  train, test = dsb.Pipeline(), dsb.Pipeline()
+  train, test = pypl.Pipeline(), pypl.Pipeline()
 
   if select_fn is not None:
     train.add(select_fn)
