@@ -125,15 +125,16 @@ class SubDataset(torch.utils.data.Dataset):
 
 
 def to_transform(**kwargs):
-  def transform(x):
+
+  def transform_fn(x):
     return x.to(**kwargs)
 
-  return transform
+  return transform_fn
 
 
 def transformer(sample=None, target=None):
-  sample = sample or (lambda x: x)
-  target = target or (lambda x: x)
+  sample = pyu.value_or(sample, lambda x: x)
+  target = pyu.value_or(target, lambda x: x)
 
   def transformer_fn(x):
     x, y = x
