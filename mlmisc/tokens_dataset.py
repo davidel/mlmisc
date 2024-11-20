@@ -10,12 +10,10 @@ from . import utils as ut
 class TokensDataset(dsb.Dataset):
 
   def __init__(self, data, window_size, mode,
-               transform=None,
+               pipeline=None,
                target_transform=None,
                **kwargs):
-    super().__init__(transform=transform,
-                     target_transform=target_transform,
-                     **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
     self._window_size = window_size
     self._mode = mode
@@ -50,8 +48,13 @@ def create(tokens_path, window_size, mode,
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit:]
 
-  kwargs.update(transform=dsb.to_transform(dtype=torch.long),
-                target_transform=dsb.to_transform(dtype=torch.long))
+  # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
+  # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
+  to_long = dsb.to_transform(dtype=torch.long)
+  pipeline = dsb.Pipeline()
+  pipeline.add(dsb.transformer(sample=to_long, target=to_long))
+
+  kwargs['pipeline'] = pipeline
 
   train_dataset = TokensDataset(train_data, window_size, mode, **kwargs)
   test_dataset = TokensDataset(test_data, window_size, mode, **kwargs)
