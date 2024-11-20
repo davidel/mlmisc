@@ -22,8 +22,9 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
 
   # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
   # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
+  to_long = dsb.to_transform(dtype=torch.long)
   pipeline = dsb.Pipeline()
-  pipeline.add(dsb.transformer(target=dsb.to_transform(dtype=torch.long)))
+  pipeline.add(dsb.transformer(sample=to_long, target=to_long))
 
   ds_args = dict(
     pipeline=pipeline,

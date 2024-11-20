@@ -21,7 +21,6 @@ class Pipeline:
     self._elems.append(elem)
 
   def __call__(self, x):
-    alog.info(f'Pipeline has {len(self)} trans')
     for elem in self._elems:
       x = elem(x)
 
