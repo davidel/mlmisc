@@ -137,9 +137,9 @@ def transformer(sample=None, target=None):
   target = pyu.value_or(target, lambda x: x)
 
   def transformer_fn(x):
-    x, y = x
+    s, t = x
 
-    return sample(x), target(y)
+    return sample(s), target(t)
 
   return transformer_fn
 
