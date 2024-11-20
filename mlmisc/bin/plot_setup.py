@@ -38,7 +38,7 @@ def plot(args):
   if args.plotfile:
     imgid = getattr(args, '_imgid', 0)
     if imgid > 0:
-      bpath, ext = os.path.spliext(args.plotfile)
+      bpath, ext = os.path.splitext(args.plotfile)
       path = f'{bpath}-{imgid + 1}{ext}'
     else:
       path = args.plotfile
