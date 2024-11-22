@@ -89,19 +89,32 @@ class WebDataset(torch.utils.data.IterableDataset):
     return self._size
 
 
+def expand_huggingface_urls(url):
+  import huggingface_hub as hfhub
+
+  fs = hfhub.HfFileSystem()
+  files = [fs.resolve_path(path) for path in fs.glob(url)]
+
+  return tuple(hfhub.hf_hub_url(file.repo_id, rfile.path_in_repo, repo_type='dataset')
+               for rfile in files)
+
+
 def expand_urls(url):
-  m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
-  if m:
-    isize = len(m.group(2))
-    start = int(m.group(2))
-    end = int(m.group(3))
-    urls = []
-    for i in range(start, end + 1):
-      urls.append(m.group(1) + f'{i:0{isize}d}' + m.group(4))
+  if url.startswith('hf://'):
+    return expand_huggingface_urls(url)
+  else:
+    m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
+    if m:
+      isize = len(m.group(2))
+      start = int(m.group(2))
+      end = int(m.group(3))
+      urls = []
+      for i in range(start, end + 1):
+        urls.append(m.group(1) + f'{i:0{isize}d}' + m.group(4))
 
-    return urls
+      return urls
 
-  return [url]
+    return [url]
 
 
 def create(url,
