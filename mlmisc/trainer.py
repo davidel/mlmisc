@@ -1,13 +1,16 @@
 import array
 import datetime
+import math
 import time
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.buffered_iterator as pybi
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import dataset_utils as dsu
 from . import debug_utils as du
 from . import utils as ut
 from .lrsched import wrapper as lrw
@@ -115,7 +118,7 @@ class Trainer:
     metrics = cls.load_metrics(path) or ()
     for m in metrics:
       ut.tb_write(tb_writer, m['name'], m['value'],
-                  global_step=int(m['epoch'] * 10),
+                  global_step=m['num_samples'],
                   walltime=m['time'])
 
   def _times(self):
@@ -130,11 +133,13 @@ class Trainer:
                                          shuffle=shuffle,
                                          num_workers=tctx.num_workers)
 
-    alog.info(f'Running validation on {len(loader)} batches')
+    num_samples = dsu.dataset_size(tctx.val_data)
+    alog.info(f'Running validation on {num_samples or "N/A"} samples')
 
     with torch.no_grad(), ut.Training(tctx.model, False):
       losses, val_start = [], self.val_time.start()
-      for i, (x, y) in enumerate(loader):
+      for bid in pybi.BufferedIterator(loader, 4):
+        x, y = bid.data
         if tctx.device is not None:
           x, y = x.to(tctx.device), y.to(tctx.device)
 
@@ -143,7 +148,7 @@ class Trainer:
 
         if ((tctx.val_time is not None and time.time() > val_start + tctx.val_time) or
             (callable(tctx.should_stop) and tctx.should_stop())):
-          alog.info(f'Validation run on {i} of {len(loader)} batches due to ' \
+          alog.info(f'Interrupted validation at batch {bid.n} due to ' \
                     f'{datetime.timedelta(seconds=tctx.val_time)} required time stop')
           break
 
@@ -151,47 +156,40 @@ class Trainer:
 
     return np.mean(losses) if losses else None
 
-  def _epoch(self, total_samples):
-    return 100 * self.num_samples / total_samples
-
-  def _metric_log(self, tb_writer, epoch, name, value):
+  def _metric_log(self, tb_writer, name, value):
     self.metrics.append(dict(name=name,
-                             epoch=epoch,
+                             num_samples=self.num_samples,
                              time=self.train_time.seconds,
                              value=value))
     if tb_writer is not None:
       ut.tb_write(tb_writer, name, value,
-                  global_step=int(epoch * 10),
+                  global_step=self.num_samples,
                   walltime=self.train_time.seconds)
 
-  def _log_train_loss(self, loss, batch_num, num_batches, step_time, tctx):
-    epoch = self._epoch(num_batches * tctx.batch_size)
-    self._metric_log(tctx.tb_writer, epoch, 'loss.train', loss)
-    alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
-              f'Train Loss {loss:.4f}')
+  def _log_train_loss(self, loss, batch_num, step_time, tctx):
+    self._metric_log(tctx.tb_writer, 'loss.train', loss)
+    alog.info(f'Batch {batch_num + 1}: Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
     alog.info(f'Perf: {tctx.batch_size / step_time:.2e} samples/sec')
 
-  def _run_validation(self, batch_num, num_batches, tctx):
+  def _run_validation(self, batch_num, tctx):
     vloss = self._val_loss(tctx)
     if vloss is not None:
-      epoch = self._epoch(num_batches * tctx.batch_size)
-      self._metric_log(tctx.tb_writer, epoch, 'loss.validation', vloss)
-      alog.info(f'Batch {batch_num + 1}/{num_batches} (epoch={epoch:.1f}%): ' \
-                f'Validation Loss {vloss:.4f}')
+      self._metric_log(tctx.tb_writer, 'loss.validation', vloss)
+      alog.info(f'Batch {batch_num + 1}: Validation Loss {vloss:.4f}')
 
     return vloss
 
-  def _log_tensor_stats(self, name_fmt, stats, epoch, tctx):
+  def _log_tensor_stats(self, name_fmt, stats, tctx):
     for ts in stats:
       value = {k: getattr(ts, k)
                for k in pyu.comma_split('min, max, mean, std')}
       for p, pv in zip(ts.percentiles, ts.percentile_values):
         value[f'p{int(100 * p)}'] = pv
 
-      self._metric_log(tctx.tb_writer, epoch, name_fmt.format(ts.name), value)
+      self._metric_log(tctx.tb_writer, name_fmt.format(ts.name), value)
 
-  def _show_stats(self, model, num_batches, tctx):
+  def _show_stats(self, model, tctx):
     percentiles = (0.5, 0.9, 0.95, 0.99)
 
     pstats = du.get_parameters_stats(model, percentiles=percentiles)
@@ -200,14 +198,13 @@ class Trainer:
     gstats = du.get_grads_stats(model, percentiles=percentiles)
     du.show_tensors_stats(gstats, dict(value_stats=alog.DEBUG0))
 
-    epoch = self._epoch(num_batches * tctx.batch_size)
-    self._log_tensor_stats('PARA.{}', pstats.stats, epoch, tctx)
-    self._log_tensor_stats('GRAD.{}', gstats.stats, epoch, tctx)
+    self._log_tensor_stats('PARA.{}', pstats.stats, tctx)
+    self._log_tensor_stats('GRAD.{}', gstats.stats, tctx)
 
     if current_lr := ut.get_lr(tctx.optimizer, reduce=False):
       alog.debug0(f'Current LR: {pyu.format(current_lr, ".3e")}')
       for name, lr in pyu.name_values('lr', current_lr):
-        self._metric_log(tctx.tb_writer, epoch, name, lr)
+        self._metric_log(tctx.tb_writer, name, lr)
 
   def _save_checkpoint(self, tctx):
     checkpoint = tctx.checkpoint or ('optimizer', 'scheduler', 'scaler')
@@ -226,13 +223,14 @@ class Trainer:
                                          shuffle=shuffle,
                                          num_workers=tctx.num_workers)
 
-    num_batches = len(loader)
-    alog.info(f'Running EPOCH train on {num_batches} batches')
+    num_samples = dsu.dataset_size(tctx.train_data)
+    alog.info(f'Running EPOCH train on {num_samples or "N/A"} samples')
 
     tctx.model.train()
     tctx.optimizer.zero_grad()
 
-    for i, (x, y) in enumerate(loader):
+    for bid in pybi.BufferedIterator(loader, tctx.accum_steps + 1):
+      x, y = bid.data
       if tctx.device is not None:
         x, y = x.to(tctx.device), y.to(tctx.device)
 
@@ -250,8 +248,8 @@ class Trainer:
       else:
         bloss.backward()
 
-      self.num_samples += tctx.batch_size
-      if (i + 1) % tctx.accum_steps == 0:
+      self.num_samples += len(x)
+      if (bid.n + 1) % tctx.accum_steps == 0:
         if tctx.scaler is not None:
           if tctx.grad_clip is not None and tctx.grad_clip > 0:
             tctx.scaler.unscale_(tctx.optimizer)
@@ -265,7 +263,7 @@ class Trainer:
 
           tctx.optimizer.step()
 
-        yield pyu.make_object(stepno=i, loss=loss, num_batches=num_batches)
+        yield pyu.make_object(stepno=bid.n, loss=loss, left=bid.left)
 
         tctx.optimizer.zero_grad()
 
@@ -296,8 +294,10 @@ class Trainer:
       now = self.train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
-        self._log_train_loss(train_losses[-1], sd.stepno, sd.num_batches,
-                             (now - tstep) / (sd.stepno - last_stepno), tctx)
+        self._log_train_loss(train_losses[-1],
+                             sd.stepno,
+                             (now - tstep) / (sd.stepno - last_stepno),
+                             tctx)
         tstep, last_stepno = now, sd.stepno
 
       wrapped_scheduler.train_step(sd.loss)
@@ -307,10 +307,10 @@ class Trainer:
         self._save_checkpoint(tctx)
         tsave = self.train_time.start()
 
-      if now > tval + val_logstep or sd.stepno + accum_steps >= sd.num_batches:
+      if now > tval + val_logstep or accum_steps > sd.left:
         self.train_time.track()
-        self._show_stats(model, sd.num_batches, tctx)
-        vloss = self._run_validation(sd.stepno, sd.num_batches, tctx)
+        self._show_stats(model, tctx)
+        vloss = self._run_validation(sd.stepno, tctx)
         if vloss is not None:
           val_losses.append(vloss)
         tval = self.train_time.start()
@@ -320,7 +320,7 @@ class Trainer:
 
       stopped = callable(should_stop) and should_stop()
       if stopped:
-        alog.info(f'Interrupted at batch {sd.stepno + 1}/{sd.num_batches}!')
+        alog.info(f'Interrupted at batch {sd.stepno + 1}!')
         break
 
     optimizer.step()
