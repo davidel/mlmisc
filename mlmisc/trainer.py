@@ -170,7 +170,8 @@ class Trainer:
 
   def _log_train_loss(self, loss, batch_num, step_time, tctx):
     self._metric_log(tctx.tb_writer, 'loss.train', loss)
-    alog.info(f'Batch {batch_num + 1}: Train Loss {loss:.4f}')
+    alog.info(f'Batch {batch_num + 1} ({self.num_samples:.1e} samples): ' \
+              f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
     alog.info(f'Perf: {tctx.batch_size / step_time:.2e} samples/sec')
 
@@ -178,7 +179,8 @@ class Trainer:
     vloss = self._val_loss(tctx)
     if vloss is not None:
       self._metric_log(tctx.tb_writer, 'loss.validation', vloss)
-      alog.info(f'Batch {batch_num + 1}: Validation Loss {vloss:.4f}')
+      alog.info(f'Batch {batch_num + 1} ({self.num_samples:.1e} samples): ' \
+                f'Validation Loss {vloss:.4f}')
 
     return vloss
 
