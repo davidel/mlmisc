@@ -81,7 +81,9 @@ class ShufflerDataset(torch.utils.data.IterableDataset):
     return iter(self.generate())
 
   def __len__(self):
-    return len(self._data)
+    data_length = getattr(self._data, '__len__', None)
+
+    return data_length() if data_length is not None else None
 
 
 class SubDataset(torch.utils.data.Dataset):

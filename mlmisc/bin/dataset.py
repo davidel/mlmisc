@@ -70,7 +70,9 @@ def create_dataset(args):
   train_dataset = dsets['train']
   test_dataset = dsets['test']
 
-  alog.info(f'Train/Test Dataset samples = {len(train_dataset)}/{len(test_dataset)}')
+  train_size, test_size = mldu.dataset_size(train_dataset), mldu.dataset_size(test_dataset)
+  if train_size is not None and test_size is not None:
+    alog.info(f'Train/Test Dataset samples = {train_size}/{test_size}')
 
   if args.show_images:
     mldu.show_images(train_dataset, args.show_images)
