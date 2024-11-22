@@ -45,6 +45,7 @@ class Trainer:
     self.load_state(dict())
 
   def load_state(self, state):
+    self.global_step = state.get('global_step', 0)
     self.num_samples = state.get('num_samples', 0)
     self.train_time = TimeTracker(total=state.get('train_time', 0))
     self.val_time = TimeTracker(total=state.get('val_time', 0))
@@ -53,6 +54,7 @@ class Trainer:
 
   def get_state(self):
     return dict(
+      global_step=self.global_step,
       num_samples=self.num_samples,
       train_time=self.train_time.total,
       val_time=self.val_time.total,
@@ -158,12 +160,12 @@ class Trainer:
 
   def _metric_log(self, tb_writer, name, value):
     self.metrics.append(dict(name=name,
-                             num_samples=self.num_samples,
+                             global_step=self.global_step,
                              time=self.train_time.seconds,
                              value=value))
     if tb_writer is not None:
       ut.tb_write(tb_writer, name, value,
-                  global_step=self.num_samples,
+                  global_step=self.global_step,
                   walltime=self.train_time.seconds)
 
   def _log_train_loss(self, loss, batch_num, step_time, tctx):
@@ -249,6 +251,7 @@ class Trainer:
         bloss.backward()
 
       self.num_samples += len(x)
+      self.global_step += 1
       if (bid.n + 1) % tctx.accum_steps == 0:
         if tctx.scaler is not None:
           if tctx.grad_clip is not None and tctx.grad_clip > 0:
