@@ -95,7 +95,7 @@ def expand_huggingface_urls(url):
   fs = hfhub.HfFileSystem()
   files = [fs.resolve_path(path) for path in fs.glob(url)]
 
-  return tuple(hfhub.hf_hub_url(file.repo_id, rfile.path_in_repo, repo_type='dataset')
+  return tuple(hfhub.hf_hub_url(rfile.repo_id, rfile.path_in_repo, repo_type='dataset')
                for rfile in files)
 
 
