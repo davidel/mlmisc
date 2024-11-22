@@ -129,7 +129,7 @@ class Trainer:
   def _val_loss(self, tctx):
     shuffle = not isinstance(tctx.val_data, torch.utils.data.IterableDataset)
     loader = torch.utils.data.DataLoader(tctx.val_data,
-                                         batch_size=tctx.batch_size or 1,
+                                         batch_size=tctx.batch_size,
                                          shuffle=shuffle,
                                          num_workers=tctx.num_workers)
 
