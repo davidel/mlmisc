@@ -68,9 +68,9 @@ class IterableDataset(dsb.IterableDataset):
       yield data
 
   def __len__(self):
-    data_length = getattr(self._data, '__len__', None)
+    dslen = dataset_size(self._data)
 
-    return data_length() if data_length is not None else dataset_size(super())
+    return dslen if dslen is not None else dataset_size(super())
 
 
 def is_random_access_dataset(dataset):
@@ -81,9 +81,9 @@ def is_random_access_dataset(dataset):
 
 
 def dataset_size(dataset):
-  data_length = getattr(dataset, '__len__', None)
+  dslen = getattr(dataset, '__len__', None)
 
-  return data_length() if data_length is not None else None
+  return dslen() if dslen is not None else None
 
 
 def _get_dataset_base(dataset):
