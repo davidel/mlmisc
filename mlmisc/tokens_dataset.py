@@ -52,8 +52,7 @@ def create(tokens_path, window_size, mode,
   # We used torch.int in tkz.tokenize_data() above to reduce the memory footprint,
   # but some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
   to_long = dsb.to_transform(dtype=torch.long)
-  pipeline = pypl.Pipeline()
-  pipeline.add(dsb.transformer(sample=to_long, target=to_long))
+  pipeline = pypl.Pipeline(dsb.transformer(sample=to_long, target=to_long))
 
   kwargs['pipeline'] = pipeline
 
