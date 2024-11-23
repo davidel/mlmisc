@@ -69,7 +69,7 @@ class ShufflerDataset(torch.utils.data.IterableDataset):
       if self._buffer_size > len(stacked):
         stacked.append(data)
       else:
-        idx = random.randrange(self._buffer_size)
+        idx = random.randrange(len(stacked))
         yield stacked[idx]
         stacked[idx] = data
 
