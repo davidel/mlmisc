@@ -184,7 +184,7 @@ def create_random_stack(max_output,
                                                               sigma=fsigma)))
       features = pyu.round_up(features, round_features)
 
-    opt_args = pyu.strip_nones(maxpool=maxpool, avgpool=avgpool, act=act)
+    opt_args = pyu.denone(maxpool=maxpool, avgpool=avgpool, act=act)
 
     convs.append(ConvSpec(features=features,
                           kernel_size=ksize,
