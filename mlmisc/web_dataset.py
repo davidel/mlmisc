@@ -129,7 +129,10 @@ def create(url,
 
   urls = expand_urls(url)
   if shuffle:
-    # Stable shuffling, given same seed.
+    # Stable shuffling, given same seed. Even though the WebDataset (and the
+    # ShufflerDataset) do shuffle urls/samples, because of the way we split
+    # between train/test urls (by slicing), randomization is needed since the
+    # distribution might not be uniform among the dataset urls.
     urls = dsb.shuffled_data(urls, seed=seed)
 
   ntrain = int(split_pct * len(urls))
