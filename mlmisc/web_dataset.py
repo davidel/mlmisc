@@ -56,10 +56,10 @@ class WebDataset(torch.utils.data.IterableDataset):
 
   def _infer_compression(self, url):
     _, ext = os.path.splitext(url)
-    if ext in {'.bz2', '.bzip2'}:
-      return 'bz2'
-    elif ext in {'.gz', '.xz'}:
+    if ext in {'.gz', '.xz', '.bz2'}:
       return ext[1:]
+    elif ext == '.bzip2':
+      return 'bz2'
 
   def generate(self):
     if self._shuffle:
