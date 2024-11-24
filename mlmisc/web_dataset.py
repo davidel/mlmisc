@@ -1,5 +1,6 @@
 import io
 import json
+import os
 import random
 import re
 import tarfile
@@ -53,6 +54,13 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     return ddata
 
+  def _infer_compression(self, url):
+    _, ext = os.path.splitext(url)
+    if ext in {'.bz2', '.bzip2'}:
+      return 'bz2'
+    elif ext in {'.gz', '.xz'}:
+      return ext[1:]
+
   def generate(self):
     if self._shuffle:
       urls = random.sample(self._urls, len(self._urls))
@@ -61,9 +69,10 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     for url in urls:
       alog.debug(f'Opening new stream: {url}')
-      stream = pysu.StreamUrl(url, **self._kwargs)
+      comp = self._infer_compression(url)
 
-      tar = tarfile.open(mode='r|', fileobj=stream)
+      stream = pysu.StreamUrl(url, **self._kwargs)
+      tar = tarfile.open(mode=f'r|{comp or ""}', fileobj=stream)
 
       ctid, data = None, dict()
       for tinfo in tar:
