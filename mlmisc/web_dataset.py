@@ -3,14 +3,13 @@ import json
 import os
 import random
 import re
-import tarfile
 import yaml
 
 import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.archive_streamer as pyas
 import py_misc_utils.img_utils as pyimg
-import py_misc_utils.stream_url as pysu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -54,13 +53,6 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     return ddata
 
-  def _infer_compression(self, url):
-    _, ext = os.path.splitext(url)
-    if ext in {'.gz', '.xz', '.bz2'}:
-      return ext[1:]
-    elif ext == '.bzip2':
-      return 'bz2'
-
   def generate(self):
     if self._shuffle:
       urls = random.sample(self._urls, len(self._urls))
@@ -69,24 +61,21 @@ class WebDataset(torch.utils.data.IterableDataset):
 
     for url in urls:
       alog.debug(f'Opening new stream: {url}')
-      comp = self._infer_compression(url)
 
-      stream = pysu.StreamUrl(url, **self._kwargs)
-      tar = tarfile.open(mode=f'r|{comp or ""}', fileobj=stream)
-
+      ars = pyas.ArchiveStreamer(url, **self._kwargs)
       ctid, data = None, dict()
-      for tinfo in tar:
-        dpos = tinfo.name.find('.')
+      for ae in ars:
+        dpos = ae.name.find('.')
         if dpos > 0:
-          tid = tinfo.name[: dpos]
-          ext = tinfo.name[dpos + 1:]
+          tid = ae.name[: dpos]
+          ext = ae.name[dpos + 1:]
 
           if tid != ctid and data:
             yield self._decode(data, ctid)
             data = dict()
 
           ctid = tid
-          data[ext] = tar.extractfile(tinfo).read()
+          data[ext] = ae.data
 
       if data:
         yield self._decode(data, ctid)
