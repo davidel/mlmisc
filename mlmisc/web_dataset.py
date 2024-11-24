@@ -73,7 +73,7 @@ class WebDataset(torch.utils.data.IterableDataset):
           ext = tinfo.name[dpos + 1:]
 
           if tid != ctid and data:
-            yield self._decode(data, tid)
+            yield self._decode(data, ctid)
             data = dict()
 
           ctid = tid
