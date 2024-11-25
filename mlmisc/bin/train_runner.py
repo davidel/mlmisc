@@ -153,7 +153,7 @@ def main(args):
   tprof = create_profiler(args.profiler)
   tb_writer = mlut.create_tb_writer(args.tb_path) if args.tb_path else None
 
-  with pybc.BreakControl() as bc, tprof:
+  with tprof:
     step_fn = create_stepfn(tprof)
 
     for e in range(args.num_epochs):
@@ -169,7 +169,7 @@ def main(args):
                           model_path=args.checkpoint_path,
                           tb_writer=tb_writer,
                           num_workers=args.num_workers,
-                          should_stop=lambda: bc.hit(),
+                          should_stop=None,
                           step_fn=step_fn,
                           scaler=scaler,
                           amp_dtype=amp_dtype)
@@ -177,8 +177,6 @@ def main(args):
       if args.show_cuda_memory and mlut.is_cuda_device(args.device):
         alog.info(f'CUDA Memory:\n{torch.cuda.memory_summary(device=args.device)}')
 
-      if bc.hit():
-        break
 
   if tb_writer is not None:
     tb_writer.flush()
