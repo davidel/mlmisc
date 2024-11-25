@@ -125,7 +125,8 @@ def create(url,
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
 
-  alog.debug(f'WebDataset kwargs: {kwargs}')
+  cs = kwargs.pop('cache_dir', None)
+  kwargs['cache_storage'] = cs
 
   urls = expand_urls(url)
   if shuffle:
