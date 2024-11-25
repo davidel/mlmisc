@@ -65,6 +65,8 @@ class WebDataset(torch.utils.data.IterableDataset):
       ars = pyas.ArchiveStreamer(url, **self._kwargs)
       ctid, data = None, dict()
       for ae in ars:
+        alog.debug(f'Read from {url}: {ae.name} is {len(ae.data)} bytes')
+
         dpos = ae.name.find('.')
         if dpos > 0:
           tid = ae.name[: dpos]
