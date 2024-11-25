@@ -1,4 +1,5 @@
 import array
+import functools
 import random
 
 import py_misc_utils.alog as alog
@@ -108,45 +109,42 @@ class SubDataset(torch.utils.data.Dataset):
     return self._data[self._indices[i]]
 
 
+def _to_transform_fn(x, **kwargs):
+  return x.to(**kwargs)
+
+
 def to_transform(**kwargs):
+  return functools.partial(_to_transform_fn, **kwargs)
 
-  def transform_fn(x):
-    return x.to(**kwargs)
 
-  return transform_fn
+def _transformer_fn(sample, target, x):
+  s, t = x
+
+  return sample(s), target(t)
 
 
 def transformer(sample=None, target=None):
   sample = pyu.value_or(sample, lambda x: x)
   target = pyu.value_or(target, lambda x: x)
 
-  def transformer_fn(x):
-    s, t = x
+  return functools.partial(_transformer_fn, sample, target)
 
-    return sample(s), target(t)
 
-  return transformer_fn
+def _items_selector_fn(items, x):
+  return [x[i] for i in items]
 
 
 def items_selector(items):
-
-  def select_fn(x):
-    return [x[i] for i in items]
-
-  return select_fn
+  return functools.partial(_items_selector_fn, items)
 
 
-def guess_select():
+def guess_select(x):
+  if isinstance(x, (list, tuple)):
+    return x[: 2]
+  if isinstance(x, dict):
+    return tuple(x.values())[: 2]
 
-  def select_fn(x):
-    if isinstance(x, (list, tuple)):
-      return x[: 2]
-    if isinstance(x, dict):
-      return tuple(x.values())[: 2]
-
-    return x
-
-  return select_fn
+  return x
 
 
 def sliced_dataset(dataset, dslice):
