@@ -65,8 +65,6 @@ class WebDataset(torch.utils.data.IterableDataset):
       ars = pyas.ArchiveStreamer(url, **self._kwargs)
       ctid, data = None, dict()
       for ae in ars:
-        alog.debug(f'Read from {url}: {os.path.basename(ae.name)} is {len(ae.data)} bytes')
-
         dpos = ae.name.find('.')
         if dpos > 0:
           tid = ae.name[: dpos]
@@ -145,10 +143,6 @@ def create(url,
     test_size = samples_per_shard * len(test_urls)
   else:
     train_size = test_size = None
-
-  cache_dir = kwargs.pop('cache_dir', None)
-  if cache_dir is not None and 'cache_storage' in kwargs:
-    kwargs['cache_storage'] = cache_dir
 
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)

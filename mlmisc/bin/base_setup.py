@@ -1,5 +1,4 @@
 import argparse
-import multiprocessing
 
 import mlmisc.utils as mlut
 import py_misc_utils.gen_fs as gfs
@@ -18,14 +17,9 @@ def add_parser_arguments(parser):
                       help='The number of threads to dedicate to the PyTorch CPU device')
   parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
                       help='Enable Autograd anomaly detection')
-  parser.add_argument('--mp_start_method',
-                      choices=('fork', 'forkserver', 'spawn'),
-                      help='Sets the Python multiprocessing start method')
 
 
 def setup(args):
-  if args.mp_start_method:
-    multiprocessing.set_start_method(args.mp_start_method)
   if args.seed is not None:
     mlut.randseed(args.seed)
   if args.autograd_debug:
