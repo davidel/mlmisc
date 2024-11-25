@@ -13,7 +13,7 @@ from . import utils as ut
 class DatasetBase:
 
   def __init__(self, pipeline=None, **kwargs):
-    self._pipeline = pyu.value_or(pipeline, lambda x: x)
+    self._pipeline = pyu.value_or(pipeline, pyu.ident)
     self._kwargs = kwargs
 
   def extra_arg(self, name):
@@ -124,8 +124,8 @@ def _transformer_fn(sample, target, x):
 
 
 def transformer(sample=None, target=None):
-  sample = pyu.value_or(sample, lambda x: x)
-  target = pyu.value_or(target, lambda x: x)
+  sample = pyu.value_or(sample, pyu.ident)
+  target = pyu.value_or(target, pyu.ident)
 
   return functools.partial(_transformer_fn, sample, target)
 
