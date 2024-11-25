@@ -144,7 +144,9 @@ def create(url,
   else:
     train_size = test_size = None
 
-  kwargs['cache_storage'] = kwargs.pop('cache_dir', None)
+  cache_dir = kwargs.pop('cache_dir', None)
+  if cache_dir is not None and 'cache_storage' in kwargs:
+    kwargs['cache_storage'] = cache_dir
 
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
