@@ -21,12 +21,12 @@ def add_parser_arguments(parser):
                       help='Enable Autograd anomaly detection')
   parser.add_argument('--mp_start_method',
                       default=os.getenv('MP_START_METHOD', 'forkserver'),
-                      choices=('fork', 'forkserver', 'spawn'),
+                      choices=('fork', 'forkserver', 'spawn', 'default'),
                       help='Sets the Python multiprocessing start method')
 
 
 def setup(args):
-  if args.mp_start_method:
+  if args.mp_start_method != 'default':
     multiprocessing.set_start_method(args.mp_start_method, force=True)
   if args.seed is not None:
     mlut.randseed(args.seed)
