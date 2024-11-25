@@ -121,6 +121,7 @@ def create(url,
            total_samples=None,
            seed=None,
            shuffle_buffer_size=None,
+           cache_dir=None,
            **kwargs):
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
@@ -143,8 +144,6 @@ def create(url,
     test_size = samples_per_shard * len(test_urls)
   else:
     train_size = test_size = None
-
-  kwargs.pop('cache_dir', None)
 
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
