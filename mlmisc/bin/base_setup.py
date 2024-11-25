@@ -1,4 +1,5 @@
 import argparse
+import multiprocessing
 
 import mlmisc.utils as mlut
 import py_misc_utils.gen_fs as gfs
@@ -20,6 +21,7 @@ def add_parser_arguments(parser):
 
 
 def setup(args):
+  multiprocessing.set_start_method('forkserver')
   if args.seed is not None:
     mlut.randseed(args.seed)
   if args.autograd_debug:
