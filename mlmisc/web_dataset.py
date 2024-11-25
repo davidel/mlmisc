@@ -59,10 +59,13 @@ class WebDataset(torch.utils.data.IterableDataset):
     else:
       urls = self._urls
 
+    as_kwargs = self._kwargs.copy()
+    as_kwargs['cache_storage'] = as_kwargs.pop('cache_dir', None)
+
     for url in urls:
       alog.debug(f'Opening new stream: {url}')
 
-      ars = pyas.ArchiveStreamer(url, **self._kwargs)
+      ars = pyas.ArchiveStreamer(url, **as_kwargs)
       ctid, data = None, dict()
       for ae in ars:
         dpos = ae.name.find('.')
@@ -124,9 +127,6 @@ def create(url,
            **kwargs):
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
-
-  cs = kwargs.pop('cache_dir', None)
-  kwargs['cache_storage'] = cs
 
   urls = expand_urls(url)
   if shuffle:
