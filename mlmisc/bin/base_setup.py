@@ -20,7 +20,7 @@ def add_parser_arguments(parser):
   parser.add_argument('--autograd_debug', action=argparse.BooleanOptionalAction, default=False,
                       help='Enable Autograd anomaly detection')
   parser.add_argument('--mp_start_method',
-                      default=os.getenv('MP_START_METHOD', 'forkserver')
+                      default=os.getenv('MP_START_METHOD', 'forkserver'),
                       choices=('fork', 'forkserver', 'spawn'),
                       help='Sets the Python multiprocessing start method')
 
