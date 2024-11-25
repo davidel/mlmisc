@@ -125,6 +125,8 @@ def create(url,
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
 
+  alog.debug(f'WebDataset kwargs: {kwargs}')
+
   urls = expand_urls(url)
   if shuffle:
     # Stable shuffling, given same seed. Even though the WebDataset (and the
