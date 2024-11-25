@@ -144,6 +144,8 @@ def create(url,
   else:
     train_size = test_size = None
 
+  kwargs.pop('cache_dir', None)
+
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
