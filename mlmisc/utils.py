@@ -14,6 +14,7 @@ import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.np_utils as pyn
+import py_misc_utils.rnd_utils as pyr
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -51,7 +52,7 @@ def is_cuda_device(device):
 
 
 def randseed(seed):
-  rseed = pyu.randseed(seed)
+  rseed = pyr.manual_seed(seed)
   torch.manual_seed(rseed)
   torch.cuda.manual_seed_all(rseed)
 
