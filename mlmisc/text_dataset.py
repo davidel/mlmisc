@@ -2,6 +2,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.pipeline as pypl
 import py_misc_utils.uncompress as pyunc
@@ -84,7 +85,7 @@ def create(content_path, context_size,
                                        user_defined_symbols=['\n', '\r'],
                                        **tokenizer_kwargs)
 
-      if os.path.isfile(tokens_path) and pyu.is_newer_file(tokens_path, proto_path):
+      if os.path.isfile(tokens_path) and pyfsu.is_newer_file(tokens_path, proto_path):
         tokens = ut.torch_load(tokens_path)
       else:
         tokens = tkz.tokenize_data(datafile, tokenizer, dtype=torch.int)

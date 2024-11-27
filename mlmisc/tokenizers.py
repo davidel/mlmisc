@@ -4,6 +4,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
+import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gen_fs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
@@ -68,7 +69,7 @@ def create_tokenizer(path, max_vocab_size,
                      model_type=None,
                      **kwargs):
   if (proto_path is not None and os.path.isfile(proto_path) and
-      pyu.is_newer_file(proto_path, path)):
+      pyfsu.is_newer_file(proto_path, path)):
     tokenizer = load_tokenizer(proto_path)
     if tokenizer.vocab_size() == max_vocab_size:
       return tokenizer
