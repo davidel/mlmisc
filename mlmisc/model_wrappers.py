@@ -36,8 +36,8 @@ class ModelHolder(nn.Module):
     return self
 
   def model_ctx(self):
-    return pycm.Wrapper(torch.set_grad_enabled(not self._frozen),
-                        wrap_obj=self._ctx.model)
+    return pycm.Pack(torch.set_grad_enabled(not self._frozen),
+                     wrap_obj=self._ctx.model)
 
 
 class TorchVision(ModelHolder):
