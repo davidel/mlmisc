@@ -1,7 +1,7 @@
 import mlmisc.dataset_base as mldb
 import mlmisc.dataset_utils as mldu
 import py_misc_utils.alog as alog
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn

@@ -6,7 +6,7 @@ import torch
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
-import py_misc_utils.gen_fs as pygfs
+import py_misc_utils.gfs as pygfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 

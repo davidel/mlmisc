@@ -7,7 +7,7 @@ import huggingface_hub as hfh
 import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.pipeline as pypl
 import py_misc_utils.utils as pyu

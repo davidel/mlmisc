@@ -5,7 +5,7 @@ import os
 import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.fs_utils as pyfsu
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import sentencepiece as spm

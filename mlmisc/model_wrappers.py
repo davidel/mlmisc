@@ -1,7 +1,7 @@
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.context_managers as pycm
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch

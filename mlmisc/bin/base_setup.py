@@ -3,7 +3,7 @@ import multiprocessing
 import os
 
 import mlmisc.utils as mlut
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 import torch
 
 

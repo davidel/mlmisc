@@ -3,7 +3,7 @@ import os
 
 import matplotlib.pyplot as plt
 import mlmisc.utils as mlut
-import py_misc_utils.gen_fs as gfs
+import py_misc_utils.gfs as gfs
 
 
 def add_parser_arguments(parser, skip_output=False):
