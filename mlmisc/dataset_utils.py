@@ -106,7 +106,8 @@ def _build_dataset_dict(train_ds, test_ds, pipelines, dataset_kwargs,
 
 
 def _get_dataset_path(name, cache_dir, dataset_kwargs):
-  ds_path = os.path.join(cache_dir, *name.split('/'))
+  sname = name.replace(':', '_')
+  ds_path = os.path.join(cache_dir, *sname.split('/'))
 
   if gfs.exists(ds_path):
     alog.debug0(f'Dataset "{name}" already cached at {ds_path}')
