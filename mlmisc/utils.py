@@ -164,12 +164,7 @@ def checkpoint_model(model, path, gs_path=None):
 
   if gs_path is not None:
     alog.debug(f'Copying model state to {gs_path}')
-    subprocess.check_call(('gsutil',
-                           '-m',
-                           '-q',
-                           'cp',
-                           path,
-                           gs_path))
+    gfs.copy(path, gs_path)
 
 
 def save_data(path, **kwargs):
