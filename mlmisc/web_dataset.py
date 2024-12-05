@@ -144,6 +144,8 @@ def create(url,
   else:
     train_size = test_size = None
 
+  alog.debug(f'Web Dataset args: {kwargs}')
+
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
