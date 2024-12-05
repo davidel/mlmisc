@@ -121,7 +121,6 @@ def create(url,
            total_samples=None,
            seed=None,
            shuffle_buffer_size=None,
-           cache_dir=None,
            **kwargs):
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
