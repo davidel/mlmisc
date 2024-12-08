@@ -144,8 +144,8 @@ def inputsum(rid):
 
 def inputtuple(rid):
 
-  def inputfn(x, result):
-    return x, result[rid]
+  def inputfn(x, results):
+    return x, results[rid]
 
   return inputfn
 
