@@ -9,6 +9,7 @@ import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
+import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.utils as pyu
 import torch
@@ -98,7 +99,7 @@ def expand_huggingface_urls(url):
 
 
 def expand_urls(url):
-  if url.startswith('hf://'):
+  if gfs.get_proto(url) == 'hf':
     return expand_huggingface_urls(url)
   else:
     m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
