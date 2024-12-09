@@ -1,4 +1,5 @@
 import collections
+import functools
 
 import py_misc_utils.utils as pyu
 import torch
@@ -124,28 +125,26 @@ class ModuleBuilder(nn.Module):
     return y
 
 
+def _inputfn(rid, x, results):
+  return (x + results[rid]) if rid is not None else x
+
 def inputfn(result_ids, back=2):
   iid = len(result_ids) - back
   rid = result_ids[iid] if iid >= 0 else None
 
-  def input_fn(x, results):
-    return (x + results[rid]) if rid is not None else x
+  return functools.partial(_inputfn, rid)
 
-  return input_fn
 
+def _inputsum(rid, x, results):
+  return x + results[rid]
 
 def inputsum(rid):
+  return functools.partial(_inputsum, rid)
 
-  def input_fn(x, results):
-    return x + results[rid]
 
-  return input_fn
-
+def _inputtuple(rid, x, results):
+  return x, results[rid]
 
 def inputtuple(rid):
-
-  def inputfn(x, results):
-    return x, results[rid]
-
-  return inputfn
+  return functools.partial(_inputtuple, rid)
 
