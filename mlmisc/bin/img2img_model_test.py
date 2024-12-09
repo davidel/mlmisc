@@ -92,7 +92,9 @@ def main(args):
       if args.device is not None:
         x, y = x.to(args.device), y.to(args.device)
 
-      out, _ = model(x)
+      out = x
+      for r in range(args.rounds):
+        out, _ = model(out)
 
       show_images(args, x, out, y)
 
@@ -125,6 +127,8 @@ if __name__ == '__main__':
   parser.add_argument('--strict', default='true',
                       choices=tuple(mlsd.VALID_STRICTS.keys()),
                       help='Which strict mode to use when loading model state dictionaries')
+  parser.add_argument('--rounds', type=int, default=1,
+                      help='The number of rounds to pass an input thorugh the model')
 
   pyam.main(parser, main)
 
