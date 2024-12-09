@@ -43,6 +43,7 @@ def plot(args):
     else:
       path = args.plotfile
 
+    gfs.makedirs(os.path.dirname(path), exists_ok=True)
     with gfs.open(path, mode='wb') as imgfd:
       plt.savefig(imgfd)
 
