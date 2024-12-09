@@ -42,8 +42,8 @@ def plot(args):
       path = f'{bpath}-{imgid + 1}{ext}'
     else:
       path = args.plotfile
+      gfs.makedirs(os.path.dirname(path), exist_ok=True)
 
-    gfs.makedirs(os.path.dirname(path), exists_ok=True)
     with gfs.open(path, mode='wb') as imgfd:
       plt.savefig(imgfd)
 
