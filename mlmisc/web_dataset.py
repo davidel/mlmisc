@@ -38,7 +38,7 @@ class WebDataset(torch.utils.data.IterableDataset):
       else:
         name = fmt = k
 
-      if fmt in {'jpg', 'png', 'jpeg'}:
+      if fmt in {'jpg', 'png', 'jpeg', 'img'}:
         ddata[name] = pyimg.from_bytes(v)
       elif fmt == 'json':
         ddata[name] = json.loads(v)
