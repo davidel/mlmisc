@@ -31,29 +31,29 @@ class WebDataset(torch.utils.data.IterableDataset):
   def _decode(self, data, tid):
     ddata = dict()
     ddata['__key__'] = tid
-    for k, v in data.items():
-      dpos = k.rfind('.')
+    for name, value in data.items():
+      dpos = name.rfind('.')
       if dpos > 0:
-        name, fmt = k[: dpos], k[dpos + 1:]
+        dname, fmt = name[: dpos], name[dpos + 1:]
       else:
-        name = fmt = k
+        dname = fmt = name
 
       if fmt in {'jpg', 'png', 'jpeg', 'img'}:
-        ddata[name] = pyimg.from_bytes(v)
+        ddata[dname] = pyimg.from_bytes(value)
       elif fmt == 'json':
-        ddata[name] = json.loads(v)
+        ddata[dname] = json.loads(value)
       elif fmt in {'pth', 'pt'}:
-        ddata[name] = torch.load(io.BytesIO(v), weights_only=True)
+        ddata[dname] = torch.load(io.BytesIO(value), weights_only=True)
       elif fmt in {'npy', 'npz'}:
-        ddata[name] = np.load(io.BytesIO(v), allow_pickle=False)
+        ddata[dname] = np.load(io.BytesIO(value), allow_pickle=False)
       elif fmt in {'cls', 'cls2', 'index'}:
-        ddata[name] = int(v)
+        ddata[dname] = int(value)
       elif fmt in {'yaml', 'yml'}:
-        ddata[name] = yaml.safe_load(io.BytesIO(v))
+        ddata[dname] = yaml.safe_load(io.BytesIO(value))
       elif fmt == 'mp':
-        ddata[name] = msgpack.unpackb(v)
+        ddata[dname] = msgpack.unpackb(value)
       else:
-        ddata[name] = v
+        ddata[dname] = value
 
     return ddata
 
@@ -72,14 +72,14 @@ class WebDataset(torch.utils.data.IterableDataset):
         dpos = ae.name.find('.')
         if dpos > 0:
           tid = ae.name[: dpos]
-          ext = ae.name[dpos + 1:]
+          name = ae.name[dpos + 1:]
 
           if tid != ctid and data:
             yield self._decode(data, ctid)
             data = dict()
 
           ctid = tid
-          data[ext] = ae.data
+          data[name] = ae.data
 
       if data:
         yield self._decode(data, ctid)
