@@ -42,7 +42,7 @@ class WebDataset(torch.utils.data.IterableDataset):
         ddata[dname] = pyimg.from_bytes(value)
       elif fmt == 'json':
         ddata[dname] = json.loads(value)
-      elif fmt in {'pth', 'pt'}:
+      elif fmt in {'pth', 'pt', 'pyd'}:
         ddata[dname] = torch.load(io.BytesIO(value), weights_only=True)
       elif fmt in {'npy', 'npz'}:
         ddata[dname] = np.load(io.BytesIO(value), allow_pickle=False)
