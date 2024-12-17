@@ -50,7 +50,7 @@ class WebDataset(torch.utils.data.IterableDataset):
         ddata[dname] = int(value)
       elif fmt in {'yaml', 'yml'}:
         ddata[dname] = yaml.safe_load(io.BytesIO(value))
-      elif fmt == 'mp':
+      elif fmt in {'mp', 'msgpack'}:
         ddata[dname] = msgpack.unpackb(value)
       else:
         ddata[dname] = value
