@@ -2,6 +2,7 @@ import os
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -44,7 +45,7 @@ def _make_trace_handler(args):
 
 
 def create_profiler(args):
-  prof_args = pyu.get_fn_kwargs(args, torch.profiler.profile, prefix='prof')
+  prof_args = pyiu.get_fn_kwargs(args, torch.profiler.profile, prefix='prof')
 
   activities = [torch.profiler.ProfilerActivity.CPU]
   if torch.cuda.is_available():
