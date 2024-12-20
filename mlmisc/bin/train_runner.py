@@ -24,7 +24,7 @@ from ..lrsched import wrapper as lrw
 
 
 def create_profiler(prof_config):
-  if prof_config:
+  if prof_config is not None:
     pcfg = pyu.parse_dict(prof_config)
     alog.debug0(f'Profiler Config: {pcfg}')
 

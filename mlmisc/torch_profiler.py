@@ -23,19 +23,19 @@ def _make_trace_handler(args):
   # https://pytorch.org/tutorials/recipes/recipes/profiler_recipe.html
   # https://pytorch.org/docs/stable/profiler.html
   row_limit = pyu.dget(args, 'prof.row_limit', 10)
-  sort_by = pyu.dget(args, 'prof.sort_by', '')
-  if not sort_by:
+  sort_by = pyu.dget(args, 'prof.sort_by', None)
+  if sort_by is None:
     sort_by = 'self_cuda_time_total' if torch.cuda.is_available() else 'cpu_time_total'
-  traces_path = pyu.dget(args, 'prof.traces_path', '')
-  stacks_path = pyu.dget(args, 'prof.stacks_path', '')
+  traces_path = pyu.dget(args, 'prof.traces_path', None)
+  stacks_path = pyu.dget(args, 'prof.stacks_path', None)
 
   def trace_handler(prof):
     alog.debug2(prof.key_averages().table(
       sort_by=sort_by, row_limit=row_limit))
-    if traces_path:
+    if traces_path is not None:
       # Use chrome://tracing for viewing.
       prof.export_chrome_trace(os.path.join(traces_path, f'trace_{prof.step_num}.json'))
-    if stacks_path:
+    if stacks_path is not None:
       # git clone https://github.com/brendangregg/FlameGraph
       # cd FlameGraph
       # ./flamegraph.pl --title "CUDA time" --countname "us." stack_?.txt > perf_viz.svg
