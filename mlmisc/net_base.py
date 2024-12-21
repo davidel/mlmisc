@@ -60,7 +60,7 @@ class NetBase(nn.Module):
   def try_call(self, api_name, *args, **kwargs):
 
     def callfn(module):
-      pyu.maybe_call(module, api_name, *args, **kwargs)
+      pycu.maybe_call(module, api_name, *args, **kwargs)
 
     self.apply(callfn)
 
