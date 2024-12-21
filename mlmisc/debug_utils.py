@@ -2,6 +2,8 @@ import collections
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.core_utils as pycu
+import py_misc_utils.object_tracker as pyot
 import py_misc_utils.utils as pyu
 import torch
 
@@ -92,4 +94,33 @@ def get_grads_stats(model,
 def show_tensors_stats(stats, slevs):
   for k, v in slevs.items():
     alog.log(v, getattr(stats, k))
+
+
+class TensorTracker:
+
+  def __init__(self, min_size=None):
+    self._min_size = min_size
+
+  def is_instance(self, obj):
+    return torch.is_tensor(obj) or isinstance(obj, np.ndarray)
+
+  def headline(self, obj):
+    if torch.is_tensor(obj):
+      size = obj.element_size() * obj.nelement()
+      header = f'PT Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} device={obj.device} ' \
+        f'size={pycu.size_str(size)}'
+    elif isinstance(obj, np.ndarray):
+      size = obj.size * obj.itemsize
+      header = f'NP Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} size={pycu.size_str(size)}'
+    else:
+      alog.xraise(RuntimeError, f'Unknown object: {obj}')
+
+    if self._min_size is None or size >= self._min_size:
+      return size, header
+
+
+def track_tensors(min_size=None):
+  tracker = TensorTracker(min_size=min_size)
+
+  return pyot.track_objects(tracker)
 
