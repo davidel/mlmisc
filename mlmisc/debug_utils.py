@@ -115,8 +115,8 @@ class TensorTracker:
       return size, info
 
 
-def track_tensors(min_size=None):
+def track_tensors(min_size=None, max_references=None):
   tracker = TensorTracker(min_size=min_size)
 
-  return pyot.track_objects(tracker)
+  return pyot.track_objects(tracker, max_references=max_references)
 
