@@ -5,6 +5,7 @@ import random
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.rnd_utils as pyr
 import py_misc_utils.utils as pyu
 import numpy as np
@@ -184,7 +185,7 @@ def create_random_stack(max_output,
                                                               sigma=fsigma)))
       features = pyu.round_up(features, round_features)
 
-    opt_args = pyu.denone(maxpool=maxpool, avgpool=avgpool, act=act)
+    opt_args = pycu.denone(maxpool=maxpool, avgpool=avgpool, act=act)
 
     convs.append(ConvSpec(features=features,
                           kernel_size=ksize,
