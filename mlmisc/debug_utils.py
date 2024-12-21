@@ -101,22 +101,18 @@ class TensorTracker:
   def __init__(self, min_size=None):
     self._min_size = min_size
 
-  def is_instance(self, obj):
-    return torch.is_tensor(obj) or isinstance(obj, np.ndarray)
-
-  def headline(self, obj):
+  def track(self, obj):
+    size = info = None
     if torch.is_tensor(obj):
       size = obj.element_size() * obj.nelement()
-      header = f'PT Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} device={obj.device} ' \
+      info = f'PT Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} device={obj.device} ' \
         f'size={pycu.size_str(size)}'
     elif isinstance(obj, np.ndarray):
       size = obj.size * obj.itemsize
-      header = f'NP Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} size={pycu.size_str(size)}'
-    else:
-      alog.xraise(RuntimeError, f'Unknown object: {obj}')
+      info = f'NP Tensor: shape={tuple(obj.shape)} dtype={obj.dtype} size={pycu.size_str(size)}'
 
-    if self._min_size is None or size >= self._min_size:
-      return size, header
+    if info is not None and (self._min_size is None or size >= self._min_size):
+      return size, info
 
 
 def track_tensors(min_size=None):
