@@ -1,7 +1,6 @@
 import collections
 
 import py_misc_utils.alog as alog
-import py_misc_utils.core_utils as pycu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -51,8 +50,8 @@ def load_state_dict(module, state, strict=None, **kwargs):
 
 
 def save_obj_state(obj, state, state_fields=None, no_state_fields=None, key=None):
-  state_fields = set(pycu.expand_strings(state_fields or ()))
-  no_state_fields = set(pycu.expand_strings(no_state_fields or ()))
+  state_fields = set(pyu.expand_strings(state_fields or ()))
+  no_state_fields = set(pyu.expand_strings(no_state_fields or ()))
   key = pyu.value_or(key, pyu.cname(obj))
 
   obj_state = dict()
