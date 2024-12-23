@@ -1,7 +1,7 @@
 import py_misc_utils.alog as alog
 import py_misc_utils.compression as pycomp
-import py_misc_utils.http_async_fetcher as pyhaf
 import py_misc_utils.img_utils as pyimg
+import py_misc_utils.url_fetcher as pyuf
 import py_misc_utils.utils as pyu
 import py_misc_utils.work_results as pywres
 import torch
@@ -18,23 +18,20 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
 
   def generate(self):
     num_workers = self._kwargs.get('num_workers')
-    http_args = self._kwargs.get('http_args')
-    if http_args is None:
-      http_args = pyu.dict_subset(self._kwargs, 'headers', 'timeout')
 
     queue_batch = self._kwargs.get('queue_batch', 256)
-    with pyhaf.HttpAsyncFetcher(num_workers=num_workers, http_args=http_args) as haf:
+    with pyuf.UrlFetcher(num_workers=num_workers, fs_args=self._kwargs) as urlf:
       index = queued = 0
       while index < len(self._urls):
         qcap = min(queue_batch - queued, len(self._urls) - index)
         qlist = self._urls[index: index + qcap]
 
-        haf.enqueue(*qlist)
+        urlf.enqueue(*qlist)
 
         queued += len(qlist)
         index += len(qlist)
 
-        for url, data in haf.iter_results(max_results=queued // 2):
+        for url, data in urlf.iter_results(max_results=queued // 2):
           queued -= 1
           if not isinstance(data, pywres.WorkException):
             try:
