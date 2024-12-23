@@ -20,7 +20,7 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
     num_workers = self._kwargs.get('num_workers')
 
     queue_batch = self._kwargs.get('queue_batch', 256)
-    with pyuf.UrlFetcher(num_workers=num_workers, fs_args=self._kwargs) as urlf:
+    with pyuf.UrlFetcher(num_workers=num_workers, fs_kwargs=self._kwargs) as urlf:
       index = queued = 0
       while index < len(self._urls):
         qcap = min(queue_batch - queued, len(self._urls) - index)
