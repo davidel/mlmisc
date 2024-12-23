@@ -7,7 +7,11 @@ import py_misc_utils.utils as pyu
 
 def _config_split(config_data):
   parts = pyu.resplit(config_data, ':')
-  mod_config = pyu.parse_dict(parts[1], allow_args=True) if len(parts) == 2 else (dict(), ())
+  if len(parts) == 2:
+    args, kwargs = pyu.parse_args(pyu.comma_split(parts[1]))
+    mod_config = kwargs, args
+  else:
+    mod_config = dict(), ()
 
   return parts[0], mod_config
 

@@ -72,15 +72,7 @@ def create_model(args, trainer, dataset):
   if model is None:
     model_function, *cmdline_args = args.extra_args
 
-    model_args, model_kwargs = [], dict()
-    for arg in cmdline_args:
-      parts = [x.strip() for x in pyu.resplit(arg, '=')]
-      if len(parts) == 2:
-        model_kwargs[parts[0]] = pyu.infer_value(parts[1])
-      elif len(parts) == 1:
-        model_args.append(pyu.infer_value(parts[0]))
-      else:
-        alog.xraise(ValueError, f'Syntax error: {arg}')
+    model_args, model_kwargs = pyu.parse_args(cmdline_args)
 
     x, y = pyu.seqfirst(dataset)
     x_shape = tuple(getattr(x, 'shape', ()))
