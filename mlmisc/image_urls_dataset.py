@@ -60,7 +60,7 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
             exception = data.exception()
 
           if exception is not None:
-            pyu.mlog(lambda: f'Exception: {exception}', level=alog.DEBUG)
+            pyu.mlog(lambda: f'Exception: {exception}', level=alog.VERBOSE)
 
   def __iter__(self):
     return iter(self.generate())
