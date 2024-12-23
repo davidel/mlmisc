@@ -68,7 +68,7 @@ class IterableDataset(dsb.IterableDataset):
       for data in self._data:
         yield data
     except GeneratorExit:
-      break
+      pass
 
   def __len__(self):
     dslen = dataset_size(self._data)
