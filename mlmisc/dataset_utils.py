@@ -64,11 +64,8 @@ class IterableDataset(dsb.IterableDataset):
     return getattr(self._data, name, None)
 
   def enum_samples(self):
-    try:
-      for data in self._data:
-        yield data
-    except GeneratorExit:
-      pass
+    for data in self._data:
+      yield data
 
   def __len__(self):
     dslen = dataset_size(self._data)

@@ -120,17 +120,19 @@ def expand_urls(url):
 
 
 def create(url,
+           url_shuffle=None,
            shuffle=None,
            split_pct=None,
            total_samples=None,
            seed=None,
            shuffle_buffer_size=None,
            **kwargs):
+  url_shuffle = pyu.value_or(url_shuffle, True)
   shuffle = pyu.value_or(shuffle, True)
   split_pct = pyu.value_or(split_pct, 0.9)
 
   urls = expand_urls(url)
-  if shuffle:
+  if url_shuffle:
     # Stable shuffling, given same seed. Even though the WebDataset (and the
     # ShufflerDataset) do shuffle urls/samples, because of the way we split
     # between train/test urls (by slicing), randomization is needed since the
