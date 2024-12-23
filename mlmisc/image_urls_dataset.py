@@ -38,7 +38,8 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
           queued -= 1
           if not isinstance(data, pywres.WorkException):
             try:
-              yield pyimg.from_bytes(data)
+              img = pyimg.from_bytes(data)
+              yield (img,)
             except:
               pass
 
