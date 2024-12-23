@@ -32,9 +32,8 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
     num_workers = self._kwargs.get('num_workers', queue_batch)
 
     with pyuf.UrlFetcher(num_workers=num_workers, fs_kwargs=self._kwargs) as urlf:
-      stopped = False
       index = queued = 0
-      while not stopped and index < len(urls):
+      while index < len(urls):
         qcap = min(queue_batch - queued, len(urls) - index)
         qlist = urls[index: index + qcap]
 
@@ -52,8 +51,7 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
               img = pyimg.from_bytes(data, convert=convert)
               yield (img,)
             except GeneratorExit:
-              stopped = True
-              break
+              raise
             except Exception as ex:
               exception = ex
           else:
