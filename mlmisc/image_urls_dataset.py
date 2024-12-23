@@ -45,6 +45,8 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
 
         for url, data in urlf.iter_results(max_results=queued // 2):
           queued -= 1
+
+          exception = None
           if not isinstance(data, pywres.WorkException):
             try:
               img = pyimg.from_bytes(data, convert=convert)
@@ -52,8 +54,13 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
             except GeneratorExit:
               stopped = True
               break
-            except:
-              pass
+            except Exception as ex:
+              exception = ex
+          else:
+            exception = data.exception()
+
+          if exception is not None:
+            pyu.mlog(lambda: f'Exception: {exception}', level=alog.DEBUG)
 
   def __iter__(self):
     return iter(self.generate())
