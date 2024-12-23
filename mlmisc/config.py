@@ -9,7 +9,7 @@ def _config_split(config_data):
   parts = pyu.resplit(config_data, ':')
   if len(parts) == 2:
     args, kwargs = pyu.parse_args(pyu.comma_split(parts[1]))
-    mod_config = kwargs, args
+    mod_config = kwargs, tuple(args)
   else:
     mod_config = dict(), ()
 
