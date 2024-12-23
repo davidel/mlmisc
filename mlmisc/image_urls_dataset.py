@@ -17,9 +17,10 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
     self._kwargs = kwargs
 
   def generate(self):
-    num_workers = self._kwargs.get('num_workers')
-
+    convert = self._kwargs.get('convert')
     queue_batch = self._kwargs.get('queue_batch', 256)
+    num_workers = self._kwargs.get('num_workers', queue_batch)
+
     with pyuf.UrlFetcher(num_workers=num_workers, fs_kwargs=self._kwargs) as urlf:
       index = queued = 0
       while index < len(self._urls):
@@ -35,7 +36,7 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
           queued -= 1
           if not isinstance(data, pywres.WorkException):
             try:
-              img = pyimg.from_bytes(data)
+              img = pyimg.from_bytes(data, convert=convert)
               yield (img,)
             except:
               pass
