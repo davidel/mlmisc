@@ -119,6 +119,29 @@ def expand_urls(url):
     return [url]
 
 
+def expand_dataset_urls(dsinfo, shuffle=None, seed=None):
+  train = test = None
+  if dsinfo.startswith('{'):
+    dsdata = pyu.parse_dict(dsinfo)
+
+    train = expand_urls(dsdata['train'])
+    test = expand_urls(dsdata['test'])
+  else:
+    train = expand_urls(dsinfo)
+
+  if shuffle in (None, True):
+    # Stable shuffling, given same seed. Even though the WebDataset (and the
+    # ShufflerDataset) do shuffle urls/samples, because of the way we split
+    # between train/test urls (by slicing), randomization is needed since the
+    # distribution might not be uniform among the dataset urls.
+    if train is not None:
+      train = dsb.shuffled_data(train, seed=seed)
+    if test is not None:
+      test = dsb.shuffled_data(test, seed=seed)
+
+  return pyu.make_object(train=train, test=test)
+
+
 def create(url,
            url_shuffle=None,
            shuffle=None,
@@ -127,21 +150,17 @@ def create(url,
            seed=None,
            shuffle_buffer_size=None,
            **kwargs):
-  url_shuffle = pyu.value_or(url_shuffle, True)
-  shuffle = pyu.value_or(shuffle, True)
-  split_pct = pyu.value_or(split_pct, 0.9)
+  ds_urls = expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
 
-  urls = expand_urls(url)
-  if url_shuffle:
-    # Stable shuffling, given same seed. Even though the WebDataset (and the
-    # ShufflerDataset) do shuffle urls/samples, because of the way we split
-    # between train/test urls (by slicing), randomization is needed since the
-    # distribution might not be uniform among the dataset urls.
-    urls = dsb.shuffled_data(urls, seed=seed)
+  if ds_urls.test is None:
+    split_pct = pyu.value_or(split_pct, 0.9)
 
-  ntrain = int(split_pct * len(urls))
-  train_urls = urls[: ntrain]
-  test_urls = urls[ntrain:]
+    ntrain = int(split_pct * len(ds_urls.train))
+    train_urls = ds_urls.train[: ntrain]
+    test_urls = ds_urls.train[ntrain:]
+  else:
+    train_urls = ds_urls.train
+    test_urls = ds_urls.test
 
   if total_samples is not None:
     samples_per_shard = total_samples // len(urls)
@@ -153,7 +172,7 @@ def create(url,
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
-  if shuffle:
+  if shuffle in (None, True):
     ds['train'] = dsb.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
     ds['test'] = dsb.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
 
