@@ -144,7 +144,8 @@ def create(url,
            url_shuffle=None,
            shuffle=None,
            split_pct=None,
-           total_samples=None,
+           train_size=None,
+           test_size=None,
            seed=None,
            shuffle_buffer_size=None,
            **kwargs):
@@ -159,13 +160,6 @@ def create(url,
   else:
     train_urls = ds_urls.train
     test_urls = ds_urls.test
-
-  if total_samples is not None:
-    samples_per_shard = total_samples // (len(train_urls) + len(test_urls))
-    train_size = samples_per_shard * len(train_urls)
-    test_size = samples_per_shard * len(test_urls)
-  else:
-    train_size = test_size = None
 
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
