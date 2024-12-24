@@ -52,7 +52,7 @@ def build_conv_stack(convs, net=None, shape=None):
 CONVS_KEY = 'convs'
 
 def load_conv_specs(path):
-  cfg = pyu.load_config(cfg_file=path)
+  cfg = pyu.load_config(path)
   alog.debug(f'Conv Specs Config:\n{pyu.config_to_string(cfg)}')
 
   conv_specs = []

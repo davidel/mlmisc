@@ -85,7 +85,7 @@ def replace(args):
 def dreplace(args):
   data, model_data = load_data(args.input, args.map_location)
 
-  repl_config = pyu.load_config(cfg_file=args.dump_file)
+  repl_config = pyu.load_config(args.dump_file)
 
   orig, replace = pyu.mget(repl_config, 'orig, replace')
   changed = 0
