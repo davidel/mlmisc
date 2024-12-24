@@ -121,11 +121,9 @@ def expand_urls(url):
 
 def expand_dataset_urls(dsinfo, shuffle=None, seed=None):
   train = test = None
-  if dsinfo.startswith('{'):
-    dsdata = pyu.parse_dict(dsinfo)
-
-    train = expand_urls(dsdata['train'])
-    test = expand_urls(dsdata['test'])
+  if isinstance(dsinfo, dict):
+    train = expand_urls(dsinfo['train'])
+    test = expand_urls(dsinfo['test'])
   else:
     train = expand_urls(dsinfo)
 
