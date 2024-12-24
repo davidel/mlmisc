@@ -161,7 +161,7 @@ def create(url,
     test_urls = ds_urls.test
 
   if total_samples is not None:
-    samples_per_shard = total_samples // len(urls)
+    samples_per_shard = total_samples // (len(train_urls) + len(test_urls))
     train_size = samples_per_shard * len(train_urls)
     test_size = samples_per_shard * len(test_urls)
   else:
