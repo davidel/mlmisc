@@ -248,7 +248,6 @@ class _IterDataLoader:
 
           batch.append(idata)
 
-        print(f'BATCH {len(batch)}')
         if batch:
           cbatch = collater.add(batch)
 
