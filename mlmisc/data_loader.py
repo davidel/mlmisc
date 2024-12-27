@@ -8,8 +8,8 @@ import py_misc_utils.fin_wrap as pyfw
 import py_misc_utils.utils as pyu
 import torch
 
-from . dataset_base as dsb
-from . dataset_utils as dsu
+from . import dataset_base as dsb
+from . import dataset_utils as dsu
 
 
 class _QueueGetter:
