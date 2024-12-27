@@ -252,10 +252,12 @@ class _IterDataLoader:
           cbatch = collater.add(batch)
 
           if cbatch is not None:
+            alog.info(f'GOT BATCH {len(cbatch)}')
             yield cbatch
 
             index += len(cbatch)
             while (cbatch := collater.reset(np.arange(index, index + self._batch_size))) is not None:
+              alog.info(f'GOT BATCH {len(cbatch)}')
               yield cbatch
 
               index += len(cbatch)
