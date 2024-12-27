@@ -100,6 +100,8 @@ class _IterDataFeeder:
         for i in range(feed_size):
           data = next(data_iter)
 
+          print('GOT DATA!')
+
           output_queue = self._output_queues[index % len(self._output_queues)]
 
           output_queue.put((index, data))
@@ -252,12 +254,10 @@ class _IterDataLoader:
           cbatch = collater.add(batch)
 
           if cbatch is not None:
-            alog.info(f'GOT BATCH {len(cbatch)}')
             yield cbatch
 
             index += len(cbatch)
             while (cbatch := collater.reset(np.arange(index, index + self._batch_size))) is not None:
-              alog.info(f'GOT BATCH {len(cbatch)}')
               yield cbatch
 
               index += len(cbatch)
