@@ -24,6 +24,7 @@ class _QueueGetter:
     while self._max_nones > self._nones:
       data = self._input_queue.get()
       if isinstance(data, Exception):
+        alog.error(f'Got exception in queue: {repr(ex)}')
         raise data
       if data is not None:
         break
