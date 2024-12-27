@@ -4,6 +4,7 @@ import random
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -129,8 +130,8 @@ def _transformer_fn(sample, target, x):
 
 
 def transformer(sample=None, target=None):
-  sample = pyu.value_or(sample, pyu.ident)
-  target = pyu.value_or(target, pyu.ident)
+  sample = pyu.value_or(sample, pycu.ident)
+  target = pyu.value_or(target, pycu.ident)
 
   return functools.partial(_transformer_fn, sample, target)
 
