@@ -10,6 +10,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import data_loader as dload
 from . import dataset_utils as dsu
 from . import debug_utils as du
 from . import utils as ut
@@ -130,10 +131,10 @@ class Trainer:
 
   def _val_loss(self, tctx):
     shuffle = not isinstance(tctx.val_data, torch.utils.data.IterableDataset)
-    loader = torch.utils.data.DataLoader(tctx.val_data,
-                                         batch_size=tctx.batch_size,
-                                         shuffle=shuffle,
-                                         num_workers=tctx.num_workers)
+    loader = dload.DataLoader(tctx.val_data,
+                              batch_size=tctx.batch_size,
+                              shuffle=shuffle,
+                              num_workers=tctx.num_workers)
 
     num_samples = dsu.dataset_size(tctx.val_data)
     alog.info(f'Running validation on {num_samples or "N/A"} samples')
@@ -222,10 +223,10 @@ class Trainer:
 
   def _step(self, tctx):
     shuffle = not isinstance(tctx.train_data, torch.utils.data.IterableDataset)
-    loader = torch.utils.data.DataLoader(tctx.train_data,
-                                         batch_size=tctx.batch_size,
-                                         shuffle=shuffle,
-                                         num_workers=tctx.num_workers)
+    loader = dload.DataLoader(tctx.train_data,
+                              batch_size=tctx.batch_size,
+                              shuffle=shuffle,
+                              num_workers=tctx.num_workers)
 
     num_samples = dsu.dataset_size(tctx.train_data)
     alog.info(f'Running EPOCH train on {num_samples or "N/A"} samples')
