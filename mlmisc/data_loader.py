@@ -55,7 +55,7 @@ class _BatchCollater:
       if data is not None:
         bdata.append(data)
 
-    return self._collate_fn(bdata) if bdata else None
+    return (self._collate_fn(bdata), len(bdata)) if bdata else None
 
   def add(self, batch):
     for index, data in batch:
@@ -85,6 +85,8 @@ class _IterDataFeeder:
     self._proc.start()
 
   def _run(self):
+    _init_process()
+
     exit_result = None
     try:
       data_iter = iter(self._dataset)
@@ -128,6 +130,8 @@ class _MapDataFeeder:
     self._proc.start()
 
   def _run(self):
+    _init_process()
+
     exit_result = None
     try:
       queue_getter = _QueueGetter(self._input_queue)
@@ -162,6 +166,8 @@ class _DataTransformer:
     self._proc.start()
 
   def _run(self):
+    _init_process()
+
     exit_result = None
     try:
       queue_getter = _QueueGetter(self._input_queue)
@@ -252,13 +258,15 @@ class _IterDataLoader:
           cbatch = collater.add(batch)
 
           if cbatch is not None:
-            yield cbatch
+            bdata, bsize = cbatch
+            yield bdata
 
-            index += len(cbatch)
+            index += bsize
             while (cbatch := collater.reset(np.arange(index, index + self._batch_size))) is not None:
-              yield cbatch
+              bdata, bsize = cbatch
+              yield bdata
 
-              index += len(cbatch)
+              index += bsize
 
             del cbatch
 
@@ -351,16 +359,18 @@ class _MapDataLoader:
           cbatch = collater.add(batch)
 
           if cbatch is not None:
-            index += len(cbatch)
+            bdata, bsize = cbatch
+            index += bsize
             input_qindex = self._feed_indices(indices, index, self._batch_size, input_qindex)
 
-            yield cbatch
+            yield bdata
 
             while (cbatch := collater.reset(indices[index: index + self._batch_size])) is not None:
-              index += len(cbatch)
+              bdata, bsize = cbatch
+              index += bsize
               input_qindex = self._feed_indices(indices, index, self._batch_size, input_qindex)
 
-              yield cbatch
+              yield bdata
 
             del cbatch
 
@@ -390,6 +400,10 @@ def _queue_close(q):
 def _closer(objs):
   for obj in objs:
     obj.close()
+
+
+def _init_process():
+  torch.set_num_threads(1)
 
 
 def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
