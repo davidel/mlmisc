@@ -100,8 +100,6 @@ class _IterDataFeeder:
         for i in range(feed_size):
           data = next(data_iter)
 
-          print('GOT DATA!')
-
           output_queue = self._output_queues[index % len(self._output_queues)]
 
           output_queue.put((index, data))
@@ -250,6 +248,7 @@ class _IterDataLoader:
 
           batch.append(idata)
 
+        print(f'BATCH {len(batch)}')
         if batch:
           cbatch = collater.add(batch)
 
