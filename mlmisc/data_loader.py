@@ -12,6 +12,12 @@ from . import dataset_base as dsb
 from . import dataset_utils as dsu
 
 
+class _QueueException(Exception):
+
+  def __init__(self, ex):
+    super().__init__(repr(ex))
+
+
 class _QueueGetter:
 
   def __init__(self, input_queue, max_nones=1):
@@ -24,7 +30,6 @@ class _QueueGetter:
     while self._max_nones > self._nones:
       data = self._input_queue.get()
       if isinstance(data, Exception):
-        alog.error(f'Got exception in queue: {repr(ex)}')
         raise data
       if data is not None:
         break
@@ -103,7 +108,7 @@ class _IterDataFeeder:
       pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader iter data feeder')
-      exit_result = ex
+      exit_result = _QueueException(ex)
     finally:
       for outq in self._output_queues:
         outq.put(exit_result)
@@ -138,7 +143,7 @@ class _MapDataFeeder:
           self._output_queue.put((index, data))
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader map data feeder')
-      exit_result = ex
+      exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
 
@@ -173,7 +178,7 @@ class _DataTransformer:
         self._output_queue.put((index, data))
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data transformer')
-      exit_result = ex
+      exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
 
