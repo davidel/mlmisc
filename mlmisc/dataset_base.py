@@ -13,14 +13,19 @@ from . import utils as ut
 class DatasetBase:
 
   def __init__(self, pipeline=None, **kwargs):
-    self._pipeline = pyu.value_or(pipeline, pyu.ident)
+    self._pipeline = pipeline
     self._kwargs = kwargs
 
   def extra_arg(self, name):
     return self._kwargs.get(name)
 
   def process_sample(self, data):
-    return self._pipeline(data)
+    return self._pipeline(data) if self._pipeline is not None else data
+
+  def reset_pipeline(self, new_pipeline=None):
+    pipeline, self._pipeline = self._pipeline, new_pipeline
+
+    return pipeline
 
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
@@ -136,15 +141,6 @@ def _items_selector_fn(items, x):
 
 def items_selector(items):
   return functools.partial(_items_selector_fn, items)
-
-
-def guess_select(x):
-  if isinstance(x, (list, tuple)):
-    return x[: 2]
-  if isinstance(x, dict):
-    return tuple(x.values())[: 2]
-
-  return x
 
 
 def sliced_dataset(dataset, dslice):
