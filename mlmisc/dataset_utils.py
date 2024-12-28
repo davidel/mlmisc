@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.gfs as gfs
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.pipeline as pypl
 import py_misc_utils.utils as pyu
@@ -126,31 +127,35 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
 def _try_torchvision(name, ds_path, split_pct, dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
-    sig = inspect.signature(dsclass)
-    kwargs = dataset_kwargs.copy()
-    if sig.parameters.get('download') is not None and 'download' not in kwargs:
-      kwargs.update(download=True)
-    ds_seed = kwargs.pop('ds_seed', None)
+    dataset_kwargs = dataset_kwargs.copy()
+    dataset_kwargs.update(root=ds_path)
 
-    if sig.parameters.get('train') is not None:
-      train_ds = dsclass(root=ds_path, train=True, **kwargs)
+    args, kwargs = pyiu.fetch_args(dsclass, dataset_kwargs)
 
-      kwargs.pop('download', None)
-      test_ds = dsclass(root=ds_path, train=False, **kwargs)
-    elif sig.parameters.get('split') is not None:
-      train_split = kwargs.pop('train_split', 'train')
-      test_split = kwargs.pop('test_split', 'test')
-
-      train_ds = dsclass(root=ds_path, split=train_split, **kwargs)
+    if 'train' in kwargs:
+      kwargs.update(train=True)
+      train_ds = dsclass(*args, **kwargs)
 
       kwargs.pop('download', None)
-      test_ds = dsclass(root=ds_path, split=test_split, **kwargs)
+      kwargs.update(train=False)
+      test_ds = dsclass(*args, **kwargs)
+    elif 'split' in kwargs:
+      train_split = dataset_kwargs.get('train_split', 'train')
+      test_split = dataset_kwargs.get('test_split', 'test')
+
+      kwargs.update(split=train_split)
+      train_ds = dsclass(*args, **kwargs)
+
+      kwargs.pop('download', None)
+      kwargs.update(split=test_split)
+      test_ds = dsclass(*args, **kwargs)
     else:
-      full_ds = dsclass(root=ds_path, **kwargs)
+      full_ds = dsclass(*args, **kwargs)
 
       # If we split the dataset ourselves, we do not know if the distribution of samples
       # is uniform within the dataset, so we shuffle indices and create a randomized one.
-      shuffled_indices = dsb.shuffled_indices(len(full_ds), seed=ds_seed)
+      shuffled_indices = dsb.shuffled_indices(len(full_ds),
+                                              seed=dataset_kwargs.get('ds_seed'))
       ntrain = int(split_pct * len(shuffled_indices))
 
       alog.info(f'Loading torchvision "{name}" dataset whose API does not support splits. ' \
