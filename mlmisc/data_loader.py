@@ -44,31 +44,42 @@ class _BatchCollater:
   def __init__(self, batch_size, collate_fn, indices):
     self._batch_size = batch_size
     self._collate_fn = collate_fn
-    self._indices = indices
-    self._pending = set(indices)
+    self._indices = np.asarray(indices)
+    self._index = 0
+    self._pending = set(self._indices[: batch_size])
     self._cached = dict()
 
   def _make_batch(self):
     bdata = []
-    for index in self._indices:
+    for index in self._indices[self._index: self._index + self._batch_size]:
       data = self._cached.pop(index, None)
       if data is not None:
         bdata.append(data)
+        if len(bdata) == self._batch_size:
+          break
 
-    return (self._collate_fn(bdata), len(bdata)) if bdata else None
+    if bdata:
+      self._index += self._batch_size
+      self._pending = set(self._indices[self._index: self._index + self._batch_size]) - \
+        set(self._cached.keys())
+
+      return self._collate_fn(bdata), len(bdata)
+
+  def add_indices(self, indices):
+    self._indices = np.concatenate((self._indices[self._index:], np.asarray(indices)))
+    self._index = 0
+
+    return len(self._indices)
+
+  def left_indices(self):
+    return len(self._indices) - self._index
 
   def add(self, batch):
     for index, data in batch:
       self._cached[index] = data
-      if index in self._pending:
-        self._pending.remove(index)
+      self._pending.discard(index)
 
-    return None if self._pending else self._make_batch()
-
-  def reset(self, indices):
-    self._indices = indices
-    self._pending = set(indices) - set(self._cached.keys())
-
+  def get_batch(self):
     return None if self._pending else self._make_batch()
 
   def flush(self):
@@ -195,13 +206,15 @@ class _DataTransformer:
 
 class _IterDataLoader:
 
-  def __init__(self, mpctx, dataset, batch_size, num_workers, collate_fn,
+  def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
                prefetch_factor):
     self._mpctx = mpctx
     self._dataset = dataset
+    self._shuffle = shuffle
     self._batch_size = batch_size
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
+    self._shuffle_window = 512
     self._input_queue = mpctx.Queue()
     self._output_queue = mpctx.Queue()
     self._trans_queues = []
@@ -234,17 +247,30 @@ class _IterDataLoader:
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
       _queue_close(q)
 
+  def _make_indices(self, index, size):
+    indices = np.arange(index, index + size)
+    if self._shuffle:
+      for idx in range(0, len(indices), self._shuffle_window):
+        np.random.shuffle(indices[idx: idx + self._shuffle_window])
+
+    return indices, index + size
+
   def _generate(self):
+    indices_size = max(10000, 8 * self._shuffle_window)
     try:
+      indices, index = self._make_indices(0, indices_size)
+
       queue_getter = _QueueGetter(self._output_queue, max(1, len(self._trans_queues)))
 
-      index = 0
-      collater = _BatchCollater(self._batch_size, self._collate_fn,
-                                np.arange(index, index + self._batch_size))
+      collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
       self._input_queue.put(self._prefetch_factor * self._batch_size)
       while True:
         self._input_queue.put(self._batch_size)
+
+        if indices_size // 3 > collater.left_indices():
+          indices, index = self._make_indices(index, indices_size - collater.left_indices())
+          collater.add_indices(indices)
 
         batch = []
         for i in range(self._batch_size):
@@ -255,27 +281,20 @@ class _IterDataLoader:
           batch.append(idata)
 
         if batch:
-          cbatch = collater.add(batch)
+          collater.add(batch)
 
-          if cbatch is not None:
+          while (cbatch := collater.get_batch()) is not None:
             bdata, bsize = cbatch
             yield bdata
-
-            index += bsize
-            while (cbatch := collater.reset(np.arange(index, index + self._batch_size))) is not None:
-              bdata, bsize = cbatch
-              yield bdata
-
-              index += bsize
 
             del cbatch
 
         if len(batch) < self._batch_size:
           break
 
-      cbatch = collater.flush()
-      if cbatch is not None:
-        yield cbatch
+      while (cbatch := collater.flush()) is not None:
+        bdata, bsize = cbatch
+        yield bdata
     except StopIteration:
       pass
     finally:
@@ -337,8 +356,7 @@ class _MapDataLoader:
       queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
 
       input_qindex = index = 0
-      collater = _BatchCollater(self._batch_size, self._collate_fn,
-                                indices[index: index + self._batch_size])
+      collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
       if self._prefetch_factor:
         input_qindex = self._feed_indices(indices,
@@ -356,30 +374,23 @@ class _MapDataLoader:
           batch.append(idata)
 
         if batch:
-          cbatch = collater.add(batch)
+          collater.add(batch)
 
-          if cbatch is not None:
+          while (cbatch := collater.get_batch()) is not None:
             bdata, bsize = cbatch
             index += bsize
             input_qindex = self._feed_indices(indices, index, self._batch_size, input_qindex)
 
             yield bdata
 
-            while (cbatch := collater.reset(indices[index: index + self._batch_size])) is not None:
-              bdata, bsize = cbatch
-              index += bsize
-              input_qindex = self._feed_indices(indices, index, self._batch_size, input_qindex)
-
-              yield bdata
-
             del cbatch
 
         if len(batch) < self._batch_size:
           break
 
-      cbatch = collater.flush()
-      if cbatch is not None:
-        yield cbatch
+      while (cbatch := collater.flush()) is not None:
+        bdata, bsize = cbatch
+        yield bdata
     except StopIteration:
       pass
     finally:
@@ -412,7 +423,7 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
     if num_workers > 1 and not isinstance(dataset, dsb.DatasetBase):
       num_workers = 1
 
-    return _IterDataLoader(mpctx, dataset, batch_size, num_workers, collate_fn,
+    return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
                            prefetch_factor)
   else:
     return _MapDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
