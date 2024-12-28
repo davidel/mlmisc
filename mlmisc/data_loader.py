@@ -52,7 +52,7 @@ class _BatchCollater:
     self._cached = dict()
 
   def _make_batch(self):
-    bdata = []
+    idx, bdata = self._index, []
     for idx in range(self._index, len(self._indices)):
       data = self._cached.pop(self._indices[idx], None)
       if data is not None:
@@ -61,12 +61,11 @@ class _BatchCollater:
           idx += 1
           break
 
-    if bdata:
-      self._index = idx
-      self._pending = set(self._indices[self._index: self._index + self._batch_size]) - \
-        set(self._cached.keys())
+    self._index = idx
+    self._pending = set(self._indices[self._index: self._index + self._batch_size]) - \
+      set(self._cached.keys())
 
-      return self._collate_fn(bdata), len(bdata)
+    return (self._collate_fn(bdata), len(bdata)) if bdata else None
 
   def add_indices(self, indices):
     self._indices = np.concatenate((self._indices[self._index:], np.asarray(indices)))
