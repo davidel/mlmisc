@@ -425,7 +425,7 @@ def _init_process():
 
 
 def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                   prefetch_factor):
+                   prefetch_factor, **kwargs):
   if isinstance(dataset, torch.utils.data.IterableDataset):
     if num_workers > 1 and not isinstance(dataset, dsb.DatasetBase):
       num_workers = 1
