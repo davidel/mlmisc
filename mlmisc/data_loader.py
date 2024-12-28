@@ -351,6 +351,8 @@ class _MapDataLoader:
 
       input_queue.put([indices[i]])
 
+    return stop
+
   def _generate(self):
     try:
       indices = np.arange(len(self._dataset))
@@ -362,10 +364,12 @@ class _MapDataLoader:
       collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
       if self._prefetch_factor:
-        self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
+        index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
+      else:
+        index = 0
 
-      index = 0
-      while index < len(indices):
+      processed = 0
+      while processed < len(indices):
         batch = []
         for i in range(self._batch_size):
           idata = queue_getter.get()
@@ -379,8 +383,8 @@ class _MapDataLoader:
 
           while (cbatch := collater.get_batch()) is not None:
             bdata, bsize = cbatch
-            index += bsize
-            self._feed_indices(indices, index, self._batch_size)
+            processed += bsize
+            index = self._feed_indices(indices, index, self._batch_size)
 
             yield bdata
 
