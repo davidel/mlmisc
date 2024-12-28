@@ -1,5 +1,6 @@
 import functools
 import multiprocessing
+import queue
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -95,12 +96,18 @@ class _IterDataFeeder:
     self._proc = mpctx.Process(target=self._run)
     self._proc.start()
 
+  def _create_iterator(self):
+    if isinstance(self._dataset, dsb.IterableDataset):
+      yield from self._dataset.enum_samples()
+    else:
+      yield from self._dataset
+
   def _run(self):
     _init_process()
 
     exit_result = None
     try:
-      data_iter = iter(self._dataset)
+      data_iter = iter(self._create_iterator())
 
       queue_getter = _QueueGetter(self._input_queue)
 
@@ -223,8 +230,7 @@ class _IterDataLoader:
       feeder = _IterDataFeeder(mpctx, dataset, self._input_queue, (self._output_queue,))
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
     else:
-      pipeline = dataset.reset_pipeline() or pycu.ident
-
+      pipeline = dataset.pipeline()
       transformers = []
       for i in range(num_workers - 1):
         self._trans_queues.append(mpctx.Queue())

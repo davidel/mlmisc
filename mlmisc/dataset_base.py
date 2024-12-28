@@ -5,6 +5,7 @@ import random
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
+import py_misc_utils.pipeline as pypl
 import py_misc_utils.utils as pyu
 import torch
 
@@ -14,19 +15,17 @@ from . import utils as ut
 class DatasetBase:
 
   def __init__(self, pipeline=None, **kwargs):
-    self._pipeline = pipeline
+    self._pipeline = pyu.value_or(pipeline, pypl.Pipeline())
     self._kwargs = kwargs
 
   def extra_arg(self, name):
     return self._kwargs.get(name)
 
   def process_sample(self, data):
-    return self._pipeline(data) if self._pipeline is not None else data
+    return self._pipeline(data)
 
-  def reset_pipeline(self, new_pipeline=None):
-    pipeline, self._pipeline = self._pipeline, new_pipeline
-
-    return pipeline
+  def pipeline(self):
+    return self._pipeline.clone()
 
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
