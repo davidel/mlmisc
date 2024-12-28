@@ -53,15 +53,16 @@ class _BatchCollater:
 
   def _make_batch(self):
     bdata = []
-    for index in self._indices[self._index: self._index + self._batch_size]:
-      data = self._cached.pop(index, None)
+    for idx in range(self._index, len(self._indices)):
+      data = self._cached.pop(self._indices[idx], None)
       if data is not None:
         bdata.append(data)
         if len(bdata) == self._batch_size:
+          idx += 1
           break
 
     if bdata:
-      self._index += self._batch_size
+      self._index = idx
       self._pending = set(self._indices[self._index: self._index + self._batch_size]) - \
         set(self._cached.keys())
 
@@ -363,15 +364,12 @@ class _MapDataLoader:
 
       collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
-      if self._prefetch_factor:
-        index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
-      else:
-        index = 0
+      index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
 
       processed = 0
       while processed < len(indices):
         batch = []
-        for i in range(self._batch_size):
+        for i in range(min(self._batch_size, len(indices) - processed)):
           idata = queue_getter.get()
           if idata is None:
             break
