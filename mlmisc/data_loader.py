@@ -344,15 +344,12 @@ class _MapDataLoader:
     for q in self._input_queues + [self._output_queue]:
       _queue_close(q)
 
-  def _feed_indices(self, indices, index, n, input_qindex):
+  def _feed_indices(self, indices, index, n):
     stop = min(index + n, len(indices))
     for i in range(index, stop):
-      input_queue = self._input_queues[input_qindex]
-      input_qindex = (input_qindex + 1) % len(self._input_queues)
+      input_queue = self._input_queues[i % len(self._input_queues)]
 
       input_queue.put([indices[i]])
-
-    return input_qindex
 
   def _generate(self):
     try:
@@ -362,16 +359,13 @@ class _MapDataLoader:
 
       queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
 
-      input_qindex = index = 0
       collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
       if self._prefetch_factor:
-        input_qindex = self._feed_indices(indices,
-                                          index,
-                                          self._prefetch_factor * self._batch_size,
-                                          input_qindex)
+        self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
 
-      while index < len(self._dataset):
+      index = 0
+      while index < len(indices):
         batch = []
         for i in range(self._batch_size):
           idata = queue_getter.get()
@@ -386,7 +380,7 @@ class _MapDataLoader:
           while (cbatch := collater.get_batch()) is not None:
             bdata, bsize = cbatch
             index += bsize
-            input_qindex = self._feed_indices(indices, index, self._batch_size, input_qindex)
+            self._feed_indices(indices, index, self._batch_size)
 
             yield bdata
 
