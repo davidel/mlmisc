@@ -4,6 +4,7 @@ import queue
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.app_main as app_main
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fin_wrap as pyfw
 import py_misc_utils.utils as pyu
@@ -93,10 +94,10 @@ class _IterDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queues = output_queues
-    self._proc = mpctx.Process(target=self._run)
+    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
     self._proc.start()
 
-  def _create_iterator(self):
+  def _generate(self):
     if isinstance(self._dataset, dsb.IterableDataset):
       yield from self._dataset.enum_samples()
     else:
@@ -107,7 +108,7 @@ class _IterDataFeeder:
 
     exit_result = None
     try:
-      data_iter = iter(self._create_iterator())
+      data_iter = iter(self._generate())
 
       queue_getter = _QueueGetter(self._input_queue)
 
@@ -144,7 +145,7 @@ class _MapDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queue = output_queue
-    self._proc = mpctx.Process(target=self._run)
+    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
     self._proc.start()
 
   def _run(self):
@@ -180,7 +181,7 @@ class _DataTransformer:
     self._input_queue = input_queue
     self._output_queue = output_queue
     self._pipeline = pipeline
-    self._proc = mpctx.Process(target=self._run)
+    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
     self._proc.start()
 
   def _run(self):
@@ -214,14 +215,14 @@ class _DataTransformer:
 class _IterDataLoader:
 
   def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-               prefetch_factor):
+               prefetch_factor, shuffle_window=None, **kwargs):
     self._mpctx = mpctx
     self._dataset = dataset
     self._shuffle = shuffle
     self._batch_size = batch_size
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
-    self._shuffle_window = 512
+    self._shuffle_window = pyu.value_or(shuffle_window, 512)
     self._input_queue = mpctx.Queue()
     self._output_queue = mpctx.Queue()
     self._trans_queues = []
@@ -316,7 +317,7 @@ class _IterDataLoader:
 class _MapDataLoader:
 
   def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-               prefetch_factor):
+               prefetch_factor, **kwargs):
     self._mpctx = mpctx
     self._dataset = dataset
     self._shuffle = shuffle
@@ -430,10 +431,10 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
       num_workers = 1
 
     return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                           prefetch_factor)
+                           prefetch_factor, **kwargs)
   else:
     return _MapDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                          prefetch_factor)
+                          prefetch_factor, **kwargs)
 
 
 class DataLoader:
@@ -444,7 +445,8 @@ class DataLoader:
                num_workers=None,
                collate_fn=None,
                prefetch_factor=None,
-               mpctx=None):
+               mpctx=None,
+               **kwargs):
     shuffle = pyu.value_or(shuffle, False)
     batch_size = pyu.value_or(batch_size, 16)
     num_workers = pyu.value_or(num_workers, 1)
@@ -453,7 +455,7 @@ class DataLoader:
     mpctx = pyu.value_or(mpctx, multiprocessing)
 
     loader = _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                            prefetch_factor)
+                            prefetch_factor, **kwargs)
     pyfw.fin_wrap(self, '_loader', loader, finfn=loader.close)
 
   def close(self):
