@@ -1,8 +1,9 @@
 import mlmisc.dataset_base as mldb
 import mlmisc.dataset_utils as mldu
 import py_misc_utils.alog as alog
+import py_misc_utils.dynamod as pydm
+import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gfs as gfs
-import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -30,8 +31,8 @@ def add_parser_arguments(parser):
 def create_dataset(args):
   train_trans = test_trans = tgt_train_trans = tgt_test_trans = nn.Identity()
   if args.dataset_transform:
-    module = pymu.import_module(args.dataset_transform,
-                                modname='dataset_transform')
+    code = pyfsu.readall(args.dataset_transform).encode()
+    module = pydm.create_module('dataset_transform', code)
 
     syms = 'TRAIN_TRANS,TEST_TRANS,TGT_TRAIN_TRANS,TGT_TEST_TRANS'
     train_trans, test_trans, tgt_train_trans, tgt_test_trans = (
@@ -46,8 +47,8 @@ def create_dataset(args):
     alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans}')
 
   if args.dataset_selector:
-    module = pymu.import_module(args.dataset_selector,
-                                modname='dataset_selector')
+    code = pyfsu.readall(args.dataset_selector).encode()
+    module = pydm.create_module('dataset_selector', code)
 
     select_fn = getattr(module, 'SELECTOR', None)
   elif args.dataset_key_selector:
