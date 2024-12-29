@@ -31,7 +31,7 @@ def add_parser_arguments(parser):
 def create_dataset(args):
   train_trans = test_trans = tgt_train_trans = tgt_test_trans = nn.Identity()
   if args.dataset_transform:
-    code = pyfsu.readall(args.dataset_transform).encode()
+    code = pyfsu.readall(args.dataset_transform).decode()
     module = pydm.create_module('dataset_transform', code)
 
     syms = 'TRAIN_TRANS,TEST_TRANS,TGT_TRAIN_TRANS,TGT_TEST_TRANS'
@@ -47,7 +47,7 @@ def create_dataset(args):
     alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans}')
 
   if args.dataset_selector:
-    code = pyfsu.readall(args.dataset_selector).encode()
+    code = pyfsu.readall(args.dataset_selector).decode()
     module = pydm.create_module('dataset_selector', code)
 
     select_fn = getattr(module, 'SELECTOR', None)
