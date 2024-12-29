@@ -94,7 +94,7 @@ class _IterDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queues = output_queues
-    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
+    self._proc = app_main.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _generate(self):
@@ -145,7 +145,7 @@ class _MapDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queue = output_queue
-    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
+    self._proc = app_main.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _run(self):
@@ -181,7 +181,7 @@ class _DataTransformer:
     self._input_queue = input_queue
     self._output_queue = output_queue
     self._pipeline = pipeline
-    self._proc = mpctx.Process(target=app_main.wrap_main(self._run))
+    self._proc = app_main.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _run(self):
