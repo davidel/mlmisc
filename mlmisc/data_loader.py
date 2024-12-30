@@ -259,29 +259,18 @@ class _IterDataLoader:
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
       _queue_close(q)
 
-  def _make_indices(self, index, size):
-    indices = np.arange(index, index + size)
-    if self._shuffle:
-      for idx in range(0, len(indices), self._shuffle_window):
-        np.random.shuffle(indices[idx: idx + self._shuffle_window])
-
-    return indices, index + size
-
   def _generate(self):
-    indices_size = max(10000, 8 * self._shuffle_window)
+    idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
     try:
-      indices, index = self._make_indices(0, indices_size)
-
       queue_getter = _QueueGetter(self._output_queue, max(1, len(self._trans_queues)))
 
-      collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
+      collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
       self._input_queue.put(self._prefetch_factor * self._batch_size)
       while True:
         self._input_queue.put(self._batch_size)
 
-        if indices_size // 3 > collater.left_indices():
-          indices, index = self._make_indices(index, indices_size - collater.left_indices())
+        if (indices := idxgen.generate(left=collater.left_indices())) is not None:
           collater.add_indices(indices)
 
         batch = []
@@ -299,8 +288,6 @@ class _IterDataLoader:
             bdata, bsize = cbatch
             yield bdata
 
-            del cbatch
-
         if len(batch) < self._batch_size:
           break
 
@@ -309,14 +296,14 @@ class _IterDataLoader:
         yield bdata
     except StopIteration:
       pass
-    finally:
-      pass
 
   def __iter__(self):
     return iter(self._generate())
 
   def __len__(self):
-    return dsu.dataset_size(self._dataset)
+    ds_size = dsu.dataset_size(self._dataset)
+
+    return ds_size // self._batch_size if ds_size is not None else None
 
 
 class _MapDataLoader:
@@ -390,8 +377,6 @@ class _MapDataLoader:
 
             yield bdata
 
-            del cbatch
-
         if len(batch) < self._batch_size:
           break
 
@@ -400,14 +385,108 @@ class _MapDataLoader:
         yield bdata
     except StopIteration:
       pass
-    finally:
-      pass
 
   def __iter__(self):
     return iter(self._generate())
 
   def __len__(self):
-    return dsu.dataset_size(self._dataset)
+    ds_size = dsu.dataset_size(self._dataset)
+
+    return ds_size // self._batch_size if ds_size is not None else None
+
+
+class _SimpleDataLoader:
+
+  def __init__(self, dataset, shuffle, batch_size, collate_fn,
+               shuffle_window=None, **kwargs):
+    self._dataset = dataset
+    self._shuffle = shuffle
+    self._batch_size = batch_size
+    self._collate_fn = collate_fn
+    self._shuffle_window = pyu.value_or(shuffle_window, 512)
+
+  def close(self):
+    pass
+
+  def _map_generate(self):
+    try:
+      indices = np.arange(len(self._dataset))
+      if self._shuffle:
+        np.random.shuffle(indices)
+
+      processed = 0
+      while processed < len(indices):
+        batch = []
+        for i in range(processed, min(processed + self._batch_size, len(indices))):
+          batch.append(self._dataset[indices[i]])
+
+        processed += len(batch)
+
+        yield self._collate_fn(batch)
+    except StopIteration:
+      pass
+
+  def _iter_generate(self):
+    try:
+      idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
+      collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
+
+      batch = []
+      for index, data in enumerate(self._dataset):
+        batch.append((index, data))
+
+        if len(batch) == self._batch_size:
+          collater.add(batch)
+          batch = []
+
+          while (cbatch := collater.get_batch()) is not None:
+            bdata, bsize = cbatch
+            yield bdata
+
+          if (indices := idxgen.generate(left=collater.left_indices())) is not None:
+            collater.add_indices(indices)
+
+      if batch:
+        collater.add(batch)
+
+      while (cbatch := collater.flush()) is not None:
+        bdata, bsize = cbatch
+        yield bdata
+    except StopIteration:
+      pass
+
+  def __iter__(self):
+    if isinstance(self._dataset, torch.utils.data.IterableDataset):
+      return iter(self._iter_generate())
+    else:
+      return iter(self._map_generate())
+
+  def __len__(self):
+    ds_size = dsu.dataset_size(self._dataset)
+
+    return ds_size // self._batch_size if ds_size is not None else None
+
+
+class _IterIndexGenerator:
+
+  def __init__(self, shuffle, shuffle_window, size=None, refill_factor=None):
+    self._shuffle = shuffle
+    self._shuffle_window = pyu.value_or(shuffle_window, 512)
+    self._size = pyu.value_or(size, max(10000, 8 * self._shuffle_window))
+    self._refill_factor = pyu.value_or(refill_factor, 4)
+    self._index = 0
+
+  def generate(self, left=0):
+    if self._size // self._refill_factor >= left:
+      csize = self._size - left
+      indices = np.arange(self._index, self._index + csize)
+      if self._shuffle:
+        for idx in range(0, self._size, self._shuffle_window):
+          np.random.shuffle(indices[idx: idx + self._shuffle_window])
+
+      self._index += csize
+
+      return indices
 
 
 def _queue_close(q):
@@ -426,7 +505,9 @@ def _init_process():
 
 def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
                    prefetch_factor, **kwargs):
-  if isinstance(dataset, torch.utils.data.IterableDataset):
+  if num_workers == 0:
+    return _SimpleDataLoader(dataset, shuffle, batch_size, collate_fn, **kwargs)
+  elif isinstance(dataset, torch.utils.data.IterableDataset):
     if num_workers > 1 and not isinstance(dataset, dsb.DatasetBase):
       num_workers = 1
 
