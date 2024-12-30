@@ -227,6 +227,11 @@ class _IterDataLoader:
     self._output_queue = mpctx.Queue()
     self._trans_queues = []
 
+    # In the case of an iterator dataset (that is, strictly sequential stream of
+    # samples) we only have one _IterDataFeeder. If the dataset has a processing
+    # pipeline it makes sense to have the _IterDataFeeder to feed N _DataTransformer
+    # (whose task is the run the pipeline), which in turn feed the output queue.
+    # Otherwise we have the _IterDataFeeder feed the output queue directly.
     if num_workers == 1:
       feeder = _IterDataFeeder(mpctx, dataset, self._input_queue, (self._output_queue,))
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
