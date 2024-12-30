@@ -403,7 +403,7 @@ class _SimpleDataLoader:
     self._shuffle = shuffle
     self._batch_size = batch_size
     self._collate_fn = collate_fn
-    self._shuffle_window = pyu.value_or(shuffle_window, 512)
+    self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
 
   def close(self):
     pass
@@ -471,8 +471,8 @@ class _IterIndexGenerator:
 
   def __init__(self, shuffle, shuffle_window, size=None, refill_factor=None):
     self._shuffle = shuffle
-    self._shuffle_window = pyu.value_or(shuffle_window, 512)
-    self._size = pyu.value_or(size, max(10000, 8 * self._shuffle_window))
+    self._shuffle_window = shuffle_window
+    self._size = pyu.value_or(size, max(10000, 8 * shuffle_window))
     self._refill_factor = pyu.value_or(refill_factor, 4)
     self._index = 0
 
