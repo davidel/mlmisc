@@ -109,7 +109,6 @@ class _IterDataFeeder:
     exit_result = None
     try:
       data_iter = iter(self._generate())
-
       queue_getter = _QueueGetter(self._input_queue)
 
       index = 0
@@ -125,7 +124,7 @@ class _IterDataFeeder:
 
           output_queue.put((index, data))
           index += 1
-    except (GeneratorExit, StopIteration):
+    except StopIteration:
       pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader iter data feeder')
@@ -261,41 +260,37 @@ class _IterDataLoader:
 
   def _generate(self):
     idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
-    try:
-      queue_getter = _QueueGetter(self._output_queue, max(1, len(self._trans_queues)))
+    queue_getter = _QueueGetter(self._output_queue, max(1, len(self._trans_queues)))
+    collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
-      collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
+    self._input_queue.put(self._prefetch_factor * self._batch_size)
+    while True:
+      self._input_queue.put(self._batch_size)
 
-      self._input_queue.put(self._prefetch_factor * self._batch_size)
-      while True:
-        self._input_queue.put(self._batch_size)
+      if (indices := idxgen.generate(left=collater.left_indices())) is not None:
+        collater.add_indices(indices)
 
-        if (indices := idxgen.generate(left=collater.left_indices())) is not None:
-          collater.add_indices(indices)
-
-        batch = []
-        for i in range(self._batch_size):
-          idata = queue_getter.get()
-          if idata is None:
-            break
-
-          batch.append(idata)
-
-        if batch:
-          collater.add(batch)
-
-          while (cbatch := collater.get_batch()) is not None:
-            bdata, bsize = cbatch
-            yield bdata
-
-        if len(batch) < self._batch_size:
+      batch = []
+      for i in range(self._batch_size):
+        idata = queue_getter.get()
+        if idata is None:
           break
 
-      while (cbatch := collater.flush()) is not None:
-        bdata, bsize = cbatch
-        yield bdata
-    except (GeneratorExit, StopIteration):
-      pass
+        batch.append(idata)
+
+      if batch:
+        collater.add(batch)
+
+        while (cbatch := collater.get_batch()) is not None:
+          bdata, bsize = cbatch
+          yield bdata
+
+      if len(batch) < self._batch_size:
+        break
+
+    while (cbatch := collater.flush()) is not None:
+      bdata, bsize = cbatch
+      yield bdata
 
   def __iter__(self):
     return iter(self._generate())
@@ -346,45 +341,42 @@ class _MapDataLoader:
     return stop
 
   def _generate(self):
-    try:
-      indices = np.arange(len(self._dataset))
-      if self._shuffle:
-        np.random.shuffle(indices)
+    indices = np.arange(len(self._dataset))
+    if self._shuffle:
+      np.random.shuffle(indices)
 
-      queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
+    queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
 
-      collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
+    collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
-      index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
+    index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
 
-      processed = 0
-      while processed < len(indices):
-        batch = []
-        for i in range(min(self._batch_size, len(indices) - processed)):
-          idata = queue_getter.get()
-          if idata is None:
-            break
-
-          batch.append(idata)
-
-        if batch:
-          collater.add(batch)
-
-          while (cbatch := collater.get_batch()) is not None:
-            bdata, bsize = cbatch
-            processed += bsize
-            index = self._feed_indices(indices, index, self._batch_size)
-
-            yield bdata
-
-        if len(batch) < self._batch_size:
+    processed = 0
+    while processed < len(indices):
+      batch = []
+      for i in range(min(self._batch_size, len(indices) - processed)):
+        idata = queue_getter.get()
+        if idata is None:
           break
 
-      while (cbatch := collater.flush()) is not None:
-        bdata, bsize = cbatch
-        yield bdata
-    except (GeneratorExit, StopIteration):
-      pass
+        batch.append(idata)
+
+      if batch:
+        collater.add(batch)
+
+        while (cbatch := collater.get_batch()) is not None:
+          bdata, bsize = cbatch
+          processed += bsize
+          index = self._feed_indices(indices, index, self._batch_size)
+
+          yield bdata
+
+      if len(batch) < self._batch_size:
+        break
+
+    while (cbatch := collater.flush()) is not None:
+      bdata, bsize = cbatch
+      yield bdata
 
   def __iter__(self):
     return iter(self._generate())
@@ -409,51 +401,45 @@ class _SimpleDataLoader:
     pass
 
   def _map_generate(self):
-    try:
-      indices = np.arange(len(self._dataset))
-      if self._shuffle:
-        np.random.shuffle(indices)
+    indices = np.arange(len(self._dataset))
+    if self._shuffle:
+      np.random.shuffle(indices)
 
-      processed = 0
-      while processed < len(indices):
-        batch = []
-        for i in range(processed, min(processed + self._batch_size, len(indices))):
-          batch.append(self._dataset[indices[i]])
+    processed = 0
+    while processed < len(indices):
+      batch = []
+      for i in range(processed, min(processed + self._batch_size, len(indices))):
+        batch.append(self._dataset[indices[i]])
 
-        processed += len(batch)
+      processed += len(batch)
 
-        yield self._collate_fn(batch)
-    except (GeneratorExit, StopIteration):
-      pass
+      yield self._collate_fn(batch)
 
   def _iter_generate(self):
-    try:
-      idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
-      collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
+    idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
+    collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
-      batch = []
-      for index, data in enumerate(self._dataset):
-        batch.append((index, data))
+    batch = []
+    for index, data in enumerate(self._dataset):
+      batch.append((index, data))
 
-        if len(batch) == self._batch_size:
-          collater.add(batch)
-          batch = []
-
-          while (cbatch := collater.get_batch()) is not None:
-            bdata, bsize = cbatch
-            yield bdata
-
-          if (indices := idxgen.generate(left=collater.left_indices())) is not None:
-            collater.add_indices(indices)
-
-      if batch:
+      if len(batch) == self._batch_size:
         collater.add(batch)
+        batch = []
 
-      while (cbatch := collater.flush()) is not None:
-        bdata, bsize = cbatch
-        yield bdata
-    except (GeneratorExit, StopIteration):
-      pass
+        while (cbatch := collater.get_batch()) is not None:
+          bdata, bsize = cbatch
+          yield bdata
+
+        if (indices := idxgen.generate(left=collater.left_indices())) is not None:
+          collater.add_indices(indices)
+
+    if batch:
+      collater.add(batch)
+
+    while (cbatch := collater.flush()) is not None:
+      bdata, bsize = cbatch
+      yield bdata
 
   def __iter__(self):
     if isinstance(self._dataset, torch.utils.data.IterableDataset):
