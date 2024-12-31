@@ -1,6 +1,7 @@
 import einops
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -72,7 +73,7 @@ class CrossSeq(sb.SequenceBase):
                **kwargs):
     netver = pyu.value_or(netver, 'v1')
     num_layers = pyu.value_or(num_layers, 8)
-    bottleneck = pyu.value_or(bottleneck, pyu.round_up(vocab_size // 8, 128))
+    bottleneck = pyu.value_or(bottleneck, pynu.round_up(vocab_size // 8, 128))
     act = pyu.value_or(act, 'relu')
     dropout = pyu.value_or(dropout, 0.1)
 

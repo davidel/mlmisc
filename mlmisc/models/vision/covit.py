@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -33,7 +34,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     wstride = 2 if (w - 5) >= 2 * patches_x_edge else 1
     hkernel_size = min(h, 2 * hstride + 1)
     wkernel_size = min(w, 2 * wstride + 1)
-    channels = min(pyu.round_up(c + cstep, 8), embed_size)
+    channels = min(pynu.round_up(c + cstep, 8), embed_size)
 
     net.batchnorm2d()
     net.conv2d(channels, (hkernel_size, wkernel_size),

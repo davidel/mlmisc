@@ -7,6 +7,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as app_main
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fin_wrap as pyfw
+import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -213,15 +214,16 @@ class _DataTransformer:
 
 class _IterDataLoader:
 
-  def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-               prefetch_factor, shuffle_window=None, **kwargs):
+  def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
+               collate_fn, prefetch_factor, shuffle_window=None, **kwargs):
     self._mpctx = mpctx
     self._dataset = dataset
     self._shuffle = shuffle
     self._batch_size = batch_size
+    self._drop_last = drop_last
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
-    self._shuffle_window = pyu.value_or(shuffle_window, 512)
+    self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
     self._input_queue = mpctx.Queue()
     self._output_queue = mpctx.Queue()
     self._trans_queues = []
@@ -290,25 +292,28 @@ class _IterDataLoader:
 
     while (cbatch := collater.flush()) is not None:
       bdata, bsize = cbatch
-      yield bdata
+      if bsize == self._batch_size or not self._drop_last:
+        yield bdata
 
   def __iter__(self):
     return iter(self._generate())
 
   def __len__(self):
-    ds_size = dsu.dataset_size(self._dataset)
+    if (ds_size := dsu.dataset_size(self._dataset)) is not None:
+      rounder = 0 if self._drop_last else self._batch_size - 1
 
-    return ds_size // self._batch_size if ds_size is not None else None
+      return (ds_size + rounder) // self._batch_size
 
 
 class _MapDataLoader:
 
-  def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-               prefetch_factor, **kwargs):
+  def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
+               collate_fn, prefetch_factor, **kwargs):
     self._mpctx = mpctx
     self._dataset = dataset
     self._shuffle = shuffle
     self._batch_size = batch_size
+    self._drop_last = drop_last
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
     self._input_queues = []
@@ -344,6 +349,8 @@ class _MapDataLoader:
     indices = np.arange(len(self._dataset))
     if self._shuffle:
       np.random.shuffle(indices)
+    if self._drop_last:
+      indices = indices[: pynu.round_down(len(indices), self._batch_size)]
 
     queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
 
@@ -382,18 +389,20 @@ class _MapDataLoader:
     return iter(self._generate())
 
   def __len__(self):
-    ds_size = dsu.dataset_size(self._dataset)
+    if (ds_size := dsu.dataset_size(self._dataset)) is not None:
+      rounder = 0 if self._drop_last else self._batch_size - 1
 
-    return ds_size // self._batch_size if ds_size is not None else None
+      return (ds_size + rounder) // self._batch_size
 
 
 class _SimpleDataLoader:
 
-  def __init__(self, dataset, shuffle, batch_size, collate_fn,
+  def __init__(self, dataset, shuffle, batch_size, drop_last, collate_fn,
                shuffle_window=None, **kwargs):
     self._dataset = dataset
     self._shuffle = shuffle
     self._batch_size = batch_size
+    self._drop_last = drop_last
     self._collate_fn = collate_fn
     self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
 
@@ -404,6 +413,8 @@ class _SimpleDataLoader:
     indices = np.arange(len(self._dataset))
     if self._shuffle:
       np.random.shuffle(indices)
+    if self._drop_last:
+      indices = indices[: pynu.round_down(len(indices), self._batch_size)]
 
     processed = 0
     while processed < len(indices):
@@ -455,15 +466,16 @@ class _SimpleDataLoader:
 
 class _IterIndexGenerator:
 
-  def __init__(self, shuffle, shuffle_window, size=None, refill_factor=None):
+  REFILL_FACTOR = 4
+
+  def __init__(self, shuffle, shuffle_window):
     self._shuffle = shuffle
     self._shuffle_window = shuffle_window
-    self._size = pyu.value_or(size, max(10000, 8 * shuffle_window))
-    self._refill_factor = pyu.value_or(refill_factor, 4)
+    self._size = 16 * self.REFILL_FACTOR * shuffle_window
     self._index = 0
 
   def generate(self, left=0):
-    if self._size // self._refill_factor >= left:
+    if self._size // self.REFILL_FACTOR >= left:
       csize = self._size - left
       indices = np.arange(self._index, self._index + csize)
       if self._shuffle:
@@ -489,19 +501,20 @@ def _init_process():
   torch.set_num_threads(1)
 
 
-def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                   prefetch_factor, **kwargs):
+def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
+                   collate_fn, prefetch_factor, **kwargs):
   if num_workers == 0:
-    return _SimpleDataLoader(dataset, shuffle, batch_size, collate_fn, **kwargs)
+    return _SimpleDataLoader(dataset, shuffle, batch_size, drop_last,
+                             collate_fn, **kwargs)
   elif isinstance(dataset, torch.utils.data.IterableDataset):
     if num_workers > 1 and not isinstance(dataset, dsb.DatasetBase):
       num_workers = 1
 
-    return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                           prefetch_factor, **kwargs)
+    return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
+                           collate_fn, prefetch_factor, **kwargs)
   else:
-    return _MapDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                          prefetch_factor, **kwargs)
+    return _MapDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
+                          collate_fn, prefetch_factor, **kwargs)
 
 
 class DataLoader:
@@ -510,6 +523,7 @@ class DataLoader:
                shuffle=None,
                batch_size=None,
                num_workers=None,
+               drop_last=None,
                collate_fn=None,
                prefetch_factor=None,
                mpctx=None,
@@ -517,12 +531,13 @@ class DataLoader:
     shuffle = pyu.value_or(shuffle, False)
     batch_size = pyu.value_or(batch_size, 16)
     num_workers = pyu.value_or(num_workers, 1)
+    drop_last = pyu.value_or(drop_last, True)
     collate_fn = pyu.value_or(collate_fn, torch.utils.data.default_collate)
     prefetch_factor = max(pyu.value_or(prefetch_factor, 3), 1)
     mpctx = pyu.value_or(mpctx, multiprocessing)
 
-    loader = _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, collate_fn,
-                            prefetch_factor, **kwargs)
+    loader = _create_loader(mpctx, dataset, shuffle, batch_size, num_workers,
+                            drop_last, collate_fn, prefetch_factor, **kwargs)
     pyfw.fin_wrap(self, '_loader', loader, finfn=loader.close)
 
   def close(self):
