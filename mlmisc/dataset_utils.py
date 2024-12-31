@@ -65,8 +65,7 @@ class IterableDataset(dsb.IterableDataset):
     return getattr(self._data, name, None)
 
   def enum_samples(self):
-    for data in self._data:
-      yield data
+    yield from self._data
 
   def __len__(self):
     dslen = dataset_size(self._data)
@@ -191,7 +190,6 @@ def build_pipelines(select_fn=None,
       test_target_transform = target_transform['test']
     else:
       train_target_transform = test_target_transform = target_transform
-
 
   if train_transform or train_target_transform:
     train.add(dsb.transformer(sample=train_transform, target=train_target_transform))
