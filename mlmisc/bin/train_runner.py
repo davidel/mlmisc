@@ -161,6 +161,7 @@ def main(args):
                           model_path=args.checkpoint_path,
                           tb_writer=tb_writer,
                           num_workers=args.num_workers,
+                          drop_last=args.drop_last,
                           should_stop=lambda: bc.hit(),
                           step_fn=step_fn,
                           scaler=scaler,
@@ -228,6 +229,9 @@ if __name__ == '__main__':
                       help='The configuration for the learning rate scheduler wrapper')
   parser.add_argument('--load_lrsched_state', action=argparse.BooleanOptionalAction, default=True,
                       help='Whether to load the learning rate scheduler state')
+  parser.add_argument('--drop_last', action=argparse.BooleanOptionalAction, default=True,
+                      help='Whether the last incomplete batch should be dropped or ' \
+                      f'returned with a lower batch size')
   parser.add_argument('--tb_path',
                       help='The path of the Tensorboard logging folder, if required')
   parser.add_argument('--profiler',

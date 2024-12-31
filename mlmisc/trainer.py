@@ -134,7 +134,8 @@ class Trainer:
     loader = dload.DataLoader(tctx.val_data,
                               batch_size=tctx.batch_size,
                               shuffle=shuffle,
-                              num_workers=tctx.num_workers)
+                              num_workers=tctx.num_workers,
+                              drop_last=tctx.drop_last)
 
     num_samples = dsu.dataset_size(tctx.val_data)
     alog.info(f'Running validation on {num_samples or "N/A"} samples')
@@ -226,7 +227,8 @@ class Trainer:
     loader = dload.DataLoader(tctx.train_data,
                               batch_size=tctx.batch_size,
                               shuffle=shuffle,
-                              num_workers=tctx.num_workers)
+                              num_workers=tctx.num_workers,
+                              drop_last=tctx.drop_last)
 
     num_samples = dsu.dataset_size(tctx.train_data)
     alog.info(f'Running EPOCH train on {num_samples or "N/A"} samples')
@@ -286,6 +288,7 @@ class Trainer:
                   model_path=None,
                   tb_writer=None,
                   num_workers=0,
+                  drop_last=True,
                   should_stop=None,
                   step_fn=None,
                   scaler=None,
