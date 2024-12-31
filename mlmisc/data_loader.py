@@ -125,7 +125,7 @@ class _IterDataFeeder:
 
           output_queue.put((index, data))
           index += 1
-    except StopIteration:
+    except (GeneratorExit, StopIteration):
       pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader iter data feeder')
@@ -294,7 +294,7 @@ class _IterDataLoader:
       while (cbatch := collater.flush()) is not None:
         bdata, bsize = cbatch
         yield bdata
-    except StopIteration:
+    except (GeneratorExit, StopIteration):
       pass
 
   def __iter__(self):
@@ -383,7 +383,7 @@ class _MapDataLoader:
       while (cbatch := collater.flush()) is not None:
         bdata, bsize = cbatch
         yield bdata
-    except StopIteration:
+    except (GeneratorExit, StopIteration):
       pass
 
   def __iter__(self):
@@ -423,7 +423,7 @@ class _SimpleDataLoader:
         processed += len(batch)
 
         yield self._collate_fn(batch)
-    except StopIteration:
+    except (GeneratorExit, StopIteration):
       pass
 
   def _iter_generate(self):
@@ -452,7 +452,7 @@ class _SimpleDataLoader:
       while (cbatch := collater.flush()) is not None:
         bdata, bsize = cbatch
         yield bdata
-    except StopIteration:
+    except (GeneratorExit, StopIteration):
       pass
 
   def __iter__(self):
