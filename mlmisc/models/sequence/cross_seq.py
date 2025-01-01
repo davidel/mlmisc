@@ -64,18 +64,14 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
 class CrossSeq(sb.SequenceBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
-               netver=None,
-               num_layers=None,
+               netver='v1',
+               num_layers=8,
                bottleneck=None,
-               act=None,
-               dropout=None,
+               act='relu',
+               dropout=0.1,
                padding_idx=None,
                **kwargs):
-    netver = pyu.value_or(netver, 'v1')
-    num_layers = pyu.value_or(num_layers, 8)
     bottleneck = pyu.value_or(bottleneck, pynu.round_up(vocab_size // 8, 128))
-    act = pyu.value_or(act, 'relu')
-    dropout = pyu.value_or(dropout, 0.1)
 
     net_builder = globals()[f'create_net_{netver}']
     net = net_builder(context_size,

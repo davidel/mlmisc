@@ -11,11 +11,8 @@ from . import utils as ut
 class Attention(nn.Module):
 
   def __init__(self, embed_size, num_heads,
-               attn_dropout=None,
-               dropout=None):
-    attn_dropout = pyu.value_or(attn_dropout, 0.0)
-    dropout = pyu.value_or(dropout, 0.0)
-
+               attn_dropout=0.0,
+               dropout=0.0):
     super().__init__()
     self._num_heads = num_heads
     self.k_prj = nn.Linear(embed_size, embed_size * num_heads, bias=False)

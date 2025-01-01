@@ -62,9 +62,7 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
 
 class ShufflerDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, data, buffer_size=None):
-    buffer_size = pyu.value_or(buffer_size, 1024)
-
+  def __init__(self, data, buffer_size=1024):
     super().__init__()
     self._data = data
     self._buffer_size = buffer_size
@@ -128,10 +126,7 @@ def _transformer_fn(sample, target, x):
   return sample(s), target(t)
 
 
-def transformer(sample=None, target=None):
-  sample = pyu.value_or(sample, pycu.ident)
-  target = pyu.value_or(target, pycu.ident)
-
+def transformer(sample=pycu.ident, target=pycu.ident):
   return functools.partial(_transformer_fn, sample, target)
 
 
@@ -152,9 +147,7 @@ def sliced_dataset(dataset, dslice):
 
 _DATASET_SEED = pyu.getenv('DATASET_SEED', dtype=int, defval=997727)
 
-def shuffled_indices(size, seed=None):
-  seed = pyu.value_or(seed, _DATASET_SEED)
-
+def shuffled_indices(size, seed=_DATASET_SEED):
   rng = random.Random(seed)
   indices = array.array(pyu.array_code(size), range(size))
   rng.shuffle(indices)

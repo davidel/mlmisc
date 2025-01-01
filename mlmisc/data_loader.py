@@ -520,22 +520,14 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
 class DataLoader:
 
   def __init__(self, dataset,
-               shuffle=None,
-               batch_size=None,
-               num_workers=None,
-               drop_last=None,
-               collate_fn=None,
-               prefetch_factor=None,
-               mpctx=None,
+               shuffle=False,
+               batch_size=16,
+               num_workers=1,
+               drop_last=True,
+               collate_fn=torch.utils.data.default_collate,
+               prefetch_factor=3,
+               mpctx=multiprocessing,
                **kwargs):
-    shuffle = pyu.value_or(shuffle, False)
-    batch_size = pyu.value_or(batch_size, 16)
-    num_workers = pyu.value_or(num_workers, 1)
-    drop_last = pyu.value_or(drop_last, True)
-    collate_fn = pyu.value_or(collate_fn, torch.utils.data.default_collate)
-    prefetch_factor = max(pyu.value_or(prefetch_factor, 3), 1)
-    mpctx = pyu.value_or(mpctx, multiprocessing)
-
     loader = _create_loader(mpctx, dataset, shuffle, batch_size, num_workers,
                             drop_last, collate_fn, prefetch_factor, **kwargs)
     pyfw.fin_wrap(self, '_loader', loader, finfn=loader.close)

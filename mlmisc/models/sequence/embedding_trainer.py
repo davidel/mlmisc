@@ -40,13 +40,10 @@ def create_net_cbow_v1(window_size, embed_size, vocab_size, act, net_kwargs):
 class EmbeddingTrainer(sb.SequenceBase):
 
   def __init__(self, window_size, mode, embed_size, vocab_size,
-               netver=None,
-               act=None,
+               netver='v1',
+               act='relu',
                padding_idx=None,
                **kwargs):
-    netver = pyu.value_or(netver, 'v1')
-    act = pyu.value_or(act, 'relu')
-
     net_builder = globals()[f'create_net_{mode}_{netver}']
     net = net_builder(window_size, embed_size, vocab_size, act, kwargs)
 

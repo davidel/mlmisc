@@ -13,9 +13,7 @@ from . import dataset_base as dsb
 
 class ImageUrlsDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, urls, shuffle=None, **kwargs):
-    shuffle = pyu.value_or(shuffle, True)
-
+  def __init__(self, urls, shuffle=True, **kwargs):
     super().__init__()
     self._urls = tuple(urls)
     self._shuffle = shuffle
@@ -68,15 +66,11 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
 
 
 def create(urls_path,
-           url_shuffle=None,
-           shuffle=None,
-           split_pct=None,
+           url_shuffle=True,
+           shuffle=True,
+           split_pct=0.9,
            seed=None,
            **kwargs):
-  url_shuffle = pyu.value_or(url_shuffle, True)
-  shuffle = pyu.value_or(shuffle, True)
-  split_pct = pyu.value_or(split_pct, 0.9)
-
   urls = set()
   with pycomp.dopen(urls_path, mode='rt', **kwargs) as fd:
     for url in fd:

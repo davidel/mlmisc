@@ -44,9 +44,9 @@ class NetsDict(nn.ModuleDict):
     for name, net in kwargs.items():
       self.add_net(net, name=name)
 
-  def add_net(self, net, name=None, replace=None):
+  def add_net(self, net, name=None, replace=False):
     if name is not None:
-      tas.check(pyu.value_or(replace, False) or name not in self,
+      tas.check(replace or name not in self,
                 msg=f'Module "{name}" ({pyu.cname(net)}) already present')
       self[name] = net
     else:

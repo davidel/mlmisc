@@ -95,8 +95,7 @@ def create_tokenizer(path, max_vocab_size,
   return tokenizer
 
 
-def enum_chunks(path, chunk_size=None):
-  chunk_size = pyu.value_or(chunk_size, 32 * 1024 * 1024)
+def enum_chunks(path, chunk_size=32 * 1024 * 1024):
   with gfs.open(path, mode='rb') as fd:
     rem = b''
     while True:

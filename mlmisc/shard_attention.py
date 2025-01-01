@@ -12,7 +12,9 @@ from . import utils as ut
 
 class ShardAttention(nn.Module):
 
-  def __init__(self, embed_size, num_heads, post=None, post_feed=None):
+  def __init__(self, embed_size, num_heads,
+               post='id',
+               post_feed=lambda x, y: y):
     tas.check_eq(embed_size % num_heads, 0,
                  f'Number of heads ({num_heads}) should divide the ' \
                  f'embedding size ({embed_size})')
@@ -21,8 +23,8 @@ class ShardAttention(nn.Module):
     self.num_heads = num_heads
     self.weight = nn.Parameter(ut.kuni_tensor(num_heads * embed_size, embed_size))
     self.attend = nn.Softmax(dim=-1)
-    self.post = lu.create(post or nn.Identity)
-    self.post_feed = pyu.value_or(post_feed, lambda x, y: y)
+    self.post = lu.create(post)
+    self.post_feed = post_feed
 
   def forward(self, x, mask=None):
     y = einops.rearrange(x, 'b t (nh hs) -> b nh t hs', nh=self.num_heads)

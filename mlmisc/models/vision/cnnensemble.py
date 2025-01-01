@@ -48,18 +48,12 @@ class CNNEnsemble(nb.NetBase):
   def __init__(self, num_classes, shape,
                conv_specs=None,
                convspecs_path=None,
-               num_nets=None,
-               max_output=None,
-               act=None,
-               dropout=None,
+               num_nets=8,
+               max_output=1024,
+               act='relu',
+               dropout=0.2,
                weight=None,
-               label_smoothing=None):
-    num_nets = pyu.value_or(num_nets, 8)
-    max_output = pyu.value_or(max_output, 1024)
-    act = pyu.value_or(act, 'relu')
-    dropout = pyu.value_or(dropout, 0.2)
-    label_smoothing = pyu.value_or(label_smoothing, 0.0)
-
+               label_smoothing=0.0):
     nets = []
     if not conv_specs:
       if convspecs_path is not None:

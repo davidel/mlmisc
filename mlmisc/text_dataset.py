@@ -41,12 +41,9 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
 
 
 def load(proto_path, tokens_path, context_size,
-         is_sequence=None,
-         split_pct=None,
+         is_sequence=True,
+         split_pct=0.9,
          **kwargs):
-  is_sequence = pyu.value_or(is_sequence, True)
-  split_pct = pyu.value_or(split_pct, 0.9)
-
   tokenizer = tkz.load_tokenizer(proto_path)
   tokens = ut.torch_load(tokens_path)
 
@@ -58,12 +55,10 @@ def create(content_path, context_size,
            module_path=None,
            model_name=None,
            cache_dir=None,
-           is_sequence=None,
-           split_pct=None,
+           is_sequence=True,
+           split_pct=0.9,
            **kwargs):
   cache_dir = gfs.cache_dir(path=cache_dir)
-  is_sequence = pyu.value_or(is_sequence, True)
-  split_pct = pyu.value_or(split_pct, 0.9)
 
   datasets_dir = os.path.join(cache_dir, 'datasets')
 

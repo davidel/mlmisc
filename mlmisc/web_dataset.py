@@ -19,9 +19,7 @@ from . import dataset_base as dsb
 
 class WebDataset(torch.utils.data.IterableDataset):
 
-  def __init__(self, urls, shuffle=None, size=None, **kwargs):
-    shuffle = pyu.value_or(shuffle, True)
-
+  def __init__(self, urls, shuffle=True, size=None, **kwargs):
     super().__init__()
     self._shuffle = shuffle
     self._size = size

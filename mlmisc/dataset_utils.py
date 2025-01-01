@@ -228,10 +228,9 @@ def create_dataset(name,
                    select_fn=None,
                    transform=None,
                    target_transform=None,
-                   split_pct=None,
+                   split_pct=0.9,
                    dataset_kwargs=None):
   cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
-  split_pct = pyu.value_or(split_pct, 0.9)
   dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
   ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
@@ -266,10 +265,9 @@ def create_dataset(name,
 
 def get_class_weights(data,
                       dtype=None,
-                      cdtype=None,
+                      cdtype=torch.int32,
                       output_filter=None,
                       max_samples=None):
-  cdtype = pyu.value_or(cdtype, torch.int32)
   tas.check(ut.torch_is_integer_dtype(cdtype),
             msg=f'Targets should be class integers instead of {cdtype}')
   # By default assume target is the second entry in the dataset return tuple.

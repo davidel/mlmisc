@@ -15,17 +15,13 @@ class ConvViT(vb.ViTBase):
 
   def __init__(self, shape, embed_size, num_heads, num_classes, num_layers,
                convs=None,
-               attn_dropout=None,
-               dropout=None,
+               attn_dropout=0.1,
+               dropout=0.1,
                norm_mode=None,
                result_tiles=None,
-               act=None,
+               act='gelu',
                weight=None,
                label_smoothing=None):
-    attn_dropout = pyu.value_or(attn_dropout, 0.1)
-    dropout = pyu.value_or(dropout, 0.1)
-    act = pyu.value_or(act, 'gelu')
-
     patcher = vb.build_conv_patcher(convs, shape, embed_size, act)
 
     net = aseq.ArgsSequential(

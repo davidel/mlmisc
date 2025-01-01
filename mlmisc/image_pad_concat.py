@@ -3,8 +3,7 @@ import torch
 import torch.nn as nn
 
 
-def image_pad_concat(*imgs, channels_dim=None):
-  channels_dim = pyu.value_or(channels_dim, -3)
+def image_pad_concat(*imgs, channels_dim=-3):
   if channels_dim > 0 and imgs:
     channels_dim = -(imgs[0].ndim - channels_dim)
 

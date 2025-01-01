@@ -69,11 +69,7 @@ def torch_dtype(dtype):
   return getattr(torch, dtype) if isinstance(dtype, str) else dtype
 
 
-def dtype_for_size(size, ns=None, signed=None):
-  # Valid for both "torch" and "numpy" namespaces.
-  ns = pyu.value_or(ns, torch)
-  signed = pyu.value_or(signed, False)
-
+def dtype_for_size(size, ns=torch, signed=False):
   nbits = math.ceil(math.log2(size))
   if signed:
     nbits += 1

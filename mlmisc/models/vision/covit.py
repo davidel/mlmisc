@@ -72,14 +72,10 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
 class CoViT(nb.NetBase):
 
   def __init__(self, shape, num_classes, num_layers, embed_size, num_patches,
-               dropout=None,
-               act=None,
+               dropout=0.1,
+               act='relu',
                weight=None,
-               label_smoothing=None):
-    dropout = pyu.value_or(dropout, 0.1)
-    act = pyu.value_or(act, nn.ReLU)
-    label_smoothing = pyu.value_or(label_smoothing, 0.0)
-
+               label_smoothing=0.0):
     net = create_layers(shape, num_layers, embed_size, num_patches, num_classes,
                         act, dropout)
 

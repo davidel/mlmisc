@@ -8,9 +8,7 @@ from . import utils as ut
 
 class CrossLinear(nn.Module):
 
-  def __init__(self, context_size, embed_size, bias=None):
-    bias = pyu.value_or(bias, True)
-
+  def __init__(self, context_size, embed_size, bias=True):
     super().__init__()
     self.fc = nn.Parameter(ut.kuni_tensor((embed_size, embed_size)))
     self.alt_fc = nn.Parameter(ut.kuni_tensor((context_size, context_size)))

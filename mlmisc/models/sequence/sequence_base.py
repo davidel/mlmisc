@@ -11,13 +11,10 @@ from ... import utils as ut
 class SequenceBase(nb.NetBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
-               use_positions=None,
+               use_positions=True,
                embeddings=None,
-               freeze=None,
+               freeze=False,
                padding_idx=None):
-    use_positions = pyu.value_or(use_positions, True)
-    freeze = pyu.value_or(freeze, False)
-
     super().__init__()
     if embeddings is None:
       self.tok_emb = nn.Embedding(vocab_size, embed_size,

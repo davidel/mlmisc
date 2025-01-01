@@ -13,11 +13,8 @@ from . import sequence_base as sb
 class ShardSeq(sb.SequenceBase):
 
   def __init__(self, context_size, embed_size, num_heads, vocab_size, num_layers,
-               use_attn_mask=None,
-               act=None):
-    use_attn_mask = pyu.value_or(use_attn_mask, True)
-    act = pyu.value_or(act, 'gelu')
-
+               use_attn_mask=True,
+               act='gelu'):
     def post():
       return aseq.ArgsSequential(
         nn.LayerNorm(embed_size),

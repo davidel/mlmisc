@@ -18,15 +18,11 @@ class EncoderBlock(nn.Module):
 
   def __init__(self, input_dim, num_heads,
                dim_feedforward=None,
-               attn_dropout=None,
-               dropout=None,
-               act=None,
-               norm_mode=None):
+               attn_dropout=0.0,
+               dropout=0.0,
+               act='gelu',
+               norm_mode=PRE_NORM):
     dim_feedforward = pyu.value_or(dim_feedforward, 4 * input_dim)
-    attn_dropout = pyu.value_or(attn_dropout, 0.0)
-    dropout = pyu.value_or(dropout, 0.0)
-    act = pyu.value_or(act, nn.GELU)
-    norm_mode = pyu.value_or(norm_mode, PRE_NORM)
 
     tas.check(norm_mode in NORM_MODES,
               msg=f'Unknown norm mode "{norm_mode}" (should be one of {NORM_MODES})')

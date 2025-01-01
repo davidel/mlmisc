@@ -39,10 +39,8 @@ class TokensDataset(dsb.Dataset):
 
 
 def create(tokens_path, window_size, mode,
-           split_pct=None,
+           split_pct=0.9,
            **kwargs):
-  split_pct = pyu.value_or(split_pct, 0.9)
-
   tokens = ut.torch_load(gfs.normpath(tokens_path))
 
   train_limit = int(len(tokens) * split_pct)

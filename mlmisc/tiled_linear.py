@@ -11,11 +11,8 @@ from . import utils as ut
 class TiledLinear(nn.Module):
 
   def __init__(self, in_features, out_features, num_tiles,
-               bias=None,
-               crossed=None):
-    bias = pyu.value_or(bias, True)
-    crossed = pyu.value_or(crossed, False)
-
+               bias=True,
+               crossed=False):
     tile_size = math.ceil(in_features / num_tiles)
 
     super().__init__()

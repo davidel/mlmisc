@@ -53,11 +53,10 @@ class WebModule(nn.Module):
   def __init__(self, repo, modname, ctor,
                cache_dir=None,
                commit=None,
-               force_clone=None,
+               force_clone=False,
                mod_args=None,
                mod_kwargs=None):
     cache_dir = gfs.cache_dir(path=cache_dir)
-    force_clone = pyu.value_or(force_clone, False)
     mod_args = pyu.value_or(mod_args, ())
     mod_kwargs = pyu.value_or(mod_kwargs, {})
 

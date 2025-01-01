@@ -95,13 +95,11 @@ def _load_params(kwargs, name, default_values, default_weights):
 def create_random_stack(max_output,
                         net=None,
                         shape=None,
-                        round_features=None,
-                        fsigma=None,
+                        round_features=16,
+                        fsigma=0.2,
                         act=None,
                         tail=None,
                         **kwargs):
-  round_features = pyu.value_or(round_features, 16)
-  fsigma = pyu.value_or(fsigma, 0.2)
   net = net or mb.ModuleBuilder(shape)
 
   kernel_values, kernel_weights = _load_params(
@@ -235,7 +233,7 @@ ReduceConvParams = collections.namedtuple(
   'ReduceConvParams',
   'error, stride, kernel_size, channels, wndsize')
 
-def conv_flat_reduce(shape, out_features, force=None):
+def conv_flat_reduce(shape, out_features, force=False):
   shape = typ.Shape2d(*shape)
   min_size = min(shape.h, shape.w)
   params = []
@@ -260,7 +258,7 @@ def conv_flat_reduce(shape, out_features, force=None):
       break
 
   if params:
-    if pyu.value_or(force, False):
+    if force:
       # When "forcing" we are going to add a marshaling linear layer, so it is better
       # to end up with an higher flattened size, and turn it down, instead of the
       # contrary. Hence we look for "error" >= 0, if any. otherwise we pick the less

@@ -17,9 +17,7 @@ from . import web_module as wmod
 
 class ModelHolder(nn.Module):
 
-  def __init__(self, model, frozen=None, **kwargs):
-    frozen = pyu.value_or(frozen, True)
-
+  def __init__(self, model, frozen=True, **kwargs):
     super().__init__()
     self._frozen = frozen
     # Storing model inside an object prevents nn.Module machinery to save its
@@ -130,11 +128,9 @@ class HugginFaceModel(ModelHolder):
 class HugginFaceImgTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, head, loss,
-               processor_class=None,
+               processor_class='transformers.AutoImageProcessor',
                frozen=None,
                cache_dir=None):
-    processor_class = pyu.value_or(processor_class, 'transformers.AutoImageProcessor')
-
     super().__init__(model_name, model_class, processor_class,
                      frozen=frozen,
                      cache_dir=cache_dir)
@@ -156,11 +152,9 @@ class HugginFaceImgTune(HugginFaceModel):
 class HugginFaceSeqTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, context_size, head, loss,
-               processor_class=None,
+               processor_class='transformers.AutoTokenizer',
                frozen=None,
                cache_dir=None):
-    processor_class = pyu.value_or(processor_class, 'transformers.AutoTokenizer')
-
     super().__init__(model_name, model_class, processor_class,
                      frozen=frozen,
                      cache_dir=cache_dir)

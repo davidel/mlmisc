@@ -32,14 +32,10 @@ def build_conv_patcher(convs, shape, embed_size, act):
 class ViTBase(nb.NetBase):
 
   def __init__(self, patcher, net, ishape, embed_size, num_classes,
-               result_tiles=None,
-               act=None,
+               result_tiles=2,
+               act='gelu',
                weight=None,
-               label_smoothing=None):
-    result_tiles = pyu.value_or(result_tiles, 2)
-    act = pyu.value_or(act, 'gelu')
-    label_smoothing = pyu.value_or(label_smoothing, 0.0)
-
+               label_smoothing=0.0):
     shape = ut.net_shape(patcher, ishape)
 
     n_tiles, patch_size = shape

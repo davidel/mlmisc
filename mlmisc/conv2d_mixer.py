@@ -9,15 +9,10 @@ from . import layer_utils as lu
 class Conv2dMixer(nn.Module):
 
   def __init__(self, in_channels, out_channels, convs_spec,
-               act=None,
-               bias=None,
-               proj_ksize=None,
-               proj_bias=None):
-    act = pyu.value_or(act, nn.Identity)
-    bias = pyu.value_or(bias, True)
-    proj_ksize = pyu.value_or(proj_ksize, 1)
-    proj_bias = pyu.value_or(proj_bias, True)
-
+               act='id',
+               bias=True,
+               proj_ksize=1,
+               proj_bias=True):
     convs, total_channels = [], 0
     for chans, ksize in convs_spec:
       convs.append(nn.Conv2d(in_channels, chans, ksize,
