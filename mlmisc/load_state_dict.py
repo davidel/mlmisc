@@ -32,8 +32,11 @@ def load_state_dict(module, state, strict=None, **kwargs):
                                      input_args=(state,))
 
     lsd_res = module.load_state_dict(*fargs, **fkwargs)
-    result = LoadResult(missing_keys=lsd_res.missing_keys,
-                        unexpected_keys=lsd_res.unexpected_keys)
+    if lsd_res is not None:
+      result = LoadResult(missing_keys=lsd_res.missing_keys,
+                          unexpected_keys=lsd_res.unexpected_keys)
+    else:
+      result = LoadResult()
   elif strict == 'force':
     result = None
     try:
@@ -42,8 +45,11 @@ def load_state_dict(module, state, strict=None, **kwargs):
                                        input_args=(state,))
 
       lsd_res = module.load_state_dict(*fargs, **fkwargs)
-      result = LoadResult(missing_keys=lsd_res.missing_keys,
-                          unexpected_keys=lsd_res.unexpected_keys)
+      if lsd_res is not None:
+        result = LoadResult(missing_keys=lsd_res.missing_keys,
+                            unexpected_keys=lsd_res.unexpected_keys)
+      else:
+        result = LoadResult()
     except Exception as ex:
       alog.warning(f'{ex}')
       result = LoadResult(exception=ex)
