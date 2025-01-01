@@ -12,6 +12,11 @@ LoadResult = collections.namedtuple(
   defaults=((), (), None,),
 )
 
+def _make_result(lsd_res):
+  return LoadResult(missing_keys=getattr(lsd_res, 'missing_keys', ()),
+                    unexpected_keys=getattr(lsd_res, 'unexpected_keys', ()))
+
+
 VALID_STRICTS = {
   'true': True,
   'false': False,
@@ -32,11 +37,8 @@ def load_state_dict(module, state, strict=None, **kwargs):
                                      input_args=(state,))
 
     lsd_res = module.load_state_dict(*fargs, **fkwargs)
-    if lsd_res is not None:
-      result = LoadResult(missing_keys=lsd_res.missing_keys,
-                          unexpected_keys=lsd_res.unexpected_keys)
-    else:
-      result = LoadResult()
+
+    result = _make_result(lsd_res)
   elif strict == 'force':
     result = None
     try:
@@ -45,11 +47,8 @@ def load_state_dict(module, state, strict=None, **kwargs):
                                        input_args=(state,))
 
       lsd_res = module.load_state_dict(*fargs, **fkwargs)
-      if lsd_res is not None:
-        result = LoadResult(missing_keys=lsd_res.missing_keys,
-                            unexpected_keys=lsd_res.unexpected_keys)
-      else:
-        result = LoadResult()
+
+      result = _make_result(lsd_res)
     except Exception as ex:
       alog.warning(f'{ex}')
       result = LoadResult(exception=ex)
