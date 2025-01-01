@@ -299,10 +299,7 @@ class _IterDataLoader:
     return iter(self._generate())
 
   def __len__(self):
-    if (ds_size := dsu.dataset_size(self._dataset)) is not None:
-      rounder = 0 if self._drop_last else self._batch_size - 1
-
-      return (ds_size + rounder) // self._batch_size
+    return _loader_size(self._dataset, self._batch_size, self._drop_last)
 
 
 class _MapDataLoader:
@@ -389,10 +386,7 @@ class _MapDataLoader:
     return iter(self._generate())
 
   def __len__(self):
-    if (ds_size := dsu.dataset_size(self._dataset)) is not None:
-      rounder = 0 if self._drop_last else self._batch_size - 1
-
-      return (ds_size + rounder) // self._batch_size
+    return _loader_size(self._dataset, self._batch_size, self._drop_last)
 
 
 class _SimpleDataLoader:
@@ -450,7 +444,8 @@ class _SimpleDataLoader:
 
     while (cbatch := collater.flush()) is not None:
       bdata, bsize = cbatch
-      yield bdata
+      if bsize == self._batch_size or not self._drop_last:
+        yield bdata
 
   def __iter__(self):
     if isinstance(self._dataset, torch.utils.data.IterableDataset):
@@ -459,9 +454,7 @@ class _SimpleDataLoader:
       return iter(self._map_generate())
 
   def __len__(self):
-    ds_size = dsu.dataset_size(self._dataset)
-
-    return ds_size // self._batch_size if ds_size is not None else None
+    return _loader_size(self._dataset, self._batch_size, self._drop_last)
 
 
 class _IterIndexGenerator:
@@ -499,6 +492,13 @@ def _closer(objs):
 
 def _init_process():
   torch.set_num_threads(1)
+
+
+def _loader_size(dataset, batch_size, drop_last):
+  if (ds_size := dsu.dataset_size(dataset)) is not None:
+    rounder = 0 if drop_last else batch_size - 1
+
+    return (ds_size + rounder) // batch_size
 
 
 def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
