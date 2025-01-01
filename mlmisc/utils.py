@@ -5,7 +5,6 @@ import operator
 import os
 import random
 import re
-import subprocess
 import sys
 
 import numpy as np
@@ -201,12 +200,7 @@ def checkpoint_data(path, gs_path=None, **kwargs):
 
   if gs_path is not None:
     alog.debug(f'Copying data to {gs_path}')
-    subprocess.check_call(('gsutil',
-                           '-m',
-                           '-q',
-                           'cp',
-                           path,
-                           gs_path))
+    gfs.copy(path, gs_path)
 
 
 def create_tb_writer(path, **kwargs):
