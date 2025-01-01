@@ -117,7 +117,7 @@ def expand_urls(url):
     return [url]
 
 
-def expand_dataset_urls(dsinfo, shuffle=None, seed=None):
+def expand_dataset_urls(dsinfo, shuffle=True, seed=None):
   train = test = None
   if isinstance(dsinfo, dict):
     train = expand_urls(dsinfo['train'])
@@ -125,7 +125,7 @@ def expand_dataset_urls(dsinfo, shuffle=None, seed=None):
   else:
     train = expand_urls(dsinfo)
 
-  if shuffle in (None, True):
+  if shuffle:
     # Stable shuffling, given same seed. Even though the WebDataset (and the
     # ShufflerDataset) do shuffle urls/samples, because of the way we split
     # between train/test urls (by slicing), randomization is needed since the
@@ -139,9 +139,9 @@ def expand_dataset_urls(dsinfo, shuffle=None, seed=None):
 
 
 def create(url,
-           url_shuffle=None,
-           shuffle=None,
-           split_pct=None,
+           url_shuffle=True,
+           shuffle=True,
+           split_pct=0.9,
            train_size=None,
            test_size=None,
            seed=None,
@@ -150,8 +150,6 @@ def create(url,
   ds_urls = expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
 
   if ds_urls.test is None:
-    split_pct = pyu.value_or(split_pct, 0.9)
-
     ntrain = int(split_pct * len(ds_urls.train))
     train_urls = ds_urls.train[: ntrain]
     test_urls = ds_urls.train[ntrain:]
@@ -162,7 +160,7 @@ def create(url,
   ds = dict()
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
-  if shuffle in (None, True):
+  if shuffle:
     ds['train'] = dsb.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
     ds['test'] = dsb.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
 
