@@ -1,6 +1,7 @@
 import collections
 
 import py_misc_utils.alog as alog
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -26,13 +27,21 @@ def load_state_dict(module, state, strict=None, **kwargs):
     strict = VALID_STRICTS[strict.lower()]
 
   if isinstance(strict, bool):
-    lsd_res = module.load_state_dict(state, strict=strict, **kwargs)
+    kwargs.update(strict=strict)
+    fargs, fkwargs = pyiu.fetch_args(module.load_state_dict, kwargs,
+                                     input_args=(state,))
+
+    lsd_res = module.load_state_dict(*fargs, **fkwargs)
     result = LoadResult(missing_keys=lsd_res.missing_keys,
                         unexpected_keys=lsd_res.unexpected_keys)
   elif strict == 'force':
     result = None
     try:
-      lsd_res = module.load_state_dict(state, strict=False, **kwargs)
+      kwargs.update(strict=False)
+      fargs, fkwargs = pyiu.fetch_args(module.load_state_dict, kwargs,
+                                       input_args=(state,))
+
+      lsd_res = module.load_state_dict(*fargs, **fkwargs)
       result = LoadResult(missing_keys=lsd_res.missing_keys,
                           unexpected_keys=lsd_res.unexpected_keys)
     except Exception as ex:
