@@ -266,12 +266,10 @@ def create_dataset(name,
 def get_class_weights(data,
                       dtype=None,
                       cdtype=torch.int32,
-                      output_filter=None,
+                      output_filter=lambda x: x[1],
                       max_samples=None):
   tas.check(ut.torch_is_integer_dtype(cdtype),
             msg=f'Targets should be class integers instead of {cdtype}')
-  # By default assume target is the second entry in the dataset return tuple.
-  output_filter = pyu.value_or(output_filter, lambda x: x[1])
 
   indices = list(range(len(data)))
   if max_samples is not None and len(indices) > max_samples:
