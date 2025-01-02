@@ -224,6 +224,14 @@ def count_params(net):
   return params
 
 
+def net_memory_size(net):
+  size = 0
+  for p in net.parameters():
+    size += p.element_size() * p.nelement()
+
+  return size
+
+
 def named_grads(net):
   grads = []
   for name, param in net.named_parameters():
