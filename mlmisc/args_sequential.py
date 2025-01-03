@@ -4,6 +4,21 @@ import torch.nn as nn
 from . import nets_dict as netd
 
 
+# Example usage of Wrap() and Mix() with ArgsSequential():
+#
+#   stack = ArgsSequential(
+#     nn.Linear(num_states, hid_size),
+#     l1 := Wrap(nn.LayerNorm(hid_size)),
+#     lu.create(act),
+#     nn.Linear(hid_size, hid_size),
+#     l2 := Wrap(nn.LayerNorm(hid_size)),
+#     lu.create(act),
+#     nn.Linear(hid_size, hid_size),
+#     nn.LayerNorm(hid_size),
+#     Mix(lambda *x: sum(x), l1, l2),
+#     ...
+#   )
+#
 class Wrap(nn.Module):
 
   def __init__(self, net):
