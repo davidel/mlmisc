@@ -58,16 +58,16 @@ def get_tensors_stats(prefix, tensor_list,
 
   value_stats = [f'{prefix} Values:']
   for ts in stats:
-    pcts = tuple(f'{int(100 * pp)}%={pv:{fmt}}'
-                 for pp, pv in zip(percentiles, ts.percentile_values))
+    pcts = ', '.join(f'{int(100 * pp)}%={pv:{fmt}}'
+                    for pp, pv in zip(percentiles, ts.percentile_values))
+    stat_line = ' '.join([f' min={ts.min:{fmt}}',
+                          f' max={ts.max:{fmt}}',
+                          f'mean={ts.mean:{fmt}}',
+                          f' std={ts.std:{fmt}}',
+                          f'pcts=({pcts})'])
 
-    value_stats.append(f'  {ts.name}:')
-    value_stats.append(f'    shape = {ts.shape}')
-    value_stats.append(f'      min = {ts.min:{fmt}}')
-    value_stats.append(f'      max = {ts.max:{fmt}}')
-    value_stats.append(f'     mean = {ts.mean:{fmt}}')
-    value_stats.append(f'      std = {ts.std:{fmt}}')
-    value_stats.append(f'     pcts = {pcts}')
+    value_stats.append(f'  {ts.name} {ts.shape}:')
+    value_stats.append(f'    {stat_line}')
 
   return pyu.make_object(stats=stats,
                          value_stats='\n'.join(value_stats))
