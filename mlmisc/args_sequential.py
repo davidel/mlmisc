@@ -16,6 +16,9 @@ class Wrap(nn.Module):
 
     return self.res
 
+  def extra_repr(self):
+    return f'Wrap({self.net.extra_repr()})'
+
 
 class Mix(nn.Module):
 
