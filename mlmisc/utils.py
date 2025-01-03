@@ -9,6 +9,7 @@ import sys
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.assert_checks as tas
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
@@ -59,9 +60,9 @@ def randseed(seed):
 
 
 def item(v):
-  fn = getattr(v, 'item', None)
+  item_fn = getattr(v, 'item', None)
 
-  return fn() if fn is not None else v
+  return v if item_fn is None else item_fn()
 
 
 def torch_dtype(dtype):
