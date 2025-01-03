@@ -67,28 +67,12 @@ def get_tensors_stats(prefix, tensor_list,
                          value_stats='\n'.join(value_stats))
 
 
-def get_parameters_stats(model,
-                         abs_stats=True,
-                         sort_by='mean',
-                         percentiles=(),
-                         top_n=None):
-  return get_tensors_stats('Parameters', model.named_parameters(),
-                           abs_stats=abs_stats,
-                           sort_by=sort_by,
-                           percentiles=percentiles,
-                           top_n=top_n)
+def get_parameters_stats(model, **kwargs):
+  return get_tensors_stats('Parameters', model.named_parameters(), **kwargs)
 
 
-def get_grads_stats(model,
-                    abs_stats=True,
-                    sort_by='mean',
-                    percentiles=(),
-                    top_n=None):
-  return get_tensors_stats('Gradients', ut.named_grads(model),
-                           abs_stats=abs_stats,
-                           sort_by=sort_by,
-                           percentiles=percentiles,
-                           top_n=top_n)
+def get_grads_stats(model, **kwargs):
+  return get_tensors_stats('Gradients', ut.named_grads(model), **kwargs)
 
 
 def show_tensors_stats(stats, slevs):
