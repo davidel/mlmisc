@@ -12,6 +12,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
@@ -74,7 +75,7 @@ def create_model(args, trainer, dataset):
 
     model_args, model_kwargs = pyu.parse_args(cmdline_args)
 
-    x, y = pyu.seqfirst(dataset)
+    x, y = pycu.seqfirst(dataset)
     x_shape = tuple(getattr(x, 'shape', ()))
     y_shape = tuple(getattr(y, 'shape', ()))
     alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')
