@@ -220,11 +220,11 @@ def create_tb_writer(path, **kwargs):
   return torch.utils.tensorboard.SummaryWriter(path, **kwargs)
 
 
-def tb_write(tb_writer, name, value, **kwargs):
+def tb_write(tb_writer, name, value, *args, **kwargs):
   if isinstance(value, dict):
-    tb_writer.add_scalars(name, value, **kwargs)
+    tb_writer.add_scalars(name, value, *args, **kwargs)
   else:
-    tb_writer.add_scalar(name, value, **kwargs)
+    tb_writer.add_scalar(name, value, *args, **kwargs)
 
 
 def count_params(net):
