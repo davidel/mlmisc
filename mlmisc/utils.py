@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
@@ -155,12 +156,12 @@ def model_load(path, model=None, device=None, strict=None):
   return model.to(device) if device is not None else model
 
 
-def checkpoint_model(model, path, gs_path=None):
+def checkpoint_model(model, path, rmt_path=None):
   model_save(model, path)
 
-  if gs_path is not None:
-    alog.debug(f'Copying model state to {gs_path}')
-    gfs.copy(path, gs_path)
+  if rmt_path is not None:
+    alog.debug(f'Copying model state to {rmt_path}')
+    gfs.copy(path, rmt_path)
 
 
 def save_data(path, **kwargs):
@@ -196,12 +197,21 @@ def load_data(path, map_location=None, strict=None, **kwargs):
   return data
 
 
-def checkpoint_data(path, gs_path=None, **kwargs):
+def checkpoint_data(path, rmt_path=None, **kwargs):
   save_data(path, **kwargs)
 
-  if gs_path is not None:
-    alog.debug(f'Copying data to {gs_path}')
-    gfs.copy(path, gs_path)
+  if rmt_path is not None:
+    alog.debug(f'Copying data to {rmt_path}')
+    gfs.copy(path, rmt_path)
+
+
+class NoopTbWriter:
+
+  def __getattr__(self, name):
+    if name.startswith('add_') or name in {'flush', 'close'}:
+      return pycu.noop
+
+    return super().__getattribute__(name)
 
 
 def create_tb_writer(path, **kwargs):
