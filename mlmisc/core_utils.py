@@ -141,10 +141,10 @@ def clamp_gradients(optimizer, gmax):
   gmax = gmax if isinstance(gmax, (list, tuple)) else (-gmax, gmax)
 
   for pg in optimizer.param_groups:
-    params = pg.get('params') or []
-    for param in params:
+    for param in pg.get('params', ()):
       if param.grad is not None:
         param.grad.data.clamp_(*gmax)
+
 
 class NoopTbWriter:
 
