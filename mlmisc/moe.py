@@ -2,15 +2,15 @@ import einops
 import torch
 import torch.nn as nn
 
+from . import core_utils as cu
 from . import layer_utils as lu
-from . import utils as ut
 
 
 class MOE(nn.Module):
 
   def __init__(self, n, idim, odim, act=None):
     super().__init__()
-    self.weight = nn.Parameter(ut.kuni_tensor(n, odim, idim))
+    self.weight = nn.Parameter(cu.kuni_tensor(n, odim, idim))
     self.gates = nn.Linear(idim, n)
     self.act = lu.create(act or 'gelu')
 

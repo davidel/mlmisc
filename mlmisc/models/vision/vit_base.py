@@ -8,18 +8,18 @@ import torch
 import torch.nn as nn
 
 from ... import args_sequential as aseq
-from ... import conv_utils as cu
+from ... import conv_utils as cvu
+from ... import core_utils as cu
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
 from ... import net_base as nb
-from ... import utils as ut
 
 
 def build_conv_patcher(convs, shape, embed_size, act):
   if isinstance(convs, str):
-    convs = cu.convs_from_string(convs)
+    convs = cvu.convs_from_string(convs)
 
-  patcher = cu.build_conv_stack(convs, shape=shape)
+  patcher = cvu.build_conv_stack(convs, shape=shape)
   patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
   patcher.linear(embed_size)
   patcher.add(lu.create(act))
@@ -36,7 +36,7 @@ class ViTBase(nb.NetBase):
                act='gelu',
                weight=None,
                label_smoothing=0.0):
-    shape = ut.net_shape(patcher, ishape)
+    shape = cu.net_shape(patcher, ishape)
 
     n_tiles, patch_size = shape
 

@@ -5,8 +5,8 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import core_utils as cu
 from . import nets_dict as netd
-from . import utils as ut
 
 
 NetConfig = collections.namedtuple(
@@ -43,9 +43,9 @@ class ModuleBuilder(nn.Module):
           in_shapes=None):
     # The shape contains no batch dimension!
     if in_shapes is None:
-      self.shape = ut.net_shape(net, self.shape)
+      self.shape = cu.net_shape(net, self.shape)
     else:
-      self.shape = ut.net_shape(net, *in_shapes)
+      self.shape = cu.net_shape(net, *in_shapes)
     self.layers.add_net(net)
     self.config.append(NetConfig(input_fn=input_fn,
                                  output_fn=output_fn,

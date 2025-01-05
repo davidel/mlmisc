@@ -10,6 +10,7 @@ import py_misc_utils.gfs as pygfs
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 
+from .. import core_utils as cu
 from .. import sequence_utils as sequ
 from .. import tokenizers as tkz
 from .. import utils as ut
@@ -17,11 +18,11 @@ from .. import utils as ut
 
 def _common_main(args):
   if args.seed is not None:
-    ut.randseed(args.seed)
+    cu.randseed(args.seed)
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
   if args.device is None:
-    args.device = ut.get_device()
+    args.device = cu.get_device()
   else:
     args.device = torch.device(args.device)
 
@@ -58,7 +59,7 @@ def _eval_model(net):
 
 
 def _generate(args, model, tokenizer):
-  with torch.no_grad(), ut.Training(model, False):
+  with torch.no_grad(), cu.Training(model, False):
     iseq = tokenizer.encode(args.input_sequence)
     iseq_tensor = torch.tensor(iseq, dtype=torch.long, device=args.device)
 

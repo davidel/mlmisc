@@ -5,7 +5,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 class TiledLinear(nn.Module):
@@ -45,7 +45,7 @@ class TiledLinear(nn.Module):
     return y
 
   def extra_repr(self):
-    return ut.extra_repr(crossed=self.crossed,
+    return cu.extra_repr(crossed=self.crossed,
                          num_tiles=self.num_tiles,
                          tile_size=self.tiled_fc.weight.shape[-1],
                          pad=self.pad)

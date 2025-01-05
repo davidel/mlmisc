@@ -4,10 +4,10 @@ import os
 
 import mlmisc.auto_module as mlam
 import mlmisc.config as mlco
+import mlmisc.core_utils as mlcu
 import mlmisc.load_state_dict as mlsd
 import mlmisc.torch_profiler as mltp
 import mlmisc.trainer as mltr
-import mlmisc.utils as mlut
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
@@ -102,7 +102,7 @@ def create_model(args, trainer, dataset):
   alog.info(f'Model Parameters:')
   for name, param in model.named_parameters():
     alog.info(f'  {name}\t{tuple(param.shape)}')
-  alog.info(f'Model {pyu.cname(model)} has {mlut.count_params(model):.2e} parameters')
+  alog.info(f'Model {pyu.cname(model)} has {mlcu.count_params(model):.2e} parameters')
 
   return model, state
 
@@ -133,18 +133,18 @@ def main(args):
   else:
     scheduler = None
 
-  if args.amp_dtype and mlut.is_cuda_device(args.device):
+  if args.amp_dtype and mlcu.is_cuda_device(args.device):
     alog.info(f'Enabling AMP scaler for device {args.device} and type {args.amp_dtype}')
     scaler = torch.amp.GradScaler()
     trainer.load_aux_state(state, scaler=scaler)
-    amp_dtype = mlut.torch_dtype(args.amp_dtype)
+    amp_dtype = mlcu.torch_dtype(args.amp_dtype)
   else:
     scaler, amp_dtype = None, None
 
   del state
 
   tprof = create_profiler(args.profiler)
-  tb_writer = mlut.create_tb_writer(args.tb_path) if args.tb_path else None
+  tb_writer = mlcu.create_tb_writer(args.tb_path) if args.tb_path else mlcu.NoopTbWriter()
 
   with pybc.BreakControl() as bc, tprof:
     step_fn = create_stepfn(tprof)
@@ -168,7 +168,7 @@ def main(args):
                           scaler=scaler,
                           amp_dtype=amp_dtype)
 
-      if args.show_cuda_memory and mlut.is_cuda_device(args.device):
+      if args.show_cuda_memory and mlcu.is_cuda_device(args.device):
         alog.info(f'CUDA Memory:\n{torch.cuda.memory_summary(device=args.device)}')
 
       if bc.hit():

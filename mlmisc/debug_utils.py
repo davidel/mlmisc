@@ -7,7 +7,7 @@ import py_misc_utils.object_tracker as pyot
 import py_misc_utils.utils as pyu
 import torch
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 STD_PCTILES = (0.0, 0.05, 0.1, 0.5, 0.9, 0.95, 1.0)
@@ -78,7 +78,7 @@ def get_parameters_stats(model, **kwargs):
 
 
 def get_grads_stats(model, **kwargs):
-  return get_tensors_stats('Gradients', ut.named_grads(model), **kwargs)
+  return get_tensors_stats('Gradients', cu.named_grads(model), **kwargs)
 
 
 def show_tensors_stats(stats, slevs):

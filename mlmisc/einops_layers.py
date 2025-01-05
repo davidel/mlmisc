@@ -3,7 +3,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 # The original einops layers do not support kwargs ...
@@ -18,7 +18,7 @@ class Rearrange(nn.Module):
     return einops.rearrange(x, self.recipe, **self.kwargs)
 
   def extra_repr(self):
-    return ut.extra_repr(recipe=self.recipe, kwargs=self.kwargs)
+    return cu.extra_repr(recipe=self.recipe, kwargs=self.kwargs)
 
 
 class Repeat(nn.Module):
@@ -32,7 +32,7 @@ class Repeat(nn.Module):
     return einops.repeat(x, self.recipe, **self.kwargs)
 
   def extra_repr(self):
-    return ut.extra_repr(recipe=self.recipe, kwargs=self.kwargs)
+    return cu.extra_repr(recipe=self.recipe, kwargs=self.kwargs)
 
 
 class Reduce(nn.Module):
@@ -47,7 +47,7 @@ class Reduce(nn.Module):
     return einops.reduce(x, self.recipe, self.reduction, **self.kwargs)
 
   def extra_repr(self):
-    return ut.extra_repr(recipe=self.recipe,
+    return cu.extra_repr(recipe=self.recipe,
                          reduction=self.reduction,
                          kwargs=self.kwargs)
 

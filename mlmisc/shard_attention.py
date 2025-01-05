@@ -6,8 +6,8 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import core_utils as cu
 from . import layer_utils as lu
-from . import utils as ut
 
 
 class ShardAttention(nn.Module):
@@ -21,7 +21,7 @@ class ShardAttention(nn.Module):
 
     super().__init__()
     self.num_heads = num_heads
-    self.weight = nn.Parameter(ut.kuni_tensor(num_heads * embed_size, embed_size))
+    self.weight = nn.Parameter(cu.kuni_tensor(num_heads * embed_size, embed_size))
     self.attend = nn.Softmax(dim=-1)
     self.post = lu.create(post)
     self.post_feed = post_feed
@@ -47,6 +47,6 @@ class ShardAttention(nn.Module):
     return self.post(self.post_feed(x, y))
 
   def extra_repr(self):
-    return ut.extra_repr(num_heads=self.num_heads,
+    return cu.extra_repr(num_heads=self.num_heads,
                          embed_size=self.weight.shape[-1])
 

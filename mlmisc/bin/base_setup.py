@@ -2,7 +2,7 @@ import argparse
 import multiprocessing
 import os
 
-import mlmisc.utils as mlut
+import mlmisc.core_utils as mlcu
 import py_misc_utils.gfs as gfs
 import torch
 
@@ -29,13 +29,13 @@ def setup(args):
   if args.mp_start_method != 'default':
     multiprocessing.set_start_method(args.mp_start_method, force=True)
   if args.seed is not None:
-    mlut.randseed(args.seed)
+    mlcu.randseed(args.seed)
   if args.autograd_debug:
     torch.autograd.set_detect_anomaly(True)
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
   if args.device is None:
-    args.device = mlut.get_device()
+    args.device = mlcu.get_device()
   else:
     args.device = torch.device(args.device)
 

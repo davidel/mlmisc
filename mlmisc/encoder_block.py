@@ -5,8 +5,8 @@ import torch.nn as nn
 
 from . import args_sequential as aseq
 from . import attention as atn
+from . import core_utils as cu
 from . import layer_utils as lu
-from . import utils as ut
 
 
 PRE_NORM = 'pre'
@@ -54,5 +54,5 @@ class EncoderBlock(nn.Module):
     return x
 
   def extra_repr(self):
-    return ut.extra_repr(norm_mode=self.norm_mode)
+    return cu.extra_repr(norm_mode=self.norm_mode)
 

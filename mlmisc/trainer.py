@@ -10,6 +10,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from . import core_utils as cu
 from . import data_loader as dload
 from . import dataset_utils as dsu
 from . import debug_utils as du
@@ -120,7 +121,7 @@ class Trainer:
   def export_tb_metrics(cls, path, tb_writer):
     metrics = cls.load_metrics(path) or ()
     for m in metrics:
-      ut.tb_write(tb_writer, m['name'], m['value'],
+      cu.tb_write(tb_writer, m['name'], m['value'],
                   global_step=m['num_samples'],
                   walltime=m['time'])
 
@@ -140,7 +141,7 @@ class Trainer:
     num_samples = dsu.dataset_size(tctx.val_data)
     alog.info(f'Running validation on {num_samples or "N/A"} samples')
 
-    with torch.no_grad(), ut.Training(tctx.model, False):
+    with torch.no_grad(), cu.Training(tctx.model, False):
       losses, val_start = [], self.val_time.start()
       for bid in pybi.BufferedIterator(loader, 4):
         x, y = bid.data
@@ -165,10 +166,9 @@ class Trainer:
                              global_step=self.global_step,
                              time=self.train_time.seconds,
                              value=value))
-    if tb_writer is not None:
-      ut.tb_write(tb_writer, name, value,
-                  global_step=self.global_step,
-                  walltime=self.train_time.seconds)
+    cu.tb_write(tb_writer, name, value,
+                global_step=self.global_step,
+                walltime=self.train_time.seconds)
 
   def _log_train_loss(self, loss, batch_num, step_time, tctx):
     self._metric_log(tctx.tb_writer, 'loss.train', loss)
@@ -207,7 +207,7 @@ class Trainer:
     self._log_tensor_stats('PARA.{}', pstats.stats, tctx)
     self._log_tensor_stats('GRAD.{}', gstats.stats, tctx)
 
-    if current_lr := ut.get_lr(tctx.optimizer, reduce=False):
+    if current_lr := cu.get_lr(tctx.optimizer, reduce=False):
       alog.debug0(f'Current LR: {pyu.format(current_lr, ".3e")}')
       for name, lr in pyu.name_values('lr', current_lr):
         self._metric_log(tctx.tb_writer, name, lr)

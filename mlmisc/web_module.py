@@ -10,7 +10,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 def _clone_repo(repo, root, force_clone, commit):
@@ -79,5 +79,5 @@ class WebModule(nn.Module):
     return self.net(*args, **kwargs)
 
   def extra_repr(self):
-    return ut.extra_repr(**self.repr_args)
+    return cu.extra_repr(**self.repr_args)
 

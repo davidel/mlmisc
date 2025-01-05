@@ -5,7 +5,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 class Attention(nn.Module):
@@ -54,7 +54,7 @@ class Attention(nn.Module):
     return out
 
   def extra_repr(self):
-    return ut.extra_repr(num_heads=self._num_heads,
+    return cu.extra_repr(num_heads=self._num_heads,
                          embed_size=self.unifyheads.out_features,
                          attn_dropout=self.attn_drop.p,
                          dropout=self.resid_drop.p)

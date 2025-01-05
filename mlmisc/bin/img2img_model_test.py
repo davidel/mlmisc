@@ -4,9 +4,9 @@ import einops
 import os
 
 import matplotlib.pyplot as plt
+import mlmisc.core_utils as mlcu
 import mlmisc.load_state_dict as mlsd
 import mlmisc.trainer as mltr
-import mlmisc.utils as mlut
 import numpy as np
 import pandas as pd
 import py_misc_utils.alog as alog
@@ -36,7 +36,7 @@ def load_model(args):
   alog.debug(f'Model Parameters:')
   for name, param in model.named_parameters():
     alog.debug(f'  {name}\t{tuple(param.shape)}')
-  alog.debug(f'Model {pyu.cname(model)} has {mlut.count_params(model):.2e} parameters')
+  alog.debug(f'Model {pyu.cname(model)} has {mlcu.count_params(model):.2e} parameters')
 
   return model
 
@@ -79,7 +79,7 @@ def main(args):
 
   model = load_model(args)
 
-  with pybc.BreakControl() as bc, torch.no_grad(), mlut.Training(model, False):
+  with pybc.BreakControl() as bc, torch.no_grad(), mlcu.Training(model, False):
     batch_size = min(args.batch_size, args.max_samples)
     shuffle = not isinstance(test_dataset, torch.utils.data.IterableDataset)
     loader = torch.utils.data.DataLoader(test_dataset,

@@ -2,7 +2,7 @@ import argparse
 
 import matplotlib.pyplot as plt
 import mlmisc.config as mlco
-import mlmisc.utils as mlut
+import mlmisc.core_utils as mlcu
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.gfs as gfs
@@ -34,7 +34,7 @@ def main(args):
   for n in range(args.num_steps):
     optimizer.step()
     scheduler.step()
-    lrs.append(mlut.get_lr(optimizer))
+    lrs.append(mlcu.get_lr(optimizer))
 
   fig, ax = plt.subplots(**ps.plot_args(args))
 

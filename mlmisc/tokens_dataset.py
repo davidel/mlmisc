@@ -4,8 +4,8 @@ import py_misc_utils.pipeline as pypl
 import py_misc_utils.utils as pyu
 import torch
 
+from . import core_utils as cu
 from . import dataset_base as dsb
-from . import utils as ut
 
 
 class TokensDataset(dsb.Dataset):
@@ -41,7 +41,7 @@ class TokensDataset(dsb.Dataset):
 def create(tokens_path, window_size, mode,
            split_pct=0.9,
            **kwargs):
-  tokens = ut.torch_load(gfs.normpath(tokens_path))
+  tokens = cu.torch_load(gfs.normpath(tokens_path))
 
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]

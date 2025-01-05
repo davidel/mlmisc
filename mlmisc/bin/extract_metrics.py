@@ -6,8 +6,8 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.utils as pyu
 
+from .. import core_utils as cu
 from .. import trainer as tr
-from .. import utils as ut
 
 
 def _main(args):
@@ -17,7 +17,7 @@ def _main(args):
     else:
       alog.xraise(RuntimeError, f'Tensorboard ouput folder already exists: {args.tb_path}')
 
-  tb_writer = ut.create_tb_writer(args.tb_path)
+  tb_writer = cu.create_tb_writer(args.tb_path)
 
   tr.Trainer.export_tb_metrics(args.checkpoint_path, tb_writer)
 

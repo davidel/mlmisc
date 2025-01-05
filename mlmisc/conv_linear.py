@@ -8,11 +8,11 @@ import torch
 import torch.nn as nn
 
 from . import args_sequential as aseq
-from . import conv_utils as cu
+from . import conv_utils as cvu
+from . import core_utils as cu
 from . import einops_layers as eil
 from . import layer_utils as lu
 from . import types as typ
-from . import utils as ut
 
 
 def calc_shape(n, c):
@@ -39,7 +39,7 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
     nn.Conv2d(shape.c, out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
   ]
-  flat_size = out_channels * cu.conv_wndsize(shape.w, kernel_size, stride)**2
+  flat_size = out_channels * cvu.conv_wndsize(shape.w, kernel_size, stride)**2
   if force:
     if flat_size != out_features:
       layers.append(nn.Linear(flat_size, out_features, bias=False))
@@ -63,7 +63,7 @@ class ConvLinear(nn.Module):
                act=None,
                force=False):
     shape, pad = calc_best_shape(in_features, in_channels, min_dim_size)
-    conv_params = cu.conv_flat_reduce(shape, out_features, force=force)
+    conv_params = cvu.conv_flat_reduce(shape, out_features, force=force)
     tas.check_is_not_none(conv_params,
                           msg=f'ConvLinear not supported for {in_features} -> {out_features}')
 
@@ -101,5 +101,5 @@ class ConvLinear(nn.Module):
     return y
 
   def extra_repr(self):
-    return ut.extra_repr(shape=self.shape, pad=self.pad)
+    return cu.extra_repr(shape=self.shape, pad=self.pad)
 

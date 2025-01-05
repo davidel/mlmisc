@@ -3,15 +3,15 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 class CrossLinear(nn.Module):
 
   def __init__(self, context_size, embed_size, bias=True):
     super().__init__()
-    self.fc = nn.Parameter(ut.kuni_tensor((embed_size, embed_size)))
-    self.alt_fc = nn.Parameter(ut.kuni_tensor((context_size, context_size)))
+    self.fc = nn.Parameter(cu.kuni_tensor((embed_size, embed_size)))
+    self.alt_fc = nn.Parameter(cu.kuni_tensor((context_size, context_size)))
     self.bias = nn.Parameter(torch.zeros(embed_size)) if bias else None
 
   def forward(self, x):
@@ -26,7 +26,7 @@ class CrossLinear(nn.Module):
     return y
 
   def extra_repr(self):
-    return ut.extra_repr(context_size=self.alt_fc.shape[-1],
+    return cu.extra_repr(context_size=self.alt_fc.shape[-1],
                          embed_size=self.fc.shape[-1],
                          bias=self.bias is not None)
 

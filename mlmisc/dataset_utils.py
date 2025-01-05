@@ -15,6 +15,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torchvision
 
+from . import core_utils as cu
 from . import dataset_base as dsb
 from . import utils as ut
 
@@ -268,7 +269,7 @@ def get_class_weights(data,
                       cdtype=torch.int32,
                       output_filter=lambda x: x[1],
                       max_samples=None):
-  tas.check(ut.torch_is_integer_dtype(cdtype),
+  tas.check(cu.torch_is_integer_dtype(cdtype),
             msg=f'Targets should be class integers instead of {cdtype}')
 
   indices = list(range(len(data)))
@@ -279,7 +280,7 @@ def get_class_weights(data,
   target = torch.empty(len(indices), dtype=cdtype)
   for i, idx in enumerate(indices):
     y = output_filter(data[idx])
-    target[i] = ut.item(y)
+    target[i] = cu.item(y)
 
   cvalues, class_counts = torch.unique(target, return_counts=True)
 

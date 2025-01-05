@@ -6,7 +6,7 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
-from . import utils as ut
+from . import core_utils as cu
 
 
 def get_post_feed(post_feed):
@@ -56,6 +56,6 @@ class ForkAttention(nn.Module):
     return self.post_feed(x, y)
 
   def extra_repr(self):
-    return ut.extra_repr(context_size=self.alt_fc.weight.shape[-1],
+    return cu.extra_repr(context_size=self.alt_fc.weight.shape[-1],
                          embed_size=self.fc.weight.shape[-1])
 
