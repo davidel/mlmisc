@@ -99,7 +99,7 @@ class Trainer:
 
   @classmethod
   def load_raw_state(cls, path):
-    return ut.torch_load(path, map_location=torch.device('cpu'))
+    return cu.torch_load(path, map_location=torch.device('cpu'))
 
   @classmethod
   def model_state(cls, state):
