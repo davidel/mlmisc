@@ -7,6 +7,7 @@ import huggingface_hub as hfh
 import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.module_utils as pymu
@@ -231,7 +232,7 @@ def create_dataset(name,
                    target_transform=None,
                    split_pct=0.9,
                    dataset_kwargs=None):
-  cache_dir = cache_dir or os.path.join(os.getenv('HOME', '.'), 'datasets')
+  cache_dir = cache_dir or os.path.join(pyfsu.home(), 'datasets')
   dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
   ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
