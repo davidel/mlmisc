@@ -33,20 +33,14 @@ def load_state_dict(module, state, strict=None, **kwargs):
 
   if isinstance(strict, bool):
     kwargs.update(strict=strict)
-    fargs, fkwargs = pyiu.fetch_args(module.load_state_dict, kwargs,
-                                     input_args=(state,))
-
-    lsd_res = module.load_state_dict(*fargs, **fkwargs)
+    lsd_res = pyiu.fetch_call(module.load_state_dict, kwargs, input_args=(state,))
 
     result = _make_result(lsd_res)
   elif strict == 'force':
     result = None
     try:
       kwargs.update(strict=False)
-      fargs, fkwargs = pyiu.fetch_args(module.load_state_dict, kwargs,
-                                       input_args=(state,))
-
-      lsd_res = module.load_state_dict(*fargs, **fkwargs)
+      lsd_res = pyiu.fetch_call(module.load_state_dict, kwargs, input_args=(state,))
 
       result = _make_result(lsd_res)
     except Exception as ex:
