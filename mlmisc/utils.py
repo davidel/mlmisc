@@ -58,12 +58,9 @@ def save_data(path, **kwargs):
   alog.debug(f'Data saved to {path}')
 
 
-def load_data(path, map_location=None, strict=None, **kwargs):
-  alog.debug(f'Loading data from {path}')
-  td = cu.torch_load(path, map_location=map_location or torch.device('cpu'))
-
+def load_state(torch_data, strict=None, **kwargs):
   data = dict()
-  for name, ndata in td.items():
+  for name, ndata in torch_data.items():
     sdobj = kwargs.get(name)
     if sdobj is not None:
       lsd.load_state_dict(sdobj, ndata, strict=strict)
@@ -74,6 +71,13 @@ def load_data(path, map_location=None, strict=None, **kwargs):
       data[name] = ndata
 
   return data
+
+
+def load_data(path, map_location=None, strict=None, **kwargs):
+  alog.debug(f'Loading data from {path}')
+  torch_data = cu.torch_load(path, map_location=map_location or torch.device('cpu'))
+
+  return load_state(torch_data, strict=strict, **kwargs)
 
 
 def checkpoint_data(path, rmt_path=None, **kwargs):
