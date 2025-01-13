@@ -13,8 +13,11 @@ LoadResult = collections.namedtuple(
 )
 
 def _make_result(lsd_res):
-  return LoadResult(missing_keys=getattr(lsd_res, 'missing_keys', ()),
-                    unexpected_keys=getattr(lsd_res, 'unexpected_keys', ()))
+  if lsd_res is not None:
+    return LoadResult(missing_keys=getattr(lsd_res, 'missing_keys', ()),
+                      unexpected_keys=getattr(lsd_res, 'unexpected_keys', ()))
+  else:
+    return LoadResult()
 
 
 VALID_STRICTS = {
@@ -25,7 +28,7 @@ VALID_STRICTS = {
   'force': 'force',
 }
 
-def load_state_dict(module, state, strict=None, **kwargs):
+def load_state_dict(obj, state, strict=None, **kwargs):
   if strict is None:
     strict = True
   elif isinstance(strict, str):
@@ -33,14 +36,14 @@ def load_state_dict(module, state, strict=None, **kwargs):
 
   if isinstance(strict, bool):
     kwargs.update(strict=strict)
-    lsd_res = pyiu.fetch_call(module.load_state_dict, kwargs, input_args=(state,))
+    lsd_res = pyiu.fetch_call(obj.load_state_dict, kwargs, input_args=(state,))
 
     result = _make_result(lsd_res)
   elif strict == 'force':
     result = None
     try:
       kwargs.update(strict=False)
-      lsd_res = pyiu.fetch_call(module.load_state_dict, kwargs, input_args=(state,))
+      lsd_res = pyiu.fetch_call(obj.load_state_dict, kwargs, input_args=(state,))
 
       result = _make_result(lsd_res)
     except Exception as ex:
