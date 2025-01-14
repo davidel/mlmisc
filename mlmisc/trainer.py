@@ -241,36 +241,18 @@ class Trainer:
       if tctx.device is not None:
         x, y = x.to(tctx.device), y.to(tctx.device)
 
-      if tctx.scaler is not None:
-        with torch.autocast(device_type=tctx.device.type,
-                            dtype=tctx.amp_dtype or torch.float16):
-          _, loss = tctx.model(x, targets=y)
-      else:
-        _, loss = tctx.model(x, targets=y)
-
-      bloss = loss if tctx.accum_steps == 1 else loss / tctx.accum_steps
-
-      if tctx.scaler is not None:
-        tctx.scaler.scale(bloss).backward()
-      else:
-        bloss.backward()
+      loss = cu.train_step(tctx.model, x, y, tctx.optimizer,
+                           scaler=tctx.scaler,
+                           device=tctx.device,
+                           amp_dtype=tctx.amp_dtype,
+                           accum_steps=tctx.accum_steps,
+                           stepno=bid.n + 1,
+                           grad_clip=tctx.grad_clip,
+                           zero_grad=False)
 
       self.num_samples += len(x)
       self.global_step += 1
       if (bid.n + 1) % tctx.accum_steps == 0:
-        if tctx.scaler is not None:
-          if tctx.grad_clip is not None and tctx.grad_clip > 0:
-            tctx.scaler.unscale_(tctx.optimizer)
-            nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
-
-          tctx.scaler.step(tctx.optimizer)
-          tctx.scaler.update()
-        else:
-          if tctx.grad_clip is not None and tctx.grad_clip > 0:
-            nn.utils.clip_grad_norm_(tctx.model.parameters(), tctx.grad_clip)
-
-          tctx.optimizer.step()
-
         yield pyu.make_object(stepno=bid.n, loss=loss, left=bid.left)
 
         tctx.optimizer.zero_grad()

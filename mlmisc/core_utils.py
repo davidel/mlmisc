@@ -137,13 +137,59 @@ def update_params(src_net, dest_net, tau=0.0):
         alog.warning(f'Missing parameter "{name}" {tuple(dparam.shape)} in source net')
 
 
-def clamp_gradients(optimizer, gmax):
-  gmax = gmax if isinstance(gmax, (list, tuple)) else (-gmax, gmax)
-
+def optimizer_params(optimizer):
+  params = dict()
   for pg in optimizer.param_groups:
     for param in pg.get('params', ()):
-      if param.grad is not None:
-        param.grad.data.clamp_(*gmax)
+      params[id(param)] = param
+
+  return tuple(params.values())
+
+
+def clamp_gradients(optimizer, gmax):
+  torch.nn.utils.clip_grad_value_(optimizer_params(optimizer), gmax)
+
+
+def train_step(net, x, y, optimizer,
+               scaler=None,
+               device=None,
+               amp_dtype=None,
+               accum_steps=1,
+               stepno=1,
+               grad_clip=None,
+               zero_grad=True):
+  if scaler is not None:
+    with torch.autocast(device_type=device.type,
+                        dtype=amp_dtype or torch.float16):
+      _, loss = net(x, targets=y)
+  else:
+    _, loss = net(x, targets=y)
+
+  bloss = loss if accum_steps == 1 else loss / accum_steps
+
+  if scaler is not None:
+    scaler.scale(bloss).backward()
+  else:
+    bloss.backward()
+
+  if stepno % accum_steps == 0:
+    if scaler is not None:
+      if grad_clip is not None and grad_clip > 0:
+        scaler.unscale_(optimizer)
+        nn.utils.clip_grad_norm_(net.parameters(), grad_clip)
+
+      scaler.step(optimizer)
+      scaler.update()
+    else:
+      if grad_clip is not None and grad_clip > 0:
+        nn.utils.clip_grad_norm_(net.parameters(), grad_clip)
+
+      optimizer.step()
+
+      if zero_grad:
+        optimizer.zero_grad()
+
+  return loss
 
 
 class NoopTbWriter:
