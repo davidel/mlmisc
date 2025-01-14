@@ -146,8 +146,11 @@ def optimizer_params(optimizer):
   return tuple(params.values())
 
 
-def clamp_gradients(optimizer, gmax):
-  torch.nn.utils.clip_grad_value_(optimizer_params(optimizer), gmax)
+def clamp_gradients(params, gmax, norm_type=None):
+  if norm_type is None:
+    torch.nn.utils.clip_grad_value_(params, gmax)
+  else:
+    torch.nn.utils.clip_grad_norm_(params, gmax, norm_type=norm_type)
 
 
 def train_step(net, x, y, optimizer,
@@ -176,13 +179,13 @@ def train_step(net, x, y, optimizer,
     if scaler is not None:
       if grad_clip is not None and grad_clip > 0:
         scaler.unscale_(optimizer)
-        nn.utils.clip_grad_norm_(net.parameters(), grad_clip)
+        clamp_gradients(net.parameters(), grad_clip)
 
       scaler.step(optimizer)
       scaler.update()
     else:
       if grad_clip is not None and grad_clip > 0:
-        nn.utils.clip_grad_norm_(net.parameters(), grad_clip)
+        clamp_gradients(net.parameters(), grad_clip)
 
       optimizer.step()
 
