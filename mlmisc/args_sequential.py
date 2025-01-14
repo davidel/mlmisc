@@ -41,7 +41,7 @@ class Mix(nn.Module):
     self.res = None
 
   def forward(self, *args):
-    fargs = list(args) + [net.res for net in self.nets]
+    fargs = args + tuple(net.res for net in self.nets)
 
     self.res = self.func(*fargs)
 
