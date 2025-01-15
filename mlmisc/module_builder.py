@@ -1,6 +1,7 @@
 import collections
 import functools
 
+import py_misc_utils.obj as obj
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -24,6 +25,7 @@ class ModuleBuilder(nn.Module):
     self.layers = netd.NetsDict()
     self.config = []
     self.aux_modules = netd.NetsDict()
+    self.nss = []
 
   def _pop_add_args(self, kwargs):
     args = pyu.pop_kwargs(kwargs, _ADD_FIELDS)
@@ -35,6 +37,17 @@ class ModuleBuilder(nn.Module):
 
   def last_id(self):
     return len(self.layers) - 1
+
+  def newns(self):
+    self.nss.append(obj.Obj())
+
+    return self.nss[-1]
+
+  def _nsclear(self):
+    for ns in self.nss:
+      for k in tuple(vars(ns).keys()):
+        if not k.startswith('_'):
+          delattr(ns, k)
 
   def add(self, net,
           input_fn=None,
@@ -121,6 +134,8 @@ class ModuleBuilder(nn.Module):
 
       results.append(res)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
+
+    self._nsclear()
 
     return y
 
