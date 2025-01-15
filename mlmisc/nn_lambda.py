@@ -6,10 +6,16 @@ import torch
 import torch.nn as nn
 
 
-def _try_getsource(fn):
+def _try_getsource(fn, maxlines=None):
   # Do not fail if inspect is not able to fetch the source.
   try:
-    return inspect.getsource(fn)
+    source = inspect.getsource(fn)
+    if maxlines is not None:
+      lines = source.splitlines()
+      if len(lines) > maxlines:
+        return '\n'.join(lines[: maxlines] + ['...'])
+
+    return source
   except:
     pass
 
@@ -29,14 +35,14 @@ def _compile(sfn, info, env):
 
 class Lambda(nn.Module):
 
-  def __init__(self, fn, info=None, env=None):
+  def __init__(self, fn, info=None, env=None, maxlines=8):
     super().__init__()
     if isinstance(fn, str):
       genv = env if env is not None else pyiu.parent_globals()
       self.fn, self.info = _compile(fn, info, genv)
     else:
       self.fn = fn
-      self.info = info if info is not None else _try_getsource(fn)
+      self.info = info if info is not None else _try_getsource(fn, maxlines=maxlines)
 
   def forward(self, *args, **kwargs):
     return self.fn(*args, **kwargs)
