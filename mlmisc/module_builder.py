@@ -38,12 +38,18 @@ class ModuleBuilder(nn.Module):
   def last_id(self):
     return len(self.layers) - 1
 
-  def newns(self):
+  def ns_new(self):
     self.nss.append(obj.Obj())
 
     return self.nss[-1]
 
-  def _nsclear(self):
+  def ns_get(self, i):
+    return self.nss[i]
+
+  def ns_count(self):
+    return len(self.nss)
+
+  def ns_clear(self):
     for ns in self.nss:
       for k in tuple(vars(ns).keys()):
         if not k.startswith('_'):
@@ -135,7 +141,7 @@ class ModuleBuilder(nn.Module):
       results.append(res)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
 
-    self._nsclear()
+    self.ns_clear()
 
     return y
 
