@@ -46,7 +46,7 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
   for i in range(num_layers):
     c, h, w = net.shape
 
-    net.batchnorm2d(input_fn=mb.inputfn(lids))
+    net.batchnorm2d(input_fn=mb.inputsum_back(lids))
     net.conv2d(c, 3, stride=1, padding='same')
     net.add(lu.create(act))
     net.add(eil.Rearrange('b c h w -> b (h w) c'))

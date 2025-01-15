@@ -23,7 +23,7 @@ def create_net_v1(context_size, embed_size, vocab_size, num_layers, bottleneck,
   result_ids = []
   for i in range(num_layers):
     net.add(xl.CrossLinear(context_size, embed_size),
-            input_fn=mb.inputfn(result_ids, back=shortcut))
+            input_fn=mb.inputsum_back(result_ids, back=shortcut))
     net.add(lu.create(act))
     rid = net.layernorm()
     result_ids.append(rid)
@@ -47,7 +47,7 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
   result_ids = []
   for i in range(num_layers):
     net.add(xl.CrossLinear(context_size, embed_size),
-            input_fn=mb.inputfn(result_ids, back=shortcut))
+            input_fn=mb.inputsum_back(result_ids, back=shortcut))
     net.add(lu.create(act))
     rid = net.layernorm()
     result_ids.append(rid)

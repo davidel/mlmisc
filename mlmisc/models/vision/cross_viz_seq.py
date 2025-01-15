@@ -29,7 +29,7 @@ class CrossVizSeq(vb.ViTBase):
     result_ids = []
     for i in range(num_layers):
       net.add(xl.CrossLinear(*net.shape),
-              input_fn=mb.inputfn(result_ids, back=shortcut))
+              input_fn=mb.inputsum_back(result_ids, back=shortcut))
       net.add(lu.create(act))
       rid = net.layernorm()
       result_ids.append(rid)

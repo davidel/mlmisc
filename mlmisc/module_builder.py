@@ -125,25 +125,23 @@ class ModuleBuilder(nn.Module):
     return y
 
 
-def _inputfn(rid, x, results):
-  return (x + results[rid]) if rid is not None else x
-
-def inputfn(result_ids, back=2):
-  iid = len(result_ids) - back
-  rid = result_ids[iid] if iid >= 0 else None
-
-  return functools.partial(_inputfn, rid)
-
-
 def _inputsum(rid, x, results):
   return x + results[rid]
+
 
 def inputsum(rid):
   return functools.partial(_inputsum, rid)
 
 
+def inputsum_back(result_ids, back=2):
+  iid = len(result_ids) - back
+
+  return functools.partial(_inputsum, iid) if iid >= 0 else None
+
+
 def _inputtuple(rid, x, results):
   return x, results[rid]
+
 
 def inputtuple(rid):
   return functools.partial(_inputtuple, rid)
