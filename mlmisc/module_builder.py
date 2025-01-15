@@ -46,7 +46,7 @@ class ModuleBuilder(nn.Module):
   def ns_get(self, i):
     return self.nss[i]
 
-  def ns_count(self):
+  def ns_len(self):
     return len(self.nss)
 
   def ns_clear(self):
