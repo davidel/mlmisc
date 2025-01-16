@@ -17,12 +17,30 @@ from . import load_state_dict as lsd
 
 class PickleWrap:
 
+  KNOWN_MODULES = {
+    'builtins',
+    'numpy',
+    'torch',
+    'py_misc_utils',
+    'mlmisc',
+    'pandas',
+  }
+
   def __init__(self, obj):
     self._data = pickle.dumps(obj)
 
   def load(self):
     return pickle.loads(self._data)
 
+  @classmethod
+  def wrap(cls, obj):
+    objmod = pyu.moduleof(obj)
+    if objmod is not None:
+      rootmod = objmod.split('.', maxsplit=1)[0]
+      if rootmod in cls.KNOWN_MODULES:
+        return obj
+
+    return PickleWrap(obj)
 
 
 def model_save(model, path):
@@ -61,7 +79,7 @@ def save_data(path, **kwargs):
     if sdfn is not None and callable(sdfn):
       data[name] = sdfn()
     else:
-      data[name] = PickleWrap(ndata)
+      data[name] = PickleWrap.wrap(ndata)
 
   alog.debug(f'Saving data to {path} ...')
   with pyfow.FileOverwrite(path, mode='wb') as ptfd:
