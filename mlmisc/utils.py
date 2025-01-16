@@ -7,6 +7,7 @@ import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gfs as gfs
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -27,7 +28,11 @@ class PickleWrap:
   }
 
   def __init__(self, obj):
+    self._class = pyiu.qual_name(obj)
     self._data = pickle.dumps(obj)
+
+  def wrapped_class(self):
+    return self._class
 
   def load(self):
     return pickle.loads(self._data)
