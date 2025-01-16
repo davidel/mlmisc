@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -12,6 +13,16 @@ import torch
 from . import auto_module as am
 from . import core_utils as cu
 from . import load_state_dict as lsd
+
+
+class PickleWrap:
+
+  def __init__(self, obj):
+    self._data = pickle.dumps(obj)
+
+  def load(self):
+    return pickle.loads(self._data)
+
 
 
 def model_save(model, path):
@@ -50,7 +61,7 @@ def save_data(path, **kwargs):
     if sdfn is not None and callable(sdfn):
       data[name] = sdfn()
     else:
-      data[name] = ndata
+      data[name] = PickleWrap(ndata)
 
   alog.debug(f'Saving data to {path} ...')
   with pyfow.FileOverwrite(path, mode='wb') as ptfd:
@@ -60,15 +71,17 @@ def save_data(path, **kwargs):
 
 def load_state(torch_data, strict=None, **kwargs):
   data = dict()
-  for name, ndata in torch_data.items():
+  for name, tdata in torch_data.items():
+    xdata = tdata.load() if isinstance(tdata, PickleWrap) else tdata
+
     sdobj = kwargs.get(name)
     if sdobj is not None:
-      lsd.load_state_dict(sdobj, ndata, strict=strict)
+      lsd.load_state_dict(sdobj, xdata, strict=strict)
       data[name] = sdobj
-    elif isinstance(ndata, dict) and am.is_auto_state(ndata):
-      data[name] = am.load(ndata, strict=strict)
+    elif isinstance(xdata, dict) and am.is_auto_state(xdata):
+      data[name] = am.load(xdata, strict=strict)
     else:
-      data[name] = ndata
+      data[name] = xdata
 
   return data
 

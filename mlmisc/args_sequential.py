@@ -55,9 +55,6 @@ class Mix(nn.Module):
 
 class ArgsSequential(netd.NetsDict):
 
-  def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
-
   def forward(self, x, *args, **kwargs):
     for net in self.values():
       x = net(x, *args, **kwargs)

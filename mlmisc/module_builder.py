@@ -1,7 +1,6 @@
 import collections
 import functools
 
-import py_misc_utils.obj as obj
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -23,9 +22,8 @@ class ModuleBuilder(nn.Module):
     super().__init__()
     self.shape = tuple(shape)
     self.layers = netd.NetsDict()
-    self.config = []
+    self._config = []
     self.aux_modules = netd.NetsDict()
-    self.nss = []
 
   def _pop_add_args(self, kwargs):
     args = pyu.pop_kwargs(kwargs, _ADD_FIELDS)
@@ -38,23 +36,6 @@ class ModuleBuilder(nn.Module):
   def last_id(self):
     return len(self.layers) - 1
 
-  def ns_new(self):
-    self.nss.append(obj.Obj())
-
-    return self.nss[-1]
-
-  def ns_get(self, i):
-    return self.nss[i]
-
-  def ns_len(self):
-    return len(self.nss)
-
-  def ns_clear(self):
-    for ns in self.nss:
-      for k in tuple(vars(ns).keys()):
-        if not k.startswith('_'):
-          delattr(ns, k)
-
   def add(self, net,
           input_fn=None,
           output_fn=None,
@@ -66,9 +47,9 @@ class ModuleBuilder(nn.Module):
     else:
       self.shape = cu.net_shape(net, *in_shapes)
     self.layers.add_net(net)
-    self.config.append(NetConfig(input_fn=input_fn,
-                                 output_fn=output_fn,
-                                 net_args=net_args))
+    self._config.append(NetConfig(input_fn=input_fn,
+                                  output_fn=output_fn,
+                                  net_args=net_args))
     # If the input/output functions are modules, store them here so that their
     # parameters can then be saved/loaded from the normal PyTorch state-dict machinery.
     if isinstance(input_fn, nn.Module):
@@ -120,7 +101,7 @@ class ModuleBuilder(nn.Module):
 
   def forward(self, *args, **kwargs):
     y, results = args, []
-    for net, cfg in zip(self.layers.values(), self.config):
+    for net, cfg in zip(self.layers.values(), self._config):
       net_kwargs = dict()
       if cfg.input_fn is None:
         xx = y
@@ -140,8 +121,6 @@ class ModuleBuilder(nn.Module):
 
       results.append(res)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
-
-    self.ns_clear()
 
     return y
 
