@@ -94,7 +94,7 @@ class ModuleBuilder(nn.Module):
 
   def batchnorm1d(self, **kwargs):
     aargs = self._pop_add_args(kwargs)
-    return self.add(nn.BatchNorm1d(self.shape[-2], **kwargs), **aargs)
+    return self.add(nn.BatchNorm1d(self.shape[-1], **kwargs), **aargs)
 
   def layernorm(self, ndims=1, **kwargs):
     aargs = self._pop_add_args(kwargs)
