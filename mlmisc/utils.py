@@ -9,6 +9,7 @@ import py_misc_utils.core_utils as pycu
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gfs as gfs
 import py_misc_utils.inspect_utils as pyiu
+import py_misc_utils.pickle_wrap as pypw
 import py_misc_utils.utils as pyu
 import torch
 
@@ -17,36 +18,7 @@ from . import core_utils as cu
 from . import load_state_dict as lsd
 
 
-class PickleWrap:
-
-  KNOWN_MODULES = {
-    'builtins',
-    'numpy',
-    'torch',
-    'py_misc_utils',
-    'mlmisc',
-    'pandas',
-  }
-
-  def __init__(self, obj):
-    self._class = pyiu.qual_name(obj)
-    self._data = pickle.dumps(obj)
-
-  def wrapped_class(self):
-    return self._class
-
-  def load(self):
-    return pickle.loads(self._data)
-
-  @classmethod
-  def wrap(cls, obj):
-    objmod = pyu.moduleof(obj)
-    if objmod is not None:
-      rootmod = objmod.split('.', maxsplit=1)[0]
-      if rootmod in cls.KNOWN_MODULES:
-        return obj
-
-    return PickleWrap(obj)
+pypw.add_known_module(__name__)
 
 
 def model_save(model, path):
@@ -85,7 +57,7 @@ def save_data(path, **kwargs):
     if sdfn is not None and callable(sdfn):
       data[name] = sdfn()
     else:
-      data[name] = PickleWrap.wrap(ndata)
+      data[name] = pypw.wrap(ndata)
 
   alog.debug(f'Saving data to {path} ...')
   with pyfow.FileOverwrite(path, mode='wb') as ptfd:
@@ -96,7 +68,7 @@ def save_data(path, **kwargs):
 def load_state(torch_data, strict=None, **kwargs):
   data = dict()
   for name, tdata in torch_data.items():
-    xdata = tdata.load() if isinstance(tdata, PickleWrap) else tdata
+    xdata = pypw.unwrap(tdata)
 
     sdobj = kwargs.get(name)
     if sdobj is not None:
