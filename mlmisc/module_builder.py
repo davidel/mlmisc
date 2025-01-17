@@ -1,6 +1,7 @@
 import collections
 import functools
 
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
@@ -107,7 +108,7 @@ class ModuleBuilder(nn.Module):
         xx = y
       else:
         xx = cfg.input_fn(y, results)
-        if isinstance(xx, dict):
+        if pycu.isdict(xx):
           net_kwargs.update(xx.get('kwargs', dict()))
           xx = xx.get('args', xx)
 

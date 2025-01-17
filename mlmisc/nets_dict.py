@@ -25,7 +25,7 @@ class NetsDict(nn.ModuleDict):
     net_args = args
     if len(args) == 1:
       arg = args[0]
-      if isinstance(arg, (dict, collections.OrderedDict, nn.ModuleDict)):
+      if pycu.isdict(arg) or isinstance(arg, nn.ModuleDict):
         for name, net in arg.items():
           self.add_net(net, name=name)
         net_args = []

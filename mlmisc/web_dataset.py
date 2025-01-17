@@ -9,6 +9,7 @@ import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.utils as pyu
@@ -119,7 +120,7 @@ def expand_urls(url):
 
 def expand_dataset_urls(dsinfo, shuffle=True, seed=None):
   train = test = None
-  if isinstance(dsinfo, dict):
+  if pycu.isdict(dsinfo):
     train = expand_urls(dsinfo['train'])
     test = expand_urls(dsinfo['test'])
   else:

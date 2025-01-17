@@ -1,9 +1,9 @@
 import argparse
-import collections
 import os
 import yaml
 
 import py_misc_utils.alog as alog
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -11,7 +11,7 @@ from .. import core_utils as cu
 
 
 def expand(data, dest_folder, ctx):
-  if isinstance(data, collections.abc.Mapping):
+  if pycu.isdict(data):
     xdata = dict()
     for name, value in data.items():
       xdata[name] = expand(value, dest_folder, ctx)
@@ -43,7 +43,7 @@ def extract_data(path, dest_folder):
 
 
 def reload(xdata, stg_folder):
-  if isinstance(xdata, collections.abc.Mapping):
+  if pycu.isdict(xdata):
     data = dict()
     for name, value in xdata.items():
       data[name] = reload(value, stg_folder)

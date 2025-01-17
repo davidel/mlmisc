@@ -7,6 +7,7 @@ import huggingface_hub as hfh
 import matplotlib.pyplot as plt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.inspect_utils as pyiu
@@ -38,13 +39,13 @@ class Dataset(dsb.Dataset):
     return getattr(self._data, name, None)
 
   def get_sample(self, i):
-    if isinstance(self._data, dict):
+    if pycu.isdict(self._data):
       return {k: v[i] for k, v in self._data.items()}
 
     return self._data[i]
 
   def __len__(self):
-    if isinstance(self._data, dict):
+    if pycu.isdict(self._data):
       return min(len(v) if hasattr(v, '__len__') else 1 for v in self._data.values())
 
     return len(self._data)
@@ -180,14 +181,14 @@ def build_pipelines(select_fn=None,
   train_transform = train_target_transform = None
   test_transform = test_target_transform = None
   if transform:
-    if isinstance(transform, dict):
+    if pycu.isdict(transform):
       train_transform = transform['train']
       test_transform = transform['test']
     else:
       train_transform = test_transform = transform
 
   if target_transform:
-    if isinstance(target_transform, dict):
+    if pycu.isdict(target_transform):
       train_target_transform = target_transform['train']
       test_target_transform = target_transform['test']
     else:

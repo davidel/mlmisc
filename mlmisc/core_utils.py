@@ -211,7 +211,7 @@ def create_tb_writer(path, **kwargs):
 
 
 def tb_write(tb_writer, name, value, *args, **kwargs):
-  if isinstance(value, dict):
+  if pycu.isdict(value):
     tb_writer.add_scalars(name, value, *args, **kwargs)
   else:
     tb_writer.add_scalar(name, value, *args, **kwargs)
