@@ -1,3 +1,4 @@
+import collections
 import os
 import pickle
 
@@ -101,7 +102,7 @@ def load_state(torch_data, strict=None, **kwargs):
     if sdobj is not None:
       lsd.load_state_dict(sdobj, xdata, strict=strict)
       data[name] = sdobj
-    elif isinstance(xdata, dict) and am.is_auto_state(xdata):
+    elif isinstance(xdata, collections.abc.Mapping) and am.is_auto_state(xdata):
       data[name] = am.load(xdata, strict=strict)
     else:
       data[name] = xdata

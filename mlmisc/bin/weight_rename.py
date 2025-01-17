@@ -10,12 +10,8 @@ import torch
 from .. import core_utils as cu
 
 
-def isdict(value):
-  return isinstance(value, (dict, collections.OrderedDict))
-
-
 def expand(data, dest_folder, ctx):
-  if isdict(data):
+  if isinstance(data, collections.abc.Mapping):
     xdata = dict()
     for name, value in data.items():
       xdata[name] = expand(value, dest_folder, ctx)
@@ -47,7 +43,7 @@ def extract_data(path, dest_folder):
 
 
 def reload(xdata, stg_folder):
-  if isdict(xdata):
+  if isinstance(xdata, collections.abc.Mapping):
     data = dict()
     for name, value in xdata.items():
       data[name] = reload(value, stg_folder)
