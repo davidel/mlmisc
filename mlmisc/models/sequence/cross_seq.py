@@ -1,6 +1,7 @@
 import einops
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
@@ -83,7 +84,7 @@ class CrossSeq(sb.SequenceBase):
                       dropout,
                       kwargs)
     if kwargs:
-      alog.info(f'Unused {pyu.cname(self)} keyword arguments: {kwargs}')
+      alog.info(f'Unused {pyiu.cname(self)} keyword arguments: {kwargs}')
 
     super().__init__(context_size, embed_size, vocab_size,
                      padding_idx=padding_idx)

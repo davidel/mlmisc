@@ -1,5 +1,5 @@
 import py_misc_utils.alog as alog
-import py_misc_utils.utils as pyu
+import py_misc_utils.inspect_utils as pyiu
 import torch
 import torch.nn as nn
 
@@ -48,7 +48,7 @@ class EmbeddingTrainer(sb.SequenceBase):
     net = net_builder(window_size, embed_size, vocab_size, act, kwargs)
 
     if kwargs:
-      alog.info(f'Unused {pyu.cname(self)} keyword arguments: {kwargs}')
+      alog.info(f'Unused {pyiu.cname(self)} keyword arguments: {kwargs}')
 
     context_size = 1 if mode == 'skipgram' else 2 * window_size
 

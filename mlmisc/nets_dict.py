@@ -2,7 +2,7 @@ import collections
 
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
-import py_misc_utils.utils as pyu
+import py_misc_utils.inspect_utils as pyiu
 import torch
 import torch.nn as nn
 
@@ -15,7 +15,7 @@ class NetsDict(nn.ModuleDict):
     self._expand_modules(args, kwargs)
 
   def _net_name(self, net):
-    cls = pyu.cname(net)
+    cls = pyiu.cname(net)
     while True:
       name = self._name_gen.newname(cls)
       if name not in self:
@@ -47,7 +47,7 @@ class NetsDict(nn.ModuleDict):
   def add_net(self, net, name=None, replace=False):
     if name is not None:
       tas.check(replace or name not in self,
-                msg=f'Module "{name}" ({pyu.cname(net)}) already present')
+                msg=f'Module "{name}" ({pyiu.cname(net)}) already present')
       self[name] = net
     else:
       name = self._net_name(net)

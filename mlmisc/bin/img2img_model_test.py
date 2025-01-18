@@ -14,6 +14,7 @@ import py_misc_utils.app_main as pyam
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.break_control as pybc
 import py_misc_utils.gfs as gfs
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.pd_utils as pyp
 import py_misc_utils.utils as pyu
@@ -36,7 +37,7 @@ def load_model(args):
   alog.debug(f'Model Parameters:')
   for name, param in model.named_parameters():
     alog.debug(f'  {name}\t{tuple(param.shape)}')
-  alog.debug(f'Model {pyu.cname(model)} has {mlcu.count_params(model):.2e} parameters')
+  alog.debug(f'Model {pyiu.cname(model)} has {mlcu.count_params(model):.2e} parameters')
 
   return model
 
