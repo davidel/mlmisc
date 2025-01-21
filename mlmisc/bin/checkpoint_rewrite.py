@@ -18,7 +18,7 @@ def main(args):
       remaps[cfrom] = cto
 
   safe_globals = None
-  for gfs.open(args.input, mode='rb') as fd:
+  with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
                       pickle_module=pyrp,
                       remaps=remaps,
