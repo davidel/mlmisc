@@ -28,7 +28,7 @@ def main(args):
 
   safe_modules = None
   if args.safe_modules:
-    safe_modules = pyrp.safe_modules() | KNOWN_SAFE_MODULES | set(args.safe_modules)
+    safe_modules = KNOWN_SAFE_MODULES | set(args.safe_modules)
 
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
