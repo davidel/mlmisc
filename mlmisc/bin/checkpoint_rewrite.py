@@ -10,14 +10,6 @@ import py_misc_utils.utils as pyu
 import torch
 
 
-KNOWN_REFS = (
-  r'collections\.',
-  r'numpy\.',
-  r'pandas\.',
-  r'sklearn\.',
-  r'torch\.',
-)
-
 def main(args):
   remaps = None
   if args.remaps:
@@ -26,9 +18,7 @@ def main(args):
       cfrom, cto = pyu.comma_split(remap)
       remaps[cfrom] = cto
 
-  safe_refs = None
-  if args.safe_refs:
-    safe_refs = KNOWN_REFS | tuple(args.safe_refs)
+  safe_refs = args.safe_refs if args.safe_refs else None
 
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
@@ -50,9 +40,9 @@ if __name__ == '__main__':
                       help='The path to be used to load the checkpoint')
   parser.add_argument('--output',
                       help='The path to be used to store the rewritten checkpoint')
-  parser.add_argument('--remaps', nargs='*',
+  parser.add_argument('--remaps', nargs='+',
                       help='The comma-separated ("FROM,TO" with FROM supporting regex) remap strings')
-  parser.add_argument('--safe_refs', nargs='*',
+  parser.add_argument('--safe_refs', nargs='+',
                       help='The safe references regular expressions to validate loading')
 
   pyam.main(parser, main)
