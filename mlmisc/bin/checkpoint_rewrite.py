@@ -9,6 +9,12 @@ import py_misc_utils.utils as pyu
 import torch
 
 
+PYTORCH_SAFE_GLOBALS = (
+  r'torch\.',
+  r'collections\.',
+)
+
+
 def main(args):
   remaps = None
   if args.remaps:
@@ -18,6 +24,9 @@ def main(args):
       remaps[cfrom] = cto
 
   safe_globals = None
+  if args.safe_globals:
+    safe_globals = PYTORCH_SAFE_GLOBALS + tuple(args.safe_globals)
+
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
                       pickle_module=pyrp,
@@ -39,7 +48,9 @@ if __name__ == '__main__':
   parser.add_argument('--output',
                       help='The path to be used to store the rewritten checkpoint')
   parser.add_argument('--remaps', nargs='*',
-                      help='The comma-separated ("FROM,TO") remap strings')
+                      help='The comma-separated ("FROM,TO" with FROM supporting regex) remap strings')
+  parser.add_argument('--safe_globals', nargs='*',
+                      help='The safe globals regular expressions to validate class loading')
 
   pyam.main(parser, main)
 
