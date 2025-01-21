@@ -10,7 +10,7 @@ import py_misc_utils.utils as pyu
 import torch
 
 
-KNOWN_SAFE_MODULES = {
+KNOWN_MODULES = {
   'collections',
   'numpy',
   'pandas',
@@ -28,7 +28,7 @@ def main(args):
 
   safe_modules = None
   if args.safe_modules:
-    safe_modules = KNOWN_SAFE_MODULES | set(args.safe_modules)
+    safe_modules = KNOWN_MODULES | set(args.safe_modules)
 
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
