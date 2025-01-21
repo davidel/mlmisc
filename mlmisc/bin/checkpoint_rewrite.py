@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
@@ -9,14 +10,13 @@ import py_misc_utils.utils as pyu
 import torch
 
 
-KNOWN_SAFE_GLOBALS = (
-  r'collections\.',
-  r'numpy\.',
-  r'pandas\.',
-  r'sklearn\.',
-  r'torch\.',
-)
-
+KNOWN_SAFE_MODULES = {
+  'collections',
+  'numpy',
+  'pandas',
+  'sklearn',
+  'torch',
+}
 
 def main(args):
   remaps = None
@@ -26,15 +26,15 @@ def main(args):
       cfrom, cto = pyu.comma_split(remap)
       remaps[cfrom] = cto
 
-  safe_globals = None
-  if args.safe_globals:
-    safe_globals = KNOWN_SAFE_GLOBALS + tuple(args.safe_globals)
+  safe_modules = None
+  if args.safe_modules:
+    safe_modules = pyrp.safe_modules() | KNOWN_SAFE_MODULES | set(args.safe_modules)
 
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
                       pickle_module=pyrp,
                       remaps=remaps,
-                      safe_globals=safe_globals)
+                      safe_modules=safe_modules)
 
   output_path = args.output or args.input
   with pyfow.FileOverwrite(output_path, mode='wb') as fd:
@@ -52,8 +52,8 @@ if __name__ == '__main__':
                       help='The path to be used to store the rewritten checkpoint')
   parser.add_argument('--remaps', nargs='*',
                       help='The comma-separated ("FROM,TO" with FROM supporting regex) remap strings')
-  parser.add_argument('--safe_globals', nargs='*',
-                      help='The safe globals regular expressions to validate class loading')
+  parser.add_argument('--safe_modules', nargs='*',
+                      help='The safe modules regular expressions to validate class loading')
 
   pyam.main(parser, main)
 
