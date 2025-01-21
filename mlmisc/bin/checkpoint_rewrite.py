@@ -9,9 +9,12 @@ import py_misc_utils.utils as pyu
 import torch
 
 
-PYTORCH_SAFE_GLOBALS = (
-  r'torch\.',
+KNOWN_SAFE_GLOBALS = (
   r'collections\.',
+  r'numpy\.',
+  r'pandas\.',
+  r'sklearn\.',
+  r'torch\.',
 )
 
 
@@ -25,7 +28,7 @@ def main(args):
 
   safe_globals = None
   if args.safe_globals:
-    safe_globals = PYTORCH_SAFE_GLOBALS + tuple(args.safe_globals)
+    safe_globals = KNOWN_SAFE_GLOBALS + tuple(args.safe_globals)
 
   with gfs.open(args.input, mode='rb') as fd:
     data = torch.load(fd,
