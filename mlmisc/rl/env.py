@@ -92,7 +92,7 @@ class GymEnv(EnvBase):
       for i in range(env.action_space.shape[0]):
         alog.debug(f'  low={env.action_space.low[i]:.2e}\thi={env.action_space.high[i]:.2e}')
     elif isinstance(env.action_space, gym.spaces.Discrete):
-      alog.debug(f'  num_actions = {env.action_space.n}')
+      alog.debug(f'  num_actions = {env.action_space.n} (start={env.action_space.start})')
 
     super().__init__(name, env)
 
