@@ -5,6 +5,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.app_main as pyam
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.gfs as gfs
+import py_misc_utils.pickle_wrap as pypw
 import py_misc_utils.remap_pickle as pyrp
 import py_misc_utils.utils as pyu
 import torch
@@ -20,11 +21,12 @@ def main(args):
 
   safe_refs = args.safe_refs if args.safe_refs else None
 
+  pickle_module = pyrp.make_module(remaps=remaps, safe_refs=safe_refs)
+
   with gfs.open(args.input, mode='rb') as fd:
-    data = torch.load(fd,
-                      pickle_module=pyrp,
-                      remaps=remaps,
-                      safe_refs=safe_refs)
+    data = torch.load(fd, pickle_module=pickle_module)
+
+  data = pypw.unwrap(data, pickle_module=pickle_module)
 
   output_path = args.output or args.input
   with pyfow.FileOverwrite(output_path, mode='wb') as fd:
