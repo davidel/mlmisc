@@ -29,10 +29,17 @@ def _build_actions(env):
 
 class EnvBase:
 
+  ALIVE = 0.0
+  DONE = 1.0
+  TERMINATED = -1.0
+
   def __init__(self, name, env):
     pyfw.fin_wrap(self, '_env', env, finfn=env.close)
     self.name = name
     self._actions = _build_actions(env)
+
+  def close(self):
+    pyfw.fin_wrap(self, '_env', None, cleanup=True)
 
   def get_screen(self):
     screen = self._env.render().transpose((2, 0, 1))
@@ -64,7 +71,7 @@ class EnvBase:
 
     return (np.asarray(next_state, dtype=np.float32),
             float(reward),
-            1.0 if done else -1.0 if terminated else 0.0)
+            self.DONE if done else self.TERMINATED if terminated else self.ALIVE)
 
   def rand(self, rand_sigma, action=None):
     return self._actions.rand(rand_sigma, action=action)

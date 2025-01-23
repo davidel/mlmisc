@@ -215,7 +215,7 @@ def make_video(path, env, train_context, pi_net,
                              dtype=cv2.CV_8U)
       out.write(screen)
 
-      if done != 0:
+      if done != env.ALIVE:
         break
       state = next_state
       if t >= max_episode_steps:
@@ -244,14 +244,14 @@ def run_episode(env, train_context, pi_net, memory,
 
     if ep_step >= max_episode_steps:
       alog.info(f'Too many steps ({ep_step}) ... aborting episode')
-      done = -1.0
+      done = env.TERMINATED
 
     step_reward = final_reward if done != 0 and final_reward is not None else reward
 
     samples.append(Sample(state, action, next_state, step_reward, done))
     state = next_state
 
-    if done != 0:
+    if done != env.ALIVE:
       break
 
   total_reward = episode_reward = sum(s.reward for s in samples)
