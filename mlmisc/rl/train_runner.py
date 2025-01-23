@@ -73,6 +73,7 @@ def _create_env(ctx):
                                    env.q_optimizer,
                                    env.pi_optimizer,
                                    env.q_lossfn,
+                                   gamma=ctx.gamma,
                                    qnet_gclamp=ctx.qnet_gclamp,
                                    pnet_gclamp=ctx.pnet_gclamp)
   elif ctx.arch in {'qlearn', 'trew_qlearn'}:

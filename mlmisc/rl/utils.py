@@ -113,9 +113,11 @@ def trew_step(q_net,
               pi_optimizer,
               q_lossfn,
               rec,
+              gamma=0.9,
               qnet_gclamp=None,
               pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
+  q_values = gamma * q_values + (1.0 - gamma) * rec.total_reward
 
   q_loss = q_lossfn(q_values, rec.total_reward)
 
