@@ -67,7 +67,7 @@ def _create_env(ctx):
   env = pyiu.fetch_call(rlmu.create_env, vars(ctx))
 
   if ctx.arch == 'trew':
-    env.stepfn = functools.partial(rlut.run_step_trew,
+    env.stepfn = functools.partial(rlut.trew_step,
                                    env.q_net,
                                    env.pi_net,
                                    env.q_optimizer,
@@ -85,7 +85,7 @@ def _create_env(ctx):
     env.target_q_net.train()
     env.saved_nets.update(target_q_net=env.target_q_net)
 
-    env.stepfn = functools.partial(rlut.run_step_qlearn,
+    env.stepfn = functools.partial(rlut.qlearn_step,
                                    env.q_net,
                                    env.target_q_net,
                                    env.pi_net,

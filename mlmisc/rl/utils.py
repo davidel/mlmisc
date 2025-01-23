@@ -49,16 +49,16 @@ def select_action(env, train_context, net, state,
 # This, like the LinearParamUpdater, is kept around for historical reasons,
 # since the run_step_trew() works much better in every environment I tested
 # them with.
-def run_step_qlearn(q_net,
-                    target_q_net,
-                    pi_net,
-                    q_optimizer,
-                    pi_optimizer,
-                    q_lossfn,
-                    rec,
-                    gamma=0.99,
-                    qnet_gclamp=None,
-                    pnet_gclamp=None):
+def qlearn_step(q_net,
+                target_q_net,
+                pi_net,
+                q_optimizer,
+                pi_optimizer,
+                q_lossfn,
+                rec,
+                gamma=0.99,
+                qnet_gclamp=None,
+                pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
 
   with torch.no_grad():
@@ -78,14 +78,14 @@ def run_step_qlearn(q_net,
   return q_loss.item(), pi_loss.item()
 
 
-def run_step_trew(q_net,
-                  pi_net,
-                  q_optimizer,
-                  pi_optimizer,
-                  q_lossfn,
-                  rec,
-                  qnet_gclamp=None,
-                  pnet_gclamp=None):
+def trew_step(q_net,
+              pi_net,
+              q_optimizer,
+              pi_optimizer,
+              q_lossfn,
+              rec,
+              qnet_gclamp=None,
+              pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
 
   q_loss = q_lossfn(q_values, rec.total_reward)
