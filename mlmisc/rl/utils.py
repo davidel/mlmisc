@@ -56,7 +56,7 @@ def qlearn_step(q_net,
                 pi_optimizer,
                 q_lossfn,
                 rec,
-                gamma=0.99,
+                gamma=0.95,
                 qnet_gclamp=None,
                 pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
@@ -64,6 +64,35 @@ def qlearn_step(q_net,
   with torch.no_grad():
     next_q = target_q_net(rec.next_state, pi_net(rec.next_state))
     q_prime = next_q * gamma * (1.0 - rec.done.abs()) + rec.reward
+
+  q_loss = q_lossfn(q_values, q_prime.detach())
+
+  optimize_step(q_optimizer, q_loss, gclamp=qnet_gclamp)
+
+  pi_action = pi_net(rec.state)
+  pi_loss = -target_q_net(rec.state, pi_action).mean()
+
+  target_q_net.zero_grad()
+  optimize_step(pi_optimizer, pi_loss, gclamp=pnet_gclamp)
+
+  return q_loss.item(), pi_loss.item()
+
+
+def trew_qlearn_step(q_net,
+                     target_q_net,
+                     pi_net,
+                     q_optimizer,
+                     pi_optimizer,
+                     q_lossfn,
+                     rec,
+                     gamma=0.95,
+                     qnet_gclamp=None,
+                     pnet_gclamp=None):
+  q_values = q_net(rec.state, rec.action)
+
+  with torch.no_grad():
+    next_q = target_q_net(rec.next_state, pi_net(rec.next_state))
+    q_prime = next_q * gamma + rec.total_reward * (1.0 - gamma)
 
   q_loss = q_lossfn(q_values, q_prime.detach())
 

@@ -75,9 +75,9 @@ def _create_env(ctx):
                                    env.q_lossfn,
                                    qnet_gclamp=ctx.qnet_gclamp,
                                    pnet_gclamp=ctx.pnet_gclamp)
-  else:
+  elif ctx.arch in {'qlearn', 'trew_qlearn'}:
     env.target_q_net = rlnets.DRLN(env.env.num_signals(), env.env.num_actions()).to(ctx.device)
-    if env.checkpoint_data is not None:
+    if env.checkpoint_data is not None and 'target_q_net' in env.checkpoint_data:
       ut.load_state(env.checkpoint_data, target_q_net=env.target_q_net)
     else:
       cu.update_params(env.q_net, env.target_q_net)
@@ -85,7 +85,8 @@ def _create_env(ctx):
     env.target_q_net.train()
     env.saved_nets.update(target_q_net=env.target_q_net)
 
-    env.stepfn = functools.partial(rlut.qlearn_step,
+    stepfn = rlut.qlearn_step if ctx.arch == 'qlearn' else rlut.trew_qlearn_step
+    env.stepfn = functools.partial(stepfn,
                                    env.q_net,
                                    env.target_q_net,
                                    env.pi_net,
@@ -95,6 +96,8 @@ def _create_env(ctx):
                                    gamma=ctx.gamma,
                                    qnet_gclamp=ctx.qnet_gclamp,
                                    pnet_gclamp=ctx.pnet_gclamp)
+  else:
+    alog.xraise(ValueError, f'Unknown step mode: {ctx.arch}')
 
   # Drop to save memory.
   delattr(env, 'checkpoint_data')
@@ -190,7 +193,7 @@ def _train_loop(ctx, env):
 def train(model_name,
           model_path: str=None,
           env_args: str=None,
-          arch: typing.Literal['trew', 'qlearn']='trew',
+          arch: typing.Literal['trew', 'qlearn', 'trew_qlearn']='trew',
           batch_size=1024,
           q_lr=1e-3,
           pi_lr=1e-4,
