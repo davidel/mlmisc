@@ -91,7 +91,7 @@ def trew_qlearn_step(q_net,
   q_values = q_net(rec.state, rec.action)
 
   with torch.no_grad():
-    next_q = target_q_net(rec.next_state, pi_net(rec.next_state))
+    next_q = target_q_net(rec.state, rec.action)
     q_prime = next_q * gamma + rec.total_reward * (1.0 - gamma)
 
   q_loss = q_lossfn(q_values, q_prime.detach())
