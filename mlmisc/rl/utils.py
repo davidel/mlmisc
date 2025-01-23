@@ -46,6 +46,9 @@ def select_action(env, train_context, net, state,
   return action
 
 
+# This, like the LinearParamUpdater, is kept around for historical reasons,
+# since the run_step_trew() works much better in every environment I tested
+# them with.
 def run_step_qlearn(q_net,
                     target_q_net,
                     pi_net,
@@ -246,7 +249,7 @@ def run_episode(env, train_context, pi_net, memory,
       alog.info(f'Too many steps ({ep_step}) ... aborting episode')
       done = env.TERMINATED
 
-    step_reward = final_reward if done != 0 and final_reward is not None else reward
+    step_reward = final_reward if done != env.ALIVE and final_reward is not None else reward
 
     samples.append(Sample(state, action, next_state, step_reward, done))
     state = next_state
