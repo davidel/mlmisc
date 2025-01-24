@@ -239,8 +239,8 @@ def make_video(path, env, train_context, pi_net,
 
       screen = env.get_screen().transpose((1, 2, 0))
       if out is None:
-        height, width, colors = screen.shape
-        alog.debug(f'Generating video ({width}x{height} {colors} colors) to {path}')
+        height, width, channels = screen.shape
+        alog.debug(f'Generating video ({width}x{height} {channels} colors) to {path}')
         out = cv2.VideoWriter(tmp_path, fourcc, fps, (width, height), isColor=True)
         xstack.callback(out.release)
 

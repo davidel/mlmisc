@@ -22,8 +22,8 @@ def create_env(model_name,
                model_path,
                env_args=None,
                device=None,
-               q_lr=1e-3,
-               pi_lr=1e-4,
+               q_lr=1e-4,
+               pi_lr=1e-5,
                stepmem_size=100000,
                stepmem_dtype='float16',
                target_reward=100,
@@ -39,9 +39,9 @@ def create_env(model_name,
 
   env.reset()
   init_screen = env.get_screen()
-  chans, screen_height, screen_width = init_screen.shape
+  channels, screen_height, screen_width = init_screen.shape
 
-  alog.info(f'Screen: {screen_width}x{screen_height} ({chans} colors)')
+  alog.info(f'Screen: {screen_width}x{screen_height} ({channels} colors)')
 
   pi_net = rlnets.PiNet(env.num_signals(), env.num_actions()).to(device)
   q_net = rlnets.DRLN(env.num_signals(), env.num_actions()).to(device)
