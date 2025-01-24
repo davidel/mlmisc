@@ -11,6 +11,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fs_utils as pyfsu
+import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
 
@@ -92,7 +93,7 @@ def trew_qlearn_step(q_net,
 
   with torch.no_grad():
     next_q = target_q_net(rec.state, rec.action)
-    q_prime = next_q * gamma + rec.total_reward * (1.0 - gamma)
+    q_prime = pynu.mix(next_q, rec.total_reward, gamma)
 
   q_loss = q_lossfn(q_values, q_prime.detach())
 
@@ -117,7 +118,7 @@ def trew_step(q_net,
               qnet_gclamp=None,
               pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
-  q_prime = q_values * gamma + rec.total_reward * (1.0 - gamma)
+  q_prime = pynu.mix(q_values, rec.total_reward, gamma)
 
   q_loss = q_lossfn(q_values, q_prime.detach())
 
