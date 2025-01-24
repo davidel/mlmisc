@@ -5,18 +5,18 @@ import torch.nn as nn
 from .. import args_sequential as aseq
 from .. import layer_utils as lu
 from .. import module_builder as mb
+from .. import net_base as nb
 from .. import nn_lambda as lmbd
 from .. import results_namespace as rns
 
 
-class Dense(nn.Module):
+class Dense(nb.NetBase):
 
   def __init__(self, in_features, out_features,
                bias=True,
                act='relu',
                resns=None):
-    super().__init__()
-    self.resns = resns
+    super().__init__(result_ns=resns)
     self.fc = nn.Linear(in_features, out_features, bias=bias)
     self.norm = nn.LayerNorm(out_features)
     self.act = lu.create(act)
@@ -26,8 +26,7 @@ class Dense(nn.Module):
     y_norm = self.norm(y_fc)
     y_act = self.act(y_norm)
 
-    if self.resns is not None:
-      self.resns.update(fc=y_fc, norm=y_norm, act=y_act)
+    self.set_result(fc=y_fc, norm=y_norm, act=y_act)
 
     return y_act
 

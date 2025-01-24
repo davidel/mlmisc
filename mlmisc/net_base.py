@@ -11,6 +11,14 @@ STATE_KEY = '_NET_STATE'
 
 class NetBase(nn.Module):
 
+  def __init__(self, result_ns=None):
+    super().__init__()
+    self._result_ns = result_ns
+
+  def set_result(self, **kwargs):
+    if self._result_ns is not None:
+      self._result_ns.update(**kwargs)
+
   def device(self):
     devices = collections.defaultdict(int)
     for param in self.parameters():
