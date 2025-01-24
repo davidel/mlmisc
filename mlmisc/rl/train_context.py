@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import time
 
 import numpy as np
@@ -19,7 +20,7 @@ class TrainContext:
     self._action_noise_end = action_noise_end
     self._base_reward = None
     self._warmup_steps = warmup_steps
-    self.sample_time = self.train_time = 0
+    self._sample_time = self._train_time = 0
     self.stepno = 0
     self.train_stepno = 0
     self._reward_ma = pyma.MovingAverage(ma_factor, init=0)
@@ -31,7 +32,7 @@ class TrainContext:
     try:
       yield self
     finally:
-      self.sample_time += time.time() - start
+      self._sample_time += time.time() - start
 
   @contextlib.contextmanager
   def training(self):
@@ -39,7 +40,13 @@ class TrainContext:
     try:
       yield self
     finally:
-      self.train_time += time.time() - start
+      self._train_time += time.time() - start
+
+  def sampling_time(self):
+    return datetime.timedelta(seconds=self._sample_time)
+
+  def training_time(self):
+    return datetime.timedelta(seconds=self._train_time)
 
   def reward_ma(self):
     return self._reward_ma.value
