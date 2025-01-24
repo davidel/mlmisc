@@ -120,10 +120,11 @@ def _train_loop(ctx, env):
 
   pushed, ep_results = 0, []
   for e in range(ctx.num_episodes):
-    epres = rlut.run_episode(env.env, env.train_context, env.pi_net, env.memory,
-                             device=ctx.device,
-                             final_reward=ctx.final_reward,
-                             max_episode_steps=ctx.max_episode_steps)
+    with env.train_context.sampling():
+      epres = rlut.run_episode(env.env, env.train_context, env.pi_net, env.memory,
+                               device=ctx.device,
+                               final_reward=ctx.final_reward,
+                               max_episode_steps=ctx.max_episode_steps)
 
     pushed += epres.step_count
     ep_results.append(epres)
@@ -146,10 +147,12 @@ def _train_loop(ctx, env):
       pushed = 0
       num_steps = int(ctx.train_coverage_pct * len(env.memory) / ctx.batch_size)
 
-      q_losses, pi_losses = rlut.optimize_model(env.memory, ctx.batch_size, env.stepfn,
-                                                device=ctx.device,
-                                                nsteps=num_steps,
-                                                bc=bc.v)
+      with env.train_context.training():
+        q_losses, pi_losses = rlut.optimize_model(env.memory, ctx.batch_size, env.stepfn,
+                                                  device=ctx.device,
+                                                  nsteps=num_steps,
+                                                  bc=bc.v)
+
       q_loss, pi_loss = np.mean(q_losses), np.mean(pi_losses)
 
       cu.tb_write(env.stat_writer, 'QLoss', q_loss, env.train_context.stepno)

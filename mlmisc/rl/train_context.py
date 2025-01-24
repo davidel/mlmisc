@@ -1,3 +1,6 @@
+import contextlib
+import time
+
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -16,10 +19,27 @@ class TrainContext:
     self._action_noise_end = action_noise_end
     self._base_reward = None
     self._warmup_steps = warmup_steps
+    self.sample_time = self.train_time = 0
     self.stepno = 0
     self.train_stepno = 0
     self._reward_ma = pyma.MovingAverage(ma_factor, init=0)
     self._episode_steps_ma = pyma.MovingAverage(ma_factor, init=0)
+
+  @contextlib.contextmanager
+  def sampling(self):
+    start = time.time()
+    try:
+      yield self
+    finally:
+      self.sample_time += time.time() - start
+
+  @contextlib.contextmanager
+  def training(self):
+    start = time.time()
+    try:
+      yield self
+    finally:
+      self.train_time += time.time() - start
 
   def reward_ma(self):
     return self._reward_ma.value
