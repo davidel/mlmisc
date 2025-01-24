@@ -40,7 +40,7 @@ def _build_dense_layers(net, rns, num_layers, size, act):
       net.add(lmbd.Lambda(lambda x, rns=rns.ns_get(nsid): x + rns.norm, info='Adder'))
 
 
-class PiNet(nn.Module):
+class PiNet(nb.NetBase):
 
   def __init__(self, num_states, num_actions,
                min_hid_size=512,
@@ -68,7 +68,7 @@ class PiNet(nn.Module):
     return self.rns(s)
 
 
-class DRLN(nn.Module):
+class DRLN(nb.NetBase):
 
   def __init__(self, num_states, num_actions,
                min_hid_size=512,
