@@ -117,7 +117,7 @@ def trew_step(q_net,
               qnet_gclamp=None,
               pnet_gclamp=None):
   q_values = q_net(rec.state, rec.action)
-  q_prime = gamma * q_values + (1.0 - gamma) * rec.total_reward
+  q_prime = q_values * gamma + rec.total_reward * (1.0 - gamma)
 
   q_loss = q_lossfn(q_values, q_prime.detach())
 
