@@ -72,7 +72,7 @@ class Memory:
     sums = 0
     for field in fields:
       data = self._buffers[field].data(dtype=np.float32)
-      fdevs = (data - np.mean(data, axis=0)) / np.std(data, axis=0)
+      fdevs = pyn.normalize(data, axis=0)
       sums = np.sum(fdevs**2, axis=1) + sums
 
     probs = sums / sums.sum()
