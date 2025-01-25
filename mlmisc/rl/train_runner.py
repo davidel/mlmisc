@@ -130,9 +130,9 @@ def _train_loop(ctx, env):
     ep_results.append(epres)
 
     cu.tb_write(env.stat_writer, 'Episode Reward', epres.episode_reward,
-                  env.train_context.stepno)
+                env.train_context.stepno)
     cu.tb_write(env.stat_writer, 'Episode Steps', epres.step_count,
-                  env.train_context.stepno)
+                env.train_context.stepno)
     if show_episode:
       avg_steps = np.mean([er.step_count for er in ep_results])
       cu.tb_write(env.stat_writer, 'AvgSteps', avg_steps, env.train_context.stepno)
