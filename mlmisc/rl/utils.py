@@ -159,7 +159,8 @@ def optimize_model(memory, batch_size, stepfn, device=None, nsteps=1, bc=None):
       break
 
   perf = (n + 1) / (time.time() - tstart)
-  alog.info(f'Train Perf ({nsteps} batches): {perf:.2e} batch/s')
+  alog.info(f'Train Perf ({nsteps} batches): {perf:.2e} batch/s ' \
+            f'({perf * batch_size:.2e} sample/s)')
 
   return q_losses, pi_losses
 
