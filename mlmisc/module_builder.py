@@ -23,6 +23,18 @@ class ResultsNamespace(list):
       vars(ns).clear()
 
 
+class Capture(nn.Module):
+
+  def __init__(self, ns):
+    super().__init__()
+    self._ns = ns
+
+  def forward(self, x):
+    self._ns.result = x
+
+    return x
+
+
 NetConfig = collections.namedtuple(
   'NetConfig',
   'input_fn, output_fn, net_args'
@@ -73,6 +85,9 @@ class ModuleBuilder(nn.Module):
       self.aux_modules.add_net(output_fn)
 
     return len(self.layers) - 1
+
+  def capture(self, ns):
+    return self.add(Capture(ns))
 
   def linear(self, nout, **kwargs):
     aargs = self._pop_add_args(kwargs)
