@@ -40,23 +40,40 @@ def _build_dense_layers(net, rns, num_layers, size, act):
       net.add(lmbd.Lambda(lambda x, rns=rns.ns_get(nsid): x + rns.norm, info='Adder'))
 
 
+def _compute_hidden_size(shape, num_actions, min_hid_size):
+  if len(shape) == 1:
+    state_size = shape[0]
+  else:
+    pass
+
+  return max(4 * max(state_size, num_actions), min_hid_size)
+
+
+def _build_state_net(shape, size, act, rns=None):
+  if len(shape) == 1:
+    net = mb.ModuleBuilder(shape)
+    net.batchnorm1d()
+    net.add(Dense(shape[0], size, bias=False, act=act,
+                  resns=rns.ns_new() if rns is not None else None))
+  else:
+    pass
+
+  return net
+
+
 class PiNet(nb.NetBase):
 
-  def __init__(self, num_states, num_actions,
+  def __init__(self, state_shape, num_actions,
                min_hid_size=512,
                num_layers=3,
                act='relu'):
-    hid_size = max(4 * max(num_states, num_actions), min_hid_size)
+    hid_size = _compute_hidden_size(state_shape, num_actions, min_hid_size)
 
     super().__init__()
     self.rns = rns.ResultsNamespace()
 
-    net = mb.ModuleBuilder((num_states,))
-    net.batchnorm1d()
-    net.add(Dense(num_states, hid_size, bias=False, act=act, resns=self.rns.ns_new()))
-
+    net = _build_state_net(state_shape, hid_size, act, rns=self.rns)
     _build_dense_layers(net, self.rns, num_layers, hid_size, act)
-
     net.linear(num_actions, bias=False)
     net.layernorm()
     # NOTE: Tanh() is needed here since the actions expect a [-1, 1] output.
@@ -70,25 +87,20 @@ class PiNet(nb.NetBase):
 
 class DRLN(nb.NetBase):
 
-  def __init__(self, num_states, num_actions,
+  def __init__(self, state_shape, num_actions,
                min_hid_size=512,
                num_layers=4,
                act='relu'):
-    ssize = max(4 * max(num_states, num_actions), min_hid_size)
-    hid_size = 2 * ssize
+    hid_size = _compute_hidden_size(state_shape, num_actions, min_hid_size)
+    joint_size = 2 * hid_size
 
     super().__init__()
-    self.sentry = aseq.ArgsSequential(
-      nn.BatchNorm1d(num_states),
-      Dense(num_states, ssize, bias=False, act=act),
-    )
-    self.aentry = Dense(num_actions, ssize, act=act)
+    self.sentry = _build_state_net(state_shape, hid_size, act)
+    self.aentry = Dense(num_actions, hid_size, act=act)
     self.rns = rns.ResultsNamespace()
 
-    net = mb.ModuleBuilder((hid_size,))
-
-    _build_dense_layers(net, self.rns, num_layers, hid_size, act)
-
+    net = mb.ModuleBuilder((joint_size,))
+    _build_dense_layers(net, self.rns, num_layers, joint_size, act)
     net.linear(1)
 
     self.rns.add_net(net, name='qnet')
