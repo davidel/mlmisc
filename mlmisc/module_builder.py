@@ -11,16 +11,22 @@ from . import core_utils as cu
 from . import nets_dict as netd
 
 
+class Result(obj.Obj):
+
+  def reset(self):
+    vars(self).clear()
+
+
 class ResultsNamespace(list):
 
   def new(self):
-    self.append(obj.Obj())
+    self.append(Result())
 
     return self[-1]
 
   def reset(self):
-    for ns in self:
-      vars(ns).clear()
+    for result in self:
+      result.reset()
 
 
 class Capture(nn.Module):
@@ -30,15 +36,12 @@ class Capture(nn.Module):
     self._ns = ns
 
   def forward(self, x):
-    self._ns.result = x
+    self._ns.y = x
 
     return x
 
 
-NetConfig = collections.namedtuple(
-  'NetConfig',
-  'input_fn, output_fn, net_args'
-)
+NetConfig = collections.namedtuple('NetConfig', 'input_fn, net_args')
 
 _ADD_FIELDS = NetConfig._fields + ('in_shapes',)
 
@@ -49,7 +52,6 @@ class ModuleBuilder(nn.Module):
     self.shape = tuple(shape)
     self.layers = netd.NetsDict()
     self._config = []
-    self.aux_modules = netd.NetsDict()
     self.resns = ResultsNamespace()
 
   def _pop_add_args(self, kwargs):
@@ -65,7 +67,6 @@ class ModuleBuilder(nn.Module):
 
   def add(self, net,
           input_fn=None,
-          output_fn=None,
           net_args=None,
           in_shapes=None):
     # The shape contains no batch dimension!
@@ -74,15 +75,7 @@ class ModuleBuilder(nn.Module):
     else:
       self.shape = cu.net_shape(net, *in_shapes)
     self.layers.add_net(net)
-    self._config.append(NetConfig(input_fn=input_fn,
-                                  output_fn=output_fn,
-                                  net_args=net_args))
-    # If the input/output functions are modules, store them here so that their
-    # parameters can then be saved/loaded from the normal PyTorch state-dict machinery.
-    if isinstance(input_fn, nn.Module):
-      self.aux_modules.add_net(input_fn)
-    if isinstance(output_fn, nn.Module):
-      self.aux_modules.add_net(output_fn)
+    self._config.append(NetConfig(input_fn=input_fn, net_args=net_args))
 
     return len(self.layers) - 1
 
@@ -147,10 +140,9 @@ class ModuleBuilder(nn.Module):
         nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
         net_kwargs[nk] = kwargs.get(wk)
 
-      res = net(*xx, **net_kwargs)
+      y = net(*xx, **net_kwargs)
 
-      results.append(res)
-      y = res if cfg.output_fn is None else cfg.output_fn(res)
+      results.append(y)
 
     self.resns.reset()
 

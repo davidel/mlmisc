@@ -10,11 +10,11 @@ from . import layer_utils as lu
 
 def unet_down(net, num_channels, act, rids, shapes):
   net.batchnorm2d()
-  rid = net.conv2d(num_channels, 3, stride=1, bias=False, padding=1)
+  rid = net.conv2d(num_channels, 3, bias=False, padding=1)
   rids.append(rid)
   shapes[rid] = net.shape
   net.add(lu.create(act))
-  net.conv2d(num_channels, 3, stride=1, bias=False, padding=1)
+  net.conv2d(num_channels, 3, bias=False, padding=1)
   net.add(lu.create(act))
   net.add(nn.MaxPool2d(2))
 
@@ -24,12 +24,12 @@ def unet_up(net, num_channels, act, rid, shape):
 
   net.deconv2d(in_channels, 2, stride=2, bias=False)
   net.batchnorm2d()
-  net.deconv2d(in_channels, 3, stride=1, bias=False, padding=1)
+  net.deconv2d(in_channels, 3, bias=False, padding=1)
   net.add(lu.create(act))
   net.add(ipc.ImagePadConcat(),
           input_fn=mb.inputtuple(rid),
           in_shapes=(net.shape, shape))
-  net.deconv2d(num_channels, 3, stride=1, bias=False, padding=1)
+  net.deconv2d(num_channels, 3, bias=False, padding=1)
 
 
 def build_unet(net, channels, act, out_channels=None):
