@@ -45,9 +45,8 @@ def create_env(model_name,
 
   alog.info(f'Screen: {screen_width}x{screen_height} ({channels} colors)')
 
-  state_shape = (env.num_signals(),)
-  pi_net = rlnets.PiNet(state_shape, env.num_actions()).to(device)
-  q_net = rlnets.DRLN(state_shape, env.num_actions()).to(device)
+  pi_net = rlnets.PiNet(env.num_signals(), env.num_actions()).to(device)
+  q_net = rlnets.DRLN(env.num_signals(), env.num_actions()).to(device)
 
   alog.info(f'PI Net (size={cu.net_memory_size(pi_net) * 1e-6:.1f} MB):\n{pi_net}')
   alog.info(f'Q Net (size={cu.net_memory_size(q_net) * 1e-6:.1f} MB):\n{q_net}')

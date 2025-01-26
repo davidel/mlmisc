@@ -105,13 +105,11 @@ def generate_conv(x, patch_specs, convs):
 
 CONV = 'conv'
 UNFOLD = 'unfold'
-PATCH_MODES = (CONV, UNFOLD)
+PATCH_MODES = {CONV, UNFOLD}
 
 class Patcher(nn.Module):
 
-  def __init__(self, patch_specs, mode=None, in_channels=None):
-    mode = mode or CONV
-
+  def __init__(self, patch_specs, mode=CONV, in_channels=None):
     verify_patch_specs(patch_specs)
     tas.check(mode in PATCH_MODES,
               msg=f'Unknown patcher mode (should be one of {PATCH_MODES}): {mode}')

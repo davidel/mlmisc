@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 
 from .. import args_sequential as aseq
+from .. import image_pad_concat as ipc
 from .. import layer_utils as lu
 from .. import module_builder as mb
 from .. import net_base as nb
@@ -30,51 +31,34 @@ class Dense(nb.NetBase):
     return y_act
 
 
-def _compute_hidden_size(shape, num_actions, min_hid_size):
-  if len(shape) == 1:
-    state_size = shape[0]
-  elif len(shape) == 3:
-    pass
-  else:
-    alog.xraise(ValueError, f'Invalid state network shape: {shape}')
-
-  return max(4 * max(state_size, num_actions), min_hid_size)
-
-
 def _build_dense_layers(net, num_layers, size, act):
-  resns = net.resns
   for _ in range(num_layers):
-    net.add(Dense(size, size, bias=False, act=act, resns=resns.new()))
+    net.add(Dense(size, size, bias=False, act=act, resns=net.resns.new()))
 
-    nsid = len(resns) - 2
+    nsid = len(net.resns) - 2
     if nsid >= 0:
-      net.add(lmbd.Lambda(lambda x, ns=resns[nsid]: x + ns.norm, info='Adder'))
+      net.add(lmbd.Lambda(lambda x, ns=net.resns[nsid]: x + ns.norm, info='Adder'))
 
 
-def _build_state_net(shape, size, act):
-  if len(shape) == 1:
-    net = mb.ModuleBuilder(shape)
-    net.batchnorm1d()
-    net.add(Dense(shape[0], size, bias=False, act=act,
-                  resns=net.resns.new()))
-  elif len(shape) == 3:
-    pass
-  else:
-    alog.xraise(ValueError, f'Invalid state network shape: {shape}')
+def _build_state_net(num_states, size, act):
+  net = mb.ModuleBuilder((num_states,))
+  net.batchnorm1d()
+  net.add(Dense(num_states, size, bias=False, act=act,
+                resns=net.resns.new()))
 
   return net
 
 
 class PiNet(nb.NetBase):
 
-  def __init__(self, state_shape, num_actions,
+  def __init__(self, num_states, num_actions,
                min_hid_size=512,
                num_layers=3,
                act='relu'):
-    hid_size = _compute_hidden_size(state_shape, num_actions, min_hid_size)
+    hid_size = max(4 * max(num_states, num_actions), min_hid_size)
 
     super().__init__()
-    self.net = _build_state_net(state_shape, hid_size, act)
+    self.net = _build_state_net(num_states, hid_size, act)
 
     _build_dense_layers(self.net, num_layers, hid_size, act)
 
@@ -89,15 +73,15 @@ class PiNet(nb.NetBase):
 
 class DRLN(nb.NetBase):
 
-  def __init__(self, state_shape, num_actions,
+  def __init__(self, num_states, num_actions,
                min_hid_size=512,
                num_layers=4,
                act='relu'):
-    hid_size = _compute_hidden_size(state_shape, num_actions, min_hid_size)
+    hid_size = max(4 * max(num_states, num_actions), min_hid_size)
     joint_size = 2 * hid_size
 
     super().__init__()
-    self.sentry = _build_state_net(state_shape, hid_size, act)
+    self.sentry = _build_state_net(num_states, hid_size, act)
     self.aentry = Dense(num_actions, hid_size, act=act)
     self.net = mb.ModuleBuilder((joint_size,))
 

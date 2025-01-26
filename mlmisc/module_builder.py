@@ -163,3 +163,11 @@ def _inputtuple(rid, x, results):
 def inputtuple(rid):
   return functools.partial(_inputtuple, rid)
 
+
+def _select(rid, x, results):
+  return results[rid]
+
+
+def select(rid):
+  return functools.partial(_select, rid)
+
