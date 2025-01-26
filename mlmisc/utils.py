@@ -88,6 +88,13 @@ def load_data(path, map_location=None, strict=None, **kwargs):
   return load_state(torch_data, strict=strict, **kwargs)
 
 
+def load_raw_data(path, map_location=None):
+  alog.debug(f'Loading data from {path}')
+  torch_data = cu.torch_load(path, map_location=map_location or torch.device('cpu'))
+
+  return pypw.unwrap(torch_data)
+
+
 def checkpoint_data(path, rmt_path=None, **kwargs):
   save_data(path, **kwargs)
 
