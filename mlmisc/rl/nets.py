@@ -7,7 +7,6 @@ from .. import layer_utils as lu
 from .. import module_builder as mb
 from .. import net_base as nb
 from .. import nn_lambda as lmbd
-from .. import results_namespace as rns
 
 
 class Dense(nb.NetBase):
@@ -31,32 +30,37 @@ class Dense(nb.NetBase):
     return y_act
 
 
-def _build_dense_layers(net, rns, num_layers, size, act):
-  for _ in range(num_layers):
-    net.add(Dense(size, size, bias=False, act=act, resns=rns.ns_new()))
-
-    nsid = rns.ns_len() - 2
-    if nsid >= 0:
-      net.add(lmbd.Lambda(lambda x, rns=rns.ns_get(nsid): x + rns.norm, info='Adder'))
-
-
 def _compute_hidden_size(shape, num_actions, min_hid_size):
   if len(shape) == 1:
     state_size = shape[0]
-  else:
+  elif len(shape) == 3:
     pass
+  else:
+    alog.xraise(ValueError, f'Invalid state network shape: {shape}')
 
   return max(4 * max(state_size, num_actions), min_hid_size)
 
 
-def _build_state_net(shape, size, act, rns=None):
+def _build_dense_layers(net, num_layers, size, act):
+  resns = net.resns
+  for _ in range(num_layers):
+    net.add(Dense(size, size, bias=False, act=act, resns=resns.new()))
+
+    nsid = len(resns) - 2
+    if nsid >= 0:
+      net.add(lmbd.Lambda(lambda x, ns=resns[nsid]: x + ns.norm, info='Adder'))
+
+
+def _build_state_net(shape, size, act):
   if len(shape) == 1:
     net = mb.ModuleBuilder(shape)
     net.batchnorm1d()
     net.add(Dense(shape[0], size, bias=False, act=act,
-                  resns=rns.ns_new() if rns is not None else None))
-  else:
+                  resns=net.resns.new()))
+  elif len(shape) == 3:
     pass
+  else:
+    alog.xraise(ValueError, f'Invalid state network shape: {shape}')
 
   return net
 
@@ -70,19 +74,17 @@ class PiNet(nb.NetBase):
     hid_size = _compute_hidden_size(state_shape, num_actions, min_hid_size)
 
     super().__init__()
-    self.rns = rns.ResultsNamespace()
+    self.net = _build_state_net(state_shape, hid_size, act)
 
-    net = _build_state_net(state_shape, hid_size, act, rns=self.rns)
-    _build_dense_layers(net, self.rns, num_layers, hid_size, act)
-    net.linear(num_actions, bias=False)
-    net.layernorm()
+    _build_dense_layers(self.net, num_layers, hid_size, act)
+
+    self.net.linear(num_actions, bias=False)
+    self.net.layernorm()
     # NOTE: Tanh() is needed here since the actions expect a [-1, 1] output.
-    net.add(nn.Tanh())
-
-    self.rns.add_net(net, name='pinet')
+    self.net.add(nn.Tanh())
 
   def forward(self, s):
-    return self.rns(s)
+    return self.net(s)
 
 
 class DRLN(nb.NetBase):
@@ -97,13 +99,11 @@ class DRLN(nb.NetBase):
     super().__init__()
     self.sentry = _build_state_net(state_shape, hid_size, act)
     self.aentry = Dense(num_actions, hid_size, act=act)
-    self.rns = rns.ResultsNamespace()
+    self.net = mb.ModuleBuilder((joint_size,))
 
-    net = mb.ModuleBuilder((joint_size,))
-    _build_dense_layers(net, self.rns, num_layers, joint_size, act)
-    net.linear(1)
+    _build_dense_layers(self.net, num_layers, joint_size, act)
 
-    self.rns.add_net(net, name='qnet')
+    self.net.linear(1)
 
   def forward(self, s, a):
     ya = self.aentry(a)
@@ -111,5 +111,5 @@ class DRLN(nb.NetBase):
 
     xnet = torch.cat([ys, ya], dim=-1)
 
-    return self.rns(xnet)
+    return self.net(xnet)
 

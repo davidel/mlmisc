@@ -2,12 +2,25 @@ import collections
 import functools
 
 import py_misc_utils.core_utils as pycu
+import py_misc_utils.obj as obj
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
 from . import core_utils as cu
 from . import nets_dict as netd
+
+
+class ResultsNamespace(list):
+
+  def new(self):
+    self.append(obj.Obj())
+
+    return self[-1]
+
+  def reset(self):
+    for ns in self:
+      vars(ns).clear()
 
 
 NetConfig = collections.namedtuple(
@@ -25,6 +38,7 @@ class ModuleBuilder(nn.Module):
     self.layers = netd.NetsDict()
     self._config = []
     self.aux_modules = netd.NetsDict()
+    self.resns = ResultsNamespace()
 
   def _pop_add_args(self, kwargs):
     args = pyu.pop_kwargs(kwargs, _ADD_FIELDS)
@@ -122,6 +136,8 @@ class ModuleBuilder(nn.Module):
 
       results.append(res)
       y = res if cfg.output_fn is None else cfg.output_fn(res)
+
+    self.resns.reset()
 
     return y
 
