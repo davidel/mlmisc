@@ -86,6 +86,7 @@ class EnvBase:
     return self._env.observation_space.shape[0]
 
 
+# See https://github.com/clvrai/awesome-rl-envs for usable Gym-based environments.
 class GymEnv(EnvBase):
 
   def __init__(self, name, **kwargs):
