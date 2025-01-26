@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from .. import config as conf
 from .. import core_utils as cu
 from .. import utils as ut
 
@@ -22,8 +23,9 @@ def create_env(model_name,
                model_path,
                env_args=None,
                device=None,
-               q_lr=1e-4,
-               pi_lr=1e-5,
+               q_optim='torch.optim.AdamW:lr=1.e-4',
+               pi_optim='torch.optim.AdamW:lr=1.e-5',
+               loss='torch.nn.HuberLoss',
                stepmem_size=100000,
                stepmem_dtype='float16',
                target_reward=100,
@@ -49,10 +51,10 @@ def create_env(model_name,
   alog.info(f'PI Net (size={cu.net_memory_size(pi_net) * 1e-6:.1f} MB):\n{pi_net}')
   alog.info(f'Q Net (size={cu.net_memory_size(q_net) * 1e-6:.1f} MB):\n{q_net}')
 
-  q_optimizer = optim.AdamW(q_net.parameters(), lr=q_lr)
-  pi_optimizer = optim.AdamW(pi_net.parameters(), lr=pi_lr)
+  q_optimizer = conf.create_optimizer(q_net.parameters(), q_optim)
+  pi_optimizer = conf.create_optimizer(pi_net.parameters(), pi_optim)
 
-  q_lossfn = nn.HuberLoss()
+  q_lossfn = conf.create_loss(loss)
 
   memory = train_context = None
   if os.path.exists(model_path):
