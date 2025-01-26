@@ -4,6 +4,17 @@ import torch.nn as nn
 from . import core_utils as cu
 
 
+class Loss(nn.Module):
+
+  def __init__(self, loss):
+    super().__init__()
+    self.loss = loss
+
+  def forward(self, y, targets):
+    if targets is not None:
+      return self.loss(y, targets)
+
+
 class CatLoss(nn.Module):
 
   def __init__(self, loss):
