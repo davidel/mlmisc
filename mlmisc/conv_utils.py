@@ -226,13 +226,13 @@ def convs_from_string(config, defaults=None):
 
 
 def conv_wndsize(size, kernel_size, stride,
-                 paddind=0,
+                 padding=0,
                  dilation=1):
   return int((size + 2 * padding - dilation * kernel_size) / stride + 1)
 
 
 def deconv_wndsize(size, kernel_size, stride,
-                   paddind=0,
+                   padding=0,
                    dilation=1,
                    output_padding=0):
   return ((size - 1) * stride - 2 * padding + dilation * (kernel_size - 1) +
