@@ -225,8 +225,18 @@ def convs_from_string(config, defaults=None):
   return convs
 
 
-def conv_wndsize(size, kernel_size, stride):
-  return int((size - kernel_size) / stride + 1)
+def conv_wndsize(size, kernel_size, stride,
+                 paddind=0,
+                 dilation=1):
+  return int((size + 2 * padding - dilation * kernel_size) / stride + 1)
+
+
+def deconv_wndsize(size, kernel_size, stride,
+                   paddind=0,
+                   dilation=1,
+                   output_padding=0):
+  return ((size - 1) * stride - 2 * padding + dilation * (kernel_size - 1) +
+          output_padding + 1)
 
 
 ReduceConvParams = collections.namedtuple(
