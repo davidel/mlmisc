@@ -146,7 +146,7 @@ def create(url,
            train_size=None,
            test_size=None,
            seed=None,
-           shuffle_buffer_size=None,
+           shuffle_buffer_size=1024,
            **kwargs):
   ds_urls = expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
 
