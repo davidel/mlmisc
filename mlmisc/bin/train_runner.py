@@ -76,6 +76,8 @@ def create_model(args, trainer, dataset):
 
     model_args, model_kwargs = pyu.parse_args(cmdline_args)
 
+    alog.info(f'Model Args: {model_args}\nModel Kwargs: {model_kwargs}')
+
     x, y = pycu.seqfirst(dataset)
     x_shape = tuple(getattr(x, 'shape', ()))
     y_shape = tuple(getattr(y, 'shape', ()))
