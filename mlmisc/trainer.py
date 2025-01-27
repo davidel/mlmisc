@@ -122,7 +122,7 @@ class Trainer:
     metrics = cls.load_metrics(path) or ()
     for m in metrics:
       cu.tb_write(tb_writer, m['name'], m['value'],
-                  global_step=m['num_samples'],
+                  global_step=m['global_step'],
                   walltime=m['time'])
 
   def _times(self):
