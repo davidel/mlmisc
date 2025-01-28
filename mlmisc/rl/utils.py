@@ -28,19 +28,6 @@ def optimize_step(optimizer, loss, gclamp=None):
   optimizer.step()
 
 
-def select_action(env, net, state, noise_sigma=0.0, device=None, mode='train'):
-  tas.check(mode in {'train', 'infer'}, msg=f'Unknown mode: {mode}')
-
-  with cu.Training(net, False), torch.no_grad():
-    x = torch.tensor(state).unsqueeze(0)
-    x = x if device is None else x.to(device)
-    action = net(x)
-
-  action = action.squeeze(0).numpy(force=True)
-
-  return env.rand(noise_sigma, action=action) if mode == 'train' else action
-
-
 # This, like the LinearParamUpdater, is kept around for historical reasons,
 # since the run_step_trew() works much better in every environment I tested
 # them with.
@@ -214,6 +201,70 @@ def show_samples(memory, percentiles=(0.5, 0.8, 0.9, 0.99), dest_path=None):
       df.to_pickle(dest_path)
 
 
+def net_infer(net, x, device=None, to_numpy=False):
+  with cu.Training(net, False), torch.no_grad():
+    if not isinstance(x, torch.Tensor):
+      x = torch.tensor(x)
+    x = x.unsqueeze(0)
+    x = x if device is None else x.to(device)
+    y = net(x)
+    y = y.squeeze(0)
+
+  return y.numpy(force=True) if to_numpy else y
+
+
+def select_action(env, pi_eval, state, noise_sigma=0.0, mode='train'):
+  tas.check(mode in {'train', 'infer'}, msg=f'Unknown mode: {mode}')
+
+  action = pi_eval(state)
+
+  return env.rand(noise_sigma, action=action) if mode == 'train' else action
+
+
+Sample = collections.namedtuple(
+  'Sample',
+  'state, action, next_state, reward, done')
+
+def run_episode(env, pi_net, memory,
+                noise_sigma=0.0,
+                device=None,
+                final_reward=None,
+                max_episode_steps=1000):
+  pi_eval = functools.partial(net_infer, pi_net, device=device, to_numpy=True)
+
+  samples = []
+  state = env.reset()
+  for stepno in itertools.count():
+    action = select_action(env, pi_eval, state, noise_sigma=noise_sigma)
+
+    next_state, reward, done = env.step(action)
+
+    if stepno >= max_episode_steps:
+      alog.info(f'Too many steps ({stepno}) ... aborting episode')
+      done = env.TERMINATED
+
+    step_reward = final_reward if done != env.ALIVE and final_reward is not None else reward
+
+    samples.append(Sample(state, action, next_state, step_reward, done))
+    state = next_state
+
+    if done != env.ALIVE:
+      break
+
+  total_reward = episode_reward = sum(s.reward for s in samples)
+  for s in samples:
+    memory.append(state=s.state,
+                  action=s.action,
+                  next_state=s.next_state,
+                  reward=[s.reward],
+                  total_reward=[total_reward],
+                  done=[s.done])
+    total_reward -= s.reward
+
+  return pyu.make_object(step_count=stepno,
+                         episode_reward=episode_reward)
+
+
 def make_video(path, env, train_context, pi_net,
                device=None,
                max_episode_steps=1000,
@@ -253,46 +304,4 @@ def make_video(path, env, train_context, pi_net,
     alog.debug(f'Video generated in {stepno} steps, reward was {total_reward:.2e}')
 
   os.replace(tmp_path, path)
-
-
-Sample = collections.namedtuple(
-  'Sample',
-  'state, action, next_state, reward, done')
-
-def run_episode(env, pi_net, memory,
-                noise_sigma=0.0,
-                device=None,
-                final_reward=None,
-                max_episode_steps=1000):
-  samples = []
-  state = env.reset()
-  for stepno in itertools.count():
-    action = select_action(env, pi_net, state, noise_sigma=noise_sigma, device=device)
-
-    next_state, reward, done = env.step(action)
-
-    if stepno >= max_episode_steps:
-      alog.info(f'Too many steps ({stepno}) ... aborting episode')
-      done = env.TERMINATED
-
-    step_reward = final_reward if done != env.ALIVE and final_reward is not None else reward
-
-    samples.append(Sample(state, action, next_state, step_reward, done))
-    state = next_state
-
-    if done != env.ALIVE:
-      break
-
-  total_reward = episode_reward = sum(s.reward for s in samples)
-  for s in samples:
-    memory.append(state=s.state,
-                  action=s.action,
-                  next_state=s.next_state,
-                  reward=[s.reward],
-                  total_reward=[total_reward],
-                  done=[s.done])
-    total_reward -= s.reward
-
-  return pyu.make_object(step_count=stepno,
-                         episode_reward=episode_reward)
 
