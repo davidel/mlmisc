@@ -121,7 +121,8 @@ def _train_loop(ctx, env):
   pushed, ep_results = 0, []
   for e in range(ctx.num_episodes):
     with env.train_context.sampling():
-      epres = rlut.run_episode(env.env, env.train_context, env.pi_net, env.memory,
+      epres = rlut.run_episode(env.env, env.pi_net, env.memory,
+                               noise_sigma=env.train_context.action_noise(),
                                device=ctx.device,
                                final_reward=ctx.final_reward,
                                max_episode_steps=ctx.max_episode_steps)

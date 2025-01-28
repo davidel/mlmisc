@@ -28,9 +28,7 @@ def optimize_step(optimizer, loss, gclamp=None):
   optimizer.step()
 
 
-def select_action(env, train_context, net, state,
-                  device=None,
-                  mode='train'):
+def select_action(env, net, state, noise_sigma=0.0, device=None, mode='train'):
   tas.check(mode in {'train', 'infer'}, msg=f'Unknown mode: {mode}')
 
   with cu.Training(net, False), torch.no_grad():
@@ -40,11 +38,7 @@ def select_action(env, train_context, net, state,
 
   action = action.squeeze(0).numpy(force=True)
 
-  if mode == 'train':
-    noise_sigma = train_context.action_noise()
-    action = env.rand(noise_sigma, action=action)
-
-  return action
+  return env.rand(noise_sigma, action=action) if mode == 'train' else action
 
 
 # This, like the LinearParamUpdater, is kept around for historical reasons,
@@ -232,9 +226,7 @@ def make_video(path, env, train_context, pi_net,
   state = env.reset()
   with contextlib.ExitStack() as xstack:
     for stepno in itertools.count():
-      action = select_action(env, train_context, pi_net, state,
-                             device=device,
-                             mode='infer')
+      action = select_action(env, pi_net, state, device=device, mode='infer')
       next_state, reward, done = env.step(action)
       total_reward += reward
 
@@ -267,14 +259,15 @@ Sample = collections.namedtuple(
   'Sample',
   'state, action, next_state, reward, done')
 
-def run_episode(env, train_context, pi_net, memory,
+def run_episode(env, pi_net, memory,
+                noise_sigma=0.0,
                 device=None,
                 final_reward=None,
                 max_episode_steps=1000):
   samples = []
   state = env.reset()
   for stepno in itertools.count():
-    action = select_action(env, train_context, pi_net, state, device=device)
+    action = select_action(env, pi_net, state, noise_sigma=noise_sigma, device=device)
 
     next_state, reward, done = env.step(action)
 
