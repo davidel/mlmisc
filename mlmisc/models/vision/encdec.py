@@ -234,7 +234,8 @@ if __name__ == '__main__':
   import py_misc_utils.app_main as app_main
 
   @app_main.Main
-  def main(shape, num_channels,
+  def main(shape: tuple,
+           num_channels,
            max_span=100,
            valid_finals=_VALID_FINALS):
     conf = find_config(shape, num_channels,
