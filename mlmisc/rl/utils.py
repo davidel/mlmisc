@@ -269,6 +269,7 @@ def make_video(path, env, train_context, pi_net,
                device=None,
                max_episode_steps=1000,
                fps=10):
+  pi_eval = functools.partial(net_infer, pi_net, device=device, to_numpy=True)
   tmp_path = pyfsu.temp_path(nspath=path)
 
   fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
@@ -277,7 +278,7 @@ def make_video(path, env, train_context, pi_net,
   state = env.reset()
   with contextlib.ExitStack() as xstack:
     for stepno in itertools.count():
-      action = select_action(env, pi_net, state, device=device, mode='infer')
+      action = select_action(env, pi_eval, state, mode='infer')
       next_state, reward, done = env.step(action)
       total_reward += reward
 
