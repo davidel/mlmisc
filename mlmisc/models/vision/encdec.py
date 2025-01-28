@@ -243,7 +243,9 @@ if __name__ == '__main__':
                        valid_finals=valid_finals)
 
     if conf:
-      alog.info(f'Found Config: {conf}')
+      alog.info(f'Found Config (shape={shape}, num_channels={num_channels}): {conf}')
+    else:
+      alog.info(f'Config Not Found (shape={shape}, num_channels={num_channels})')
 
 
   app_main.basic_main(main, description='EncDec Config Find')
