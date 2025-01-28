@@ -76,13 +76,13 @@ def save_conv_specs(conv_specs, path):
 def _load_params(kwargs, name, default_values, default_weights):
   pvalues = kwargs.get(f'{name}_values')
   if pvalues is not None and isinstance(pvalues, str):
-    pvalues = tuple(pyu.infer_value(v) for v in pyu.comma_split(pvalues))
+    pvalues = tuple(pycu.infer_value(v) for v in pyu.comma_split(pvalues))
   if pvalues is None:
     pvalues = default_values
 
   pweights = kwargs.get(f'{name}_weights')
   if pweights is not None and isinstance(pweights, str):
-    pweights = tuple(pyu.infer_value(v) for v in pyu.comma_split(pweights))
+    pweights = tuple(pycu.infer_value(v) for v in pyu.comma_split(pweights))
   if pweights is None:
     pweights = default_weights
 
