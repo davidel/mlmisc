@@ -231,7 +231,7 @@ def make_video(path, env, train_context, pi_net,
   total_reward, out = 0, None
   state = env.reset()
   with contextlib.ExitStack() as xstack:
-    for t in itertools.count():
+    for stepno in itertools.count():
       action = select_action(env, train_context, pi_net, state,
                              device=device,
                              mode='infer')
@@ -254,11 +254,11 @@ def make_video(path, env, train_context, pi_net,
       if done != env.ALIVE:
         break
       state = next_state
-      if t >= max_episode_steps:
-        alog.info(f'Too many steps ({t}) ... aborting episode')
+      if stepno >= max_episode_steps:
+        alog.info(f'Too many steps ({stepno}) ... aborting episode')
         break
 
-    alog.debug(f'Video generated in {t} steps, reward was {total_reward:.2e}')
+    alog.debug(f'Video generated in {stepno} steps, reward was {total_reward:.2e}')
 
   os.replace(tmp_path, path)
 
@@ -273,13 +273,13 @@ def run_episode(env, train_context, pi_net, memory,
                 max_episode_steps=1000):
   samples = []
   state = env.reset()
-  for ep_step in itertools.count():
+  for stepno in itertools.count():
     action = select_action(env, train_context, pi_net, state, device=device)
 
     next_state, reward, done = env.step(action)
 
-    if ep_step >= max_episode_steps:
-      alog.info(f'Too many steps ({ep_step}) ... aborting episode')
+    if stepno >= max_episode_steps:
+      alog.info(f'Too many steps ({stepno}) ... aborting episode')
       done = env.TERMINATED
 
     step_reward = final_reward if done != env.ALIVE and final_reward is not None else reward
@@ -300,6 +300,6 @@ def run_episode(env, train_context, pi_net, memory,
                   done=[s.done])
     total_reward -= s.reward
 
-  return pyu.make_object(step_count=ep_step,
+  return pyu.make_object(step_count=stepno,
                          episode_reward=episode_reward)
 
