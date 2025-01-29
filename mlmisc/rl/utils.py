@@ -201,16 +201,15 @@ def show_samples(memory, percentiles=(0.5, 0.8, 0.9, 0.99), dest_path=None):
       df.to_pickle(dest_path)
 
 
-def net_infer(net, x, device=None, to_numpy=False):
+def net_infer(net, x, device=None):
   with cu.Training(net, False), torch.no_grad():
-    if not isinstance(x, torch.Tensor):
-      x = torch.tensor(x)
+    x = torch.tensor(x)
     x = x.unsqueeze(0)
     x = x if device is None else x.to(device)
     y = net(x)
     y = y.squeeze(0)
 
-  return y.numpy(force=True) if to_numpy else y
+    return y.numpy(force=True)
 
 
 def select_action(env, pi_eval, state, noise_sigma=0.0, mode='train'):
@@ -230,7 +229,7 @@ def run_episode(env, pi_net, memory,
                 device=None,
                 final_reward=None,
                 max_episode_steps=1000):
-  pi_eval = functools.partial(net_infer, pi_net, device=device, to_numpy=True)
+  pi_eval = functools.partial(net_infer, pi_net, device=device)
 
   samples = []
   state = env.reset()
@@ -269,7 +268,7 @@ def make_video(path, env, train_context, pi_net,
                device=None,
                max_episode_steps=1000,
                fps=10):
-  pi_eval = functools.partial(net_infer, pi_net, device=device, to_numpy=True)
+  pi_eval = functools.partial(net_infer, pi_net, device=device)
   tmp_path = pyfsu.temp_path(nspath=path)
 
   fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
