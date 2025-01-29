@@ -27,11 +27,11 @@ def _build_actions(env):
   return rlact.Actions(actions)
 
 
-class EnvBase:
+ALIVE = 0.0
+DONE = 1.0
+TERMINATED = -1.0
 
-  ALIVE = 0.0
-  DONE = 1.0
-  TERMINATED = -1.0
+class EnvBase:
 
   def __init__(self, name, env):
     pyfw.fin_wrap(self, '_env', env, finfn=env.close)
@@ -71,7 +71,7 @@ class EnvBase:
 
     return (np.asarray(next_state, dtype=np.float32),
             float(reward),
-            self.DONE if done else self.TERMINATED if terminated else self.ALIVE)
+            DONE if done else TERMINATED if terminated else ALIVE)
 
   def rand(self, rand_sigma, action=None):
     return self._actions.rand(rand_sigma, action=action)

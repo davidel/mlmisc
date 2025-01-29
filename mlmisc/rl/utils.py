@@ -18,6 +18,8 @@ import torch
 from .. import core_utils as cu
 from .. import debug_utils as du
 
+from . import env as rlenv
+
 
 def optimize_step(optimizer, loss, gclamp=None):
   optimizer.zero_grad()
@@ -240,14 +242,17 @@ def run_episode(env, pi_net, memory,
 
     if stepno >= max_episode_steps:
       alog.info(f'Too many steps ({stepno}) ... aborting episode')
-      done = env.TERMINATED
+      done = rlenv.TERMINATED
 
-    step_reward = final_reward if done != env.ALIVE and final_reward is not None else reward
+    if done != rlenv.ALIVE and final_reward is not None:
+      step_reward = final_reward
+    else:
+      step_reward = reward
 
     samples.append(Sample(state, action, next_state, step_reward, done))
     state = next_state
 
-    if done != env.ALIVE:
+    if done != rlenv.ALIVE:
       break
 
   total_reward = episode_reward = sum(s.reward for s in samples)
@@ -264,7 +269,7 @@ def run_episode(env, pi_net, memory,
                          episode_reward=episode_reward)
 
 
-def make_video(path, env, train_context, pi_net,
+def make_video(path, env, pi_net,
                device=None,
                max_episode_steps=1000,
                fps=10):
@@ -294,7 +299,7 @@ def make_video(path, env, train_context, pi_net,
                              dtype=cv2.CV_8U)
       out.write(screen)
 
-      if done != env.ALIVE:
+      if done != rlenv.ALIVE:
         break
       state = next_state
       if stepno >= max_episode_steps:

@@ -168,7 +168,7 @@ def _train_loop(ctx, env):
       env.memory.filter(('state', 'action'), 1.0 - ctx.train_capacity_pct)
 
       if ctx.video_path is not None:
-        rlut.make_video(ctx.video_path, env.env, env.train_context, env.pi_net,
+        rlut.make_video(ctx.video_path, env.env, env.pi_net,
                         device=ctx.device,
                         max_episode_steps=ctx.max_episode_steps)
 
