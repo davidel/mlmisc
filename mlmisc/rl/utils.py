@@ -260,9 +260,9 @@ def run_episode(env, pi_net, memory,
     memory.append(state=s.state,
                   action=s.action,
                   next_state=s.next_state,
-                  reward=[s.reward],
-                  total_reward=[total_reward],
-                  done=[s.done])
+                  reward=np.array([s.reward]),
+                  total_reward=np.array([total_reward]),
+                  done=np.array([s.done]))
     total_reward -= s.reward
 
   return pyu.make_object(step_count=stepno,
