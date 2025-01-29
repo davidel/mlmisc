@@ -91,7 +91,7 @@ class GymEnv(EnvBase):
 
   def __init__(self, name, **kwargs):
     kwargs.update(render_mode='rgb_array')
-    env = gym.make(name, **kwargs).unwrapped
+    env = gym.make(name, **kwargs)
 
     alog.debug(f'Env Args: {kwargs}')
     alog.debug(f'Observation Space: {env.observation_space}')
