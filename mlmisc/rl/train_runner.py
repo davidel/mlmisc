@@ -120,7 +120,7 @@ def _train_loop(ctx, env):
 
   pushed, ep_results = 0, []
   for e in range(ctx.num_episodes):
-    with env.train_context.sampling():
+    with env.train_context.sampling() as ltime:
       epres = rlut.learn(env.env, env.pi_net, env.memory,
                          num_episodes=ctx.learn_episodes,
                          num_workers=ctx.num_workers,
@@ -142,7 +142,9 @@ def _train_loop(ctx, env):
       avg_reward = np.mean([epres.avg_reward for er in ep_results])
       cu.tb_write(env.stat_writer, 'AvgReward', avg_reward, env.train_context.stepno)
       ep_results = []
-      alog.info(f'[{e}/{env.train_context.stepno}] Steps {avg_steps:.1f}\tReward {avg_reward:.2e}\t')
+      alog.info(f'[{e}/{env.train_context.stepno}] Steps {avg_steps:.1f}\t' \
+                f'Reward {avg_reward:.2e}\t' \
+                f'StepPerf: {epres.total_steps / ltime.elapsed:.2e} steps/sec')
 
     if pushed >= refill_train_size:
       alog.info(f'[{env.train_context.stepno}] SamplingTime = {env.train_context.sampling_time()}' \

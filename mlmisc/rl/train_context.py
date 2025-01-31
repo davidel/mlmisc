@@ -1,6 +1,7 @@
 import contextlib
 import datetime
 import time
+import types
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -28,19 +29,21 @@ class TrainContext:
 
   @contextlib.contextmanager
   def sampling(self):
-    start = time.time()
+    optime = types.SimpleNamespace(start=time.time(), elapsed=None)
     try:
-      yield self
+      yield optime
     finally:
-      self._sample_time += time.time() - start
+      optime.elapsed = time.time() - optime.start
+      self._sample_time += optime.elapsed
 
   @contextlib.contextmanager
   def training(self):
-    start = time.time()
+    optime = types.SimpleNamespace(start=time.time(), elapsed=None)
     try:
-      yield self
+      yield optime
     finally:
-      self._train_time += time.time() - start
+      optime.elapsed = time.time() - optime.start
+      self._train_time += optime.elapsed
 
   def sampling_time(self):
     return datetime.timedelta(seconds=self._sample_time)

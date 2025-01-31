@@ -204,6 +204,8 @@ class NoopTbWriter:
 
 
 def create_tb_writer(path, **kwargs):
+  # Unfortunately tensorboard depends on Tensorflow, and that creates all sort
+  # of issues with GPUs on Colab (Argh! Issues coming from XLA).
   import torch.utils.tensorboard
 
   alog.debug(f'Creating TB summary writer in {path}')
