@@ -13,7 +13,6 @@ import py_misc_utils.rnd_utils as pyr
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
-import torch.utils.tensorboard
 
 
 class Training:
@@ -205,6 +204,8 @@ class NoopTbWriter:
 
 
 def create_tb_writer(path, **kwargs):
+  import torch.utils.tensorboard
+
   alog.debug(f'Creating TB summary writer in {path}')
 
   return torch.utils.tensorboard.SummaryWriter(path, **kwargs)
