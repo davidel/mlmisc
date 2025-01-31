@@ -144,7 +144,7 @@ def _train_loop(ctx, env):
       ep_results = []
       alog.info(f'[{e}/{env.train_context.stepno}] Steps {avg_steps:.1f}\t' \
                 f'Reward {avg_reward:.2e}\t' \
-                f'StepPerf: {epres.total_steps / ltime.elapsed:.2e} steps/sec')
+                f'StepPerf {epres.total_steps / ltime.elapsed:.2e} steps/sec')
 
     if pushed >= refill_train_size:
       alog.info(f'[{env.train_context.stepno}] SamplingTime = {env.train_context.sampling_time()}' \
