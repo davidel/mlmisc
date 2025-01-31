@@ -121,23 +121,25 @@ def _train_loop(ctx, env):
   pushed, ep_results = 0, []
   for e in range(ctx.num_episodes):
     with env.train_context.sampling():
-      epres = rlut.run_episode(env.env, env.pi_net, env.memory,
-                               noise_sigma=env.train_context.action_noise(),
-                               device=ctx.device,
-                               final_reward=ctx.final_reward,
-                               max_episode_steps=ctx.max_episode_steps)
+      epres = rlut.learn(env.env, env.pi_net, env.memory,
+                         num_episodes=ctx.learn_episodes,
+                         num_workers=ctx.num_workers,
+                         noise_sigma=env.train_context.action_noise(),
+                         device=ctx.device,
+                         final_reward=ctx.final_reward,
+                         max_episode_steps=ctx.max_episode_steps)
 
-    pushed += epres.step_count
+    pushed += epres.total_steps
     ep_results.append(epres)
 
-    cu.tb_write(env.stat_writer, 'Episode Reward', epres.episode_reward,
+    cu.tb_write(env.stat_writer, 'Episode Reward', epres.avg_reward,
                 env.train_context.stepno)
-    cu.tb_write(env.stat_writer, 'Episode Steps', epres.step_count,
+    cu.tb_write(env.stat_writer, 'Episode Steps', epres.avg_nsteps,
                 env.train_context.stepno)
     if show_episode:
-      avg_steps = np.mean([er.step_count for er in ep_results])
+      avg_steps = np.mean([epres.avg_nsteps for er in ep_results])
       cu.tb_write(env.stat_writer, 'AvgSteps', avg_steps, env.train_context.stepno)
-      avg_reward = np.mean([er.episode_reward for er in ep_results])
+      avg_reward = np.mean([epres.avg_reward for er in ep_results])
       cu.tb_write(env.stat_writer, 'AvgReward', avg_reward, env.train_context.stepno)
       ep_results = []
       alog.info(f'[{e}/{env.train_context.stepno}] Steps {avg_steps:.1f}\tReward {avg_reward:.2e}\t')
@@ -178,7 +180,7 @@ def _train_loop(ctx, env):
     if print_screen:
       env.env.print_screen(path=ctx.image_path)
 
-    env.train_context.step(epres.episode_reward, epres.step_count)
+    env.train_context.step(epres.avg_reward, epres.avg_nsteps)
 
     if do_checkpoint:
       ut.save_data(ctx.model_path,
@@ -222,6 +224,8 @@ def train(model_name,
           stepmem_dtype='float16',
           stepmem_path: str=None,
           num_cpu_threads: int=None,
+          learn_episodes: int= 50,
+          num_workers: int= 1,
           show_episode_nsecs=4,
           print_screen_nsecs=0,
           checkpoint_nsecs=300,
@@ -239,7 +243,7 @@ def train(model_name,
   rlut.show_context(ctx)
 
   if num_cpu_threads is not None:
-    torch.set_num_threads(num_cpu_threads)
+    app_main.add_setupfn(functools.partial(torch.set_num_threads, num_cpu_threads))
 
   env = _create_env(ctx)
 

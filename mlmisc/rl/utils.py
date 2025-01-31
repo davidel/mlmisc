@@ -1,14 +1,17 @@
-import collections
 import contextlib
+import dataclasses
 import functools
 import itertools
+import multiprocessing
 import os
 import time
 
 import cv2
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.app_main as app_main
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.break_control as pybc
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.num_utils as pynu
@@ -222,11 +225,17 @@ def select_action(env, pi_eval, state, noise_sigma=0.0, mode='train'):
   return env.rand(noise_sigma, action=action) if mode == 'train' else action
 
 
-Sample = collections.namedtuple(
-  'Sample',
-  'state, action, next_state, reward, done')
+@dataclasses.dataclass
+class Sample:
+  state: np.ndarray
+  action: np.ndarray
+  next_state: np.ndarray
+  reward: float
+  done: float
+  total_reward: float = None
 
-def run_episode(env, pi_net, memory,
+
+def run_episode(env, pi_net,
                 noise_sigma=0.0,
                 device=None,
                 final_reward=None,
@@ -255,18 +264,91 @@ def run_episode(env, pi_net, memory,
     if done != rlenv.ALIVE:
       break
 
-  total_reward = episode_reward = sum(s.reward for s in samples)
-  for s in samples:
-    memory.append(state=s.state,
-                  action=s.action,
-                  next_state=s.next_state,
-                  reward=np.array([s.reward]),
-                  total_reward=np.array([total_reward]),
-                  done=np.array([s.done]))
-    total_reward -= s.reward
+  total_reward = episode_reward = sum(sample.reward for sample in samples)
+  for sample in samples:
+    sample.total_reward = total_reward
+    total_reward -= sample.reward
 
   return pyu.make_object(step_count=stepno,
-                         episode_reward=episode_reward)
+                         episode_reward=episode_reward,
+                         samples=samples)
+
+
+def _mp_run_episodes(rqueue, env, pi_net, count=1, **kwargs):
+  try:
+    with pybc.BreakControl() as bc:
+      results = []
+      for _ in range(count):
+        result = run_episode(env, pi_net, **kwargs)
+        results.append(result)
+
+        if bc.hit():
+          break
+
+      rqueue.put(results)
+  except Exception as ex:
+    rqueue.put(ex)
+
+
+_MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 50))
+
+def learn(env, pi_net, memory, num_episodes=1, num_workers=None, **kwargs):
+  num_workers = num_workers or os.cpu_count()
+
+  num_workers = min(num_workers, num_episodes // _MIN_PERCPU_EPISODES)
+
+  results = []
+  if num_workers <= 1:
+    results.append(run_episode(env, pi_net, **kwargs))
+  else:
+    worker_kwargs = kwargs.copy()
+    worker_kwargs.update(count=round(num_episodes / num_workers))
+
+    mpctx = multiprocessing.get_context('spawn')
+
+    rqueue = mpctx.Queue()
+    workers = []
+    for i in range(num_workers):
+      worker = app_main.create_process(_mp_run_episodes,
+                                       args=(rqueue, env, pi_net),
+                                       kwargs=worker_kwargs,
+                                       context=mpctx,
+                                       daemon=True)
+      worker.start()
+      workers.append(worker)
+
+    exceptions = []
+    for i in range(num_workers):
+      result = rqueue.get()
+      if isinstance(result, Exception):
+        exceptions.append(result)
+      else:
+        results.extend(result)
+
+    for worker in workers:
+      worker.join()
+
+    rqueue.close()
+    if exceptions:
+      xmsg = '\n'.join(f'[{i}] {ex}' for i, ex in enumerate(exceptions))
+      alog.error(f'Exception in learner worker:\n{xmsg}')
+
+  total_steps = sum(r.step_count for r in results)
+  avg_nsteps = total_steps // len(results)
+  avg_reward = np.mean(tuple(r.episode_reward for r in results)).item()
+
+  for result in results:
+    for sample in result.samples:
+      memory.append(state=sample.state,
+                    action=sample.action,
+                    next_state=sample.next_state,
+                    reward=np.array([sample.reward]),
+                    total_reward=np.array([sample.total_reward]),
+                    done=np.array([sample.done]))
+
+  return pyu.make_object(total_steps=total_steps,
+                         avg_nsteps=avg_nsteps,
+                         avg_reward=avg_reward)
 
 
 def make_video(path, env, pi_net,

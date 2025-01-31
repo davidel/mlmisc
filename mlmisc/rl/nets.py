@@ -1,3 +1,5 @@
+import functools
+
 import py_misc_utils.alog as alog
 import torch
 import torch.nn as nn
@@ -31,13 +33,18 @@ class Dense(nb.NetBase):
     return y_act
 
 
+def _norm_adder(ns, x):
+  return x + ns.norm
+
+
 def _build_dense_layers(net, num_layers, size, act):
   for _ in range(num_layers):
     net.add(Dense(size, size, bias=False, act=act, resns=net.resns.new()))
 
     nsid = len(net.resns) - 2
     if nsid >= 0:
-      net.add(lmbd.Lambda(lambda x, ns=net.resns[nsid]: x + ns.norm, info='Adder'))
+      adder = functools.partial(_norm_adder, net.resns[nsid])
+      net.add(lmbd.Lambda(adder, info='Adder'))
 
 
 def _build_state_net(num_states, size, act):
