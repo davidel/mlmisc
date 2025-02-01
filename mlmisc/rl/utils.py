@@ -206,23 +206,34 @@ def show_samples(memory, percentiles=(0.5, 0.8, 0.9, 0.99), dest_path=None):
       df.to_pickle(dest_path)
 
 
-def net_infer(net, x, device=None):
+def net_infer(net, x, device=torch.device('cpu')):
   with cu.Training(net, False), torch.no_grad():
-    x = torch.tensor(x)
-    x = x.unsqueeze(0)
-    x = x if device is None else x.to(device)
+    x = torch.tensor(x).to(device)
     y = net(x)
-    y = y.squeeze(0)
 
     return y.numpy(force=True)
 
 
-def select_action(env, pi_eval, state, noise_sigma=0.0, mode='train'):
+def select_action(env, pi_eval, state,
+                  noise_sigma=0.0,
+                  mode='train',
+                  needs_batch=True):
   tas.check(mode in {'train', 'infer'}, msg=f'Unknown mode: {mode}')
 
-  action = pi_eval(state)
+  if needs_batch:
+    bstate = np.expand_dims(state, axis=0)
+    baction = pi_eval(bstate)
+    action = np.squeeze(baction, axis=0)
+  else:
+    action = pi_eval(state)
 
-  return env.rand(noise_sigma, action=action) if mode == 'train' else action
+  if mode == 'infer':
+    return action
+
+  if needs_batch:
+    return env.rand(noise_sigma, action=action)
+
+  return [env.rand(noise_sigma, action=act) for act in action]
 
 
 @dataclasses.dataclass
