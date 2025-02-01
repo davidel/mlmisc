@@ -4,6 +4,7 @@ import functools
 import itertools
 import multiprocessing
 import os
+import queue
 import time
 
 import cv2
@@ -309,14 +310,51 @@ def run_episodes(env, pi_net, count,
   return results
 
 
-def _mp_run_episodes(rqueue, env, pi_net, count=1, **kwargs):
+def _mp_run_episodes(pidx, rqueue, env, pi_net, count=1, **kwargs):
   try:
     with pybc.BreakControl() as bc:
+      rqueue.put((pidx, None))
+
       results = run_episodes(env, pi_net, count, **kwargs)
 
-      rqueue.put(results)
+      rqueue.put((pidx, results))
   except Exception as ex:
-    rqueue.put(ex)
+    rqueue.put((pidx, ex))
+
+
+def _collect_mp_results(rqueue, workers):
+  results = []
+  exceptions, to_ack = [], set(workers.keys())
+  while workers:
+    try:
+      qvalue = rqueue.get(True, 0.5)
+    except queue.Empty:
+      qvalue = None
+
+    if qvalue is not None:
+      pidx, value = qvalue
+      if value is None:
+        to_ack.discard(pidx)
+      elif isinstance(value, Exception):
+        exceptions.append(value)
+      else:
+        results.extend(value)
+
+        workers[pidx].join()
+        workers.pop(pidx)
+
+    for pidx in tuple(to_ack):
+      if not workers[pidx].is_alive():
+        workers[pidx].join()
+        workers.pop(pidx)
+        to_ack.discard(pidx)
+
+  if exceptions:
+    xmsg = '\n'.join(f'[{i}] {ex}' for i, ex in enumerate(exceptions))
+    alog.error(f'Exception in learner worker:\n{xmsg}')
+    raise type(exceptions[0])(xmsg)
+
+  return results
 
 
 _MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 50))
@@ -338,33 +376,18 @@ def learn(env, pi_net, memory,
 
     mpctx = multiprocessing.get_context('spawn')
 
-    rqueue = mpctx.Queue()
-    workers = []
-    for i in range(num_workers):
-      worker = app_main.create_process(_mp_run_episodes,
-                                       args=(rqueue, env, pi_net),
-                                       kwargs=worker_kwargs,
-                                       context=mpctx,
-                                       daemon=True)
-      worker.start()
-      workers.append(worker)
+    with contextlib.closing(mpctx.Queue()) as rqueue:
+      workers = dict()
+      for i in range(num_workers):
+        worker = app_main.create_process(_mp_run_episodes,
+                                         args=(i, rqueue, env, pi_net),
+                                         kwargs=worker_kwargs,
+                                         context=mpctx,
+                                         daemon=True)
+        worker.start()
+        workers[i] = worker
 
-    exceptions = []
-    for i in range(num_workers):
-      result = rqueue.get()
-      if isinstance(result, Exception):
-        exceptions.append(result)
-      else:
-        results.extend(result)
-
-    for worker in workers:
-      worker.join()
-
-    rqueue.close()
-    if exceptions:
-      xmsg = '\n'.join(f'[{i}] {ex}' for i, ex in enumerate(exceptions))
-      alog.error(f'Exception in learner worker:\n{xmsg}')
-      raise type(exceptions[0])(xmsg)
+      results.extend(_collect_mp_results(rqueue, workers))
 
   total_steps = sum(r.step_count for r in results)
   avg_nsteps = total_steps // len(results)
