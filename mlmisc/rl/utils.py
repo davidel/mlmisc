@@ -280,14 +280,13 @@ def run_episodes(env, pi_net, count, batch_size,
       samples[idx].append(Sample(states[i], actions[i], next_state, step_reward, done))
 
       if done != rlenv.ALIVE:
-        if count > len(traces):
-          traces.append(samples[idx])
+        traces.append(samples[idx])
+        samples[idx] = []
 
+        if count > len(traces) + len(next_running):
           state = envs[idx].reset()
           next_states.append(state)
           next_running.append(idx)
-
-        samples[idx] = []
       else:
         next_states.append(next_state)
         next_running.append(idx)
