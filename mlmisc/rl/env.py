@@ -33,9 +33,8 @@ TERMINATED = -1.0
 
 class EnvBase:
 
-  def __init__(self, name, env):
+  def __init__(self, env):
     pyfw.fin_wrap(self, '_env', env, finfn=env.close)
-    self.name = name
     self._actions = _build_actions(env)
 
   def close(self):
@@ -58,8 +57,8 @@ class EnvBase:
     else:
       plt.show()
 
-  def reset(self):
-    state, info = self._env.reset()
+  def reset(self, **kwargs):
+    state, info = self._env.reset(**kwargs)
 
     return np.asarray(state, dtype=np.float32)
 
@@ -93,14 +92,22 @@ class GymEnv(EnvBase):
     kwargs.update(render_mode='rgb_array')
     env = gym.make(name, **kwargs)
 
-    alog.debug(f'Env Args: {kwargs}')
-    alog.debug(f'Observation Space: {env.observation_space}')
-    alog.debug(f'Action Space: {env.action_space}')
-    if isinstance(env.action_space, gym.spaces.Box):
-      for i in range(env.action_space.shape[0]):
-        alog.debug(f'  low={env.action_space.low[i]:.2e}\thi={env.action_space.high[i]:.2e}')
-    elif isinstance(env.action_space, gym.spaces.Discrete):
-      alog.debug(f'  num_actions = {env.action_space.n} (start={env.action_space.start})')
+    super().__init__(env)
+    self.name = name
+    self._kwargs = kwargs
 
-    super().__init__(name, env)
+  def new(self):
+    return self.__class__(self.name, **self._kwargs)
+
+  def show_info(self):
+    alog.info(f'Env Args: {self._kwargs}')
+    alog.info(f'Observation Space: {self._env.observation_space}')
+    alog.info(f'Action Space: {self._env.action_space}')
+    if isinstance(self._env.action_space, gym.spaces.Box):
+      for i in range(self._env.action_space.shape[0]):
+        alog.info(f'  low={self._env.action_space.low[i]:.2e}\t' \
+                  f'hi={self._env.action_space.high[i]:.2e}')
+    elif isinstance(self._env.action_space, gym.spaces.Discrete):
+      alog.info(f'  num_actions = {self._env.action_space.n} ' \
+                f'(start={self._env.action_space.start})')
 

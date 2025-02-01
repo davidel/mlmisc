@@ -35,6 +35,7 @@ def create_env(model_name,
                **kwargs):
   env_kwargs = pyu.parse_dict(env_args) if env_args else dict()
   env = rlenv.GymEnv(model_name, **env_kwargs)
+  env.show_info()
 
   alog.info(f'Actions: {env.num_actions()}')
   alog.info(f'States: {env.num_signals()}')

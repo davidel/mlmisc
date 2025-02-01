@@ -214,7 +214,7 @@ def net_infer(net, x, device=torch.device('cpu')):
     return y.numpy(force=True)
 
 
-def select_action(env, pi_eval, state,
+def select_action(envs, pi_eval, state,
                   noise_sigma=0.0,
                   mode='train',
                   needs_batch=True):
@@ -231,9 +231,9 @@ def select_action(env, pi_eval, state,
     return action
 
   if needs_batch:
-    return env.rand(noise_sigma, action=action)
+    return envs[0].rand(noise_sigma, action=action)
 
-  return [env.rand(noise_sigma, action=act) for act in action]
+  return [envs[i].rand(noise_sigma, action=act) for i, act in enumerate(action)]
 
 
 @dataclasses.dataclass
@@ -246,55 +246,73 @@ class Sample:
   total_reward: float = None
 
 
-def run_episode(env, pi_net,
-                noise_sigma=0.0,
-                device=None,
-                final_reward=None,
-                max_episode_steps=1000):
+def run_episodes(env, pi_net, count, batch_size,
+                 noise_sigma=0.0,
+                 device=None,
+                 final_reward=None,
+                 max_episode_steps=1000):
+  batch_size = min(count, batch_size)
+
   pi_eval = functools.partial(net_infer, pi_net, device=device)
 
-  samples = []
-  state = env.reset()
-  for stepno in itertools.count():
-    action = select_action(env, pi_eval, state, noise_sigma=noise_sigma)
+  envs = [env.new() for _ in range(batch_size)]
+  states = [envs[i].reset() for i in range(batch_size)]
+  running = list(range(batch_size))
+  samples = [[] for _ in range(batch_size)]
+  traces = []
+  while running:
+    actions = select_action([envs[idx] for idx in running], pi_eval, np.vstack(states),
+                            noise_sigma=noise_sigma,
+                            needs_batch=False)
 
-    next_state, reward, done = env.step(action)
+    next_states, next_running = [], []
+    for i in range(len(actions)):
+      idx = running[i]
+      next_state, reward, done = envs[idx].step(actions[i])
 
-    if stepno >= max_episode_steps:
-      alog.info(f'Too many steps ({stepno}) ... aborting episode')
-      done = rlenv.TERMINATED
+      if len(samples[idx]) + 1 >= max_episode_steps:
+        done = rlenv.TERMINATED
+      if done != rlenv.ALIVE and final_reward is not None:
+        step_reward = final_reward
+      else:
+        step_reward = reward
 
-    if done != rlenv.ALIVE and final_reward is not None:
-      step_reward = final_reward
-    else:
-      step_reward = reward
+      samples[idx].append(Sample(states[i], actions[i], next_state, step_reward, done))
 
-    samples.append(Sample(state, action, next_state, step_reward, done))
-    state = next_state
+      if done != rlenv.ALIVE:
+        if count > len(traces):
+          traces.append(samples[idx])
 
-    if done != rlenv.ALIVE:
-      break
+          state = envs[idx].reset()
+          next_states.append(state)
+          next_running.append(idx)
 
-  total_reward = episode_reward = sum(sample.reward for sample in samples)
-  for sample in samples:
-    sample.total_reward = total_reward
-    total_reward -= sample.reward
+        samples[idx] = []
+      else:
+        next_states.append(next_state)
+        next_running.append(idx)
 
-  return pyu.make_object(step_count=stepno,
-                         episode_reward=episode_reward,
-                         samples=samples)
+    states, running = next_states, next_running
+
+  results = []
+  for trace in traces:
+    total_reward = episode_reward = sum(sample.reward for sample in trace)
+    for sample in trace:
+      sample.total_reward = total_reward
+      total_reward -= sample.reward
+
+    result = pyu.make_object(step_count=len(trace),
+                             episode_reward=episode_reward,
+                             samples=trace)
+    results.append(result)
+
+  return results
 
 
-def _mp_run_episodes(rqueue, env, pi_net, count=1, **kwargs):
+def _mp_run_episodes(rqueue, env, pi_net, count=1, batch_size=32, **kwargs):
   try:
     with pybc.BreakControl() as bc:
-      results = []
-      for _ in range(count):
-        result = run_episode(env, pi_net, **kwargs)
-        results.append(result)
-
-        if bc.hit():
-          break
+      results = run_episodes(env, pi_net, count, batch_size, **kwargs)
 
       rqueue.put(results)
   except Exception as ex:
@@ -303,17 +321,22 @@ def _mp_run_episodes(rqueue, env, pi_net, count=1, **kwargs):
 
 _MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 50))
 
-def learn(env, pi_net, memory, num_episodes=1, num_workers=None, **kwargs):
+def learn(env, pi_net, memory,
+          num_episodes=1,
+          batch_size=32,
+          num_workers=None,
+          **kwargs):
   num_workers = num_workers or os.cpu_count()
 
   num_workers = min(num_workers, num_episodes // _MIN_PERCPU_EPISODES)
 
   results = []
   if num_workers <= 1:
-    results.append(run_episode(env, pi_net, **kwargs))
+    results.extend(run_episodes(env, pi_net, num_episodes, batch_size, **kwargs))
   else:
     worker_kwargs = kwargs.copy()
-    worker_kwargs.update(count=round(num_episodes / num_workers))
+    worker_kwargs.update(count=round(num_episodes / num_workers),
+                         batch_size=batch_size)
 
     mpctx = multiprocessing.get_context('spawn')
 
@@ -343,6 +366,7 @@ def learn(env, pi_net, memory, num_episodes=1, num_workers=None, **kwargs):
     if exceptions:
       xmsg = '\n'.join(f'[{i}] {ex}' for i, ex in enumerate(exceptions))
       alog.error(f'Exception in learner worker:\n{xmsg}')
+      raise type(exceptions[0])(xmsg)
 
   total_steps = sum(r.step_count for r in results)
   avg_nsteps = total_steps // len(results)
@@ -375,7 +399,7 @@ def make_video(path, env, pi_net,
   state = env.reset()
   with contextlib.ExitStack() as xstack:
     for stepno in itertools.count():
-      action = select_action(env, pi_eval, state, mode='infer')
+      action = select_action([env], pi_eval, state, mode='infer')
       next_state, reward, done = env.step(action)
       total_reward += reward
 
