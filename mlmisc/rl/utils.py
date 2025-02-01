@@ -246,7 +246,8 @@ class Sample:
   total_reward: float = None
 
 
-def run_episodes(env, pi_net, count, batch_size,
+def run_episodes(env, pi_net, count,
+                 batch_size=64,
                  noise_sigma=0.0,
                  device=None,
                  final_reward=None,
@@ -308,10 +309,10 @@ def run_episodes(env, pi_net, count, batch_size,
   return results
 
 
-def _mp_run_episodes(rqueue, env, pi_net, count=1, batch_size=32, **kwargs):
+def _mp_run_episodes(rqueue, env, pi_net, count=1, **kwargs):
   try:
     with pybc.BreakControl() as bc:
-      results = run_episodes(env, pi_net, count, batch_size, **kwargs)
+      results = run_episodes(env, pi_net, count, **kwargs)
 
       rqueue.put(results)
   except Exception as ex:
@@ -322,7 +323,6 @@ _MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 50))
 
 def learn(env, pi_net, memory,
           num_episodes=1,
-          batch_size=32,
           num_workers=None,
           **kwargs):
   num_workers = num_workers or os.cpu_count()
@@ -331,11 +331,10 @@ def learn(env, pi_net, memory,
 
   results = []
   if num_workers <= 1:
-    results.extend(run_episodes(env, pi_net, num_episodes, batch_size, **kwargs))
+    results.extend(run_episodes(env, pi_net, num_episodes, **kwargs))
   else:
     worker_kwargs = kwargs.copy()
-    worker_kwargs.update(count=round(num_episodes / num_workers),
-                         batch_size=batch_size)
+    worker_kwargs.update(count=round(num_episodes / num_workers))
 
     mpctx = multiprocessing.get_context('spawn')
 
