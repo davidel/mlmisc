@@ -218,7 +218,7 @@ def net_infer(net, x, device=torch.device('cpu')):
 def select_action(envs, pi_eval, state,
                   noise_sigma=0.0,
                   mode='train',
-                  needs_batch=True):
+                  needs_batch=False):
   tas.check(mode in {'train', 'infer'}, msg=f'Unknown mode: {mode}')
 
   if needs_batch:
@@ -264,8 +264,7 @@ def run_episodes(env, pi_net, count,
   traces = []
   while running:
     actions = select_action([envs[idx] for idx in running], pi_eval, np.vstack(states),
-                            noise_sigma=noise_sigma,
-                            needs_batch=False)
+                            noise_sigma=noise_sigma)
 
     next_states, next_running = [], []
     for i in range(len(actions)):
@@ -429,7 +428,7 @@ def make_video(path, env, pi_net,
   state = env.reset()
   with contextlib.ExitStack() as xstack:
     for stepno in itertools.count():
-      action = select_action([env], pi_eval, state, mode='infer')
+      action = select_action([env], pi_eval, state, mode='infer', needs_batch=True)
       next_state, reward, done = env.step(action)
       total_reward += reward
 
