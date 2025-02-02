@@ -329,12 +329,11 @@ def _collect_mp_results(rqueue, workers, timeout=0.5):
   results = []
   exceptions, to_ack = [], set(workers.keys())
   while workers:
-    try:
+    qvalue = None
+    with contextlib.suppress(queue.Empty):
       # Once we got the ACK from all child, we can expect a result on the queue
       # from all of them, so we can stop waiting with timeout.
       qvalue = rqueue.get(True, timeout if to_ack else None)
-    except queue.Empty:
-      qvalue = None
 
     if qvalue is not None:
       pidx, value = qvalue
