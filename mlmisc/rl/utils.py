@@ -313,6 +313,10 @@ def run_episodes(env, pi_net, count,
 def _mp_run_episodes(pidx, rqueue, env, pi_net, count=1, **kwargs):
   try:
     with pybc.BreakControl() as bc:
+      # Send the ACK to the parent, so that it knows the child got to a point where
+      # it can expect a result on the output queue. It can happen (ie. in case of CTRL-C)
+      # that the child gets the signal and it is interrupted during the bootstrap phase,
+      # leaving the parent without any result on the queue.
       rqueue.put((pidx, None))
 
       results = run_episodes(env, pi_net, count, **kwargs)
@@ -322,12 +326,14 @@ def _mp_run_episodes(pidx, rqueue, env, pi_net, count=1, **kwargs):
     rqueue.put((pidx, ex))
 
 
-def _collect_mp_results(rqueue, workers):
+def _collect_mp_results(rqueue, workers, timeout=0.5):
   results = []
   exceptions, to_ack = [], set(workers.keys())
   while workers:
     try:
-      qvalue = rqueue.get(True, 0.5)
+      # Once we got the ACK from all child, we can expect a result on the queue
+      # from all of them, so we can stop waiting with timeout.
+      qvalue = rqueue.get(True, timeout if to_ack else None)
     except queue.Empty:
       qvalue = None
 
@@ -339,13 +345,16 @@ def _collect_mp_results(rqueue, workers):
         exceptions.append(value)
       else:
         results.extend(value)
-
         workers[pidx].join()
         workers.pop(pidx)
 
     for pidx in tuple(to_ack):
-      if not workers[pidx].is_alive():
-        workers[pidx].join()
+      worker = workers[pidx]
+      if not worker.is_alive():
+        worker.join()
+        if worker.exitcode != 0:
+          exceptions.append(RuntimeError(f'Learner child {pidx} (pid={worker.pid}) ' \
+                                         f'exited with {worker.exitcode} code'))
         workers.pop(pidx)
         to_ack.discard(pidx)
 
