@@ -99,15 +99,18 @@ class GymEnv(EnvBase):
   def new(self):
     return self.__class__(self.name, **self._kwargs)
 
-  def show_info(self):
-    alog.info(f'Env Args: {self._kwargs}')
-    alog.info(f'Observation Space: {self._env.observation_space}')
-    alog.info(f'Action Space: {self._env.action_space}')
+  def info(self):
+    info = []
+    info.append(f'Env Args: {self._kwargs}')
+    info.append(f'Observation Space: {self._env.observation_space}')
+    info.append(f'Action Space: {self._env.action_space}')
     if isinstance(self._env.action_space, gym.spaces.Box):
       for i in range(self._env.action_space.shape[0]):
-        alog.info(f'  low={self._env.action_space.low[i]:.2e}\t' \
-                  f'hi={self._env.action_space.high[i]:.2e}')
+        info.append(f'  low={self._env.action_space.low[i]:.2e}\t' \
+                    f'hi={self._env.action_space.high[i]:.2e}')
     elif isinstance(self._env.action_space, gym.spaces.Discrete):
-      alog.info(f'  num_actions = {self._env.action_space.n} ' \
-                f'(start={self._env.action_space.start})')
+      info.append(f'  num_actions = {self._env.action_space.n} ' \
+                  f'(start={self._env.action_space.start})')
+
+    return '\n'.join(info)
 
