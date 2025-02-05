@@ -4,9 +4,9 @@ import queue
 
 import numpy as np
 import py_misc_utils.alog as alog
-import py_misc_utils.app_main as app_main
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fin_wrap as pyfw
+import py_misc_utils.multiprocessing as pymp
 import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
@@ -95,7 +95,7 @@ class _IterDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queues = output_queues
-    self._proc = app_main.create_process(self._run, context=mpctx)
+    self._proc = pymp.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _generate(self):
@@ -145,7 +145,7 @@ class _MapDataFeeder:
     self._dataset = dataset
     self._input_queue = input_queue
     self._output_queue = output_queue
-    self._proc = app_main.create_process(self._run, context=mpctx)
+    self._proc = pymp.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _run(self):
@@ -181,7 +181,7 @@ class _DataTransformer:
     self._input_queue = input_queue
     self._output_queue = output_queue
     self._pipeline = pipeline
-    self._proc = app_main.create_process(self._run, context=mpctx)
+    self._proc = pymp.create_process(self._run, context=mpctx)
     self._proc.start()
 
   def _run(self):

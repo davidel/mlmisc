@@ -10,10 +10,10 @@ import time
 import cv2
 import numpy as np
 import py_misc_utils.alog as alog
-import py_misc_utils.app_main as app_main
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fs_utils as pyfsu
+import py_misc_utils.multiprocessing as pymp
 import py_misc_utils.no_break as pynb
 import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
@@ -387,11 +387,11 @@ def learn(env, pi_net, memory,
     with contextlib.closing(mpctx.Queue()) as rqueue:
       workers = dict()
       for i in range(num_workers):
-        worker = app_main.create_process(_mp_run_episodes,
-                                         args=(i, rqueue, env, pi_net),
-                                         kwargs=worker_kwargs,
-                                         context=mpctx,
-                                         daemon=True)
+        worker = pymp.create_process(_mp_run_episodes,
+                                     args=(i, rqueue, env, pi_net),
+                                     kwargs=worker_kwargs,
+                                     context=mpctx,
+                                     daemon=True)
         worker.start()
         workers[i] = worker
 
