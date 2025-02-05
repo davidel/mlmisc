@@ -364,7 +364,8 @@ def _collect_mp_results(rqueue, workers, timeout=0.5):
   return results
 
 
-_MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 50))
+_MIN_PERCPU_EPISODES = int(os.getenv('MIN_PERCPU_EPISODES', 20))
+_MP_LEARN_CONTEXT = os.getenv('MP_LEARN_CONTEXT', 'spawn')
 
 def learn(env, pi_net, memory,
           num_episodes=1,
@@ -381,7 +382,7 @@ def learn(env, pi_net, memory,
     worker_kwargs = kwargs.copy()
     worker_kwargs.update(count=round(num_episodes / num_workers))
 
-    mpctx = multiprocessing.get_context('spawn')
+    mpctx = multiprocessing.get_context(_MP_LEARN_CONTEXT)
 
     with contextlib.closing(mpctx.Queue()) as rqueue:
       workers = dict()
