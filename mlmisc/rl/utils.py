@@ -12,9 +12,9 @@ import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.app_main as app_main
 import py_misc_utils.assert_checks as tas
-import py_misc_utils.break_control as pybc
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.fs_utils as pyfsu
+import py_misc_utils.no_break as pynb
 import py_misc_utils.num_utils as pynu
 import py_misc_utils.utils as pyu
 import torch
@@ -311,7 +311,7 @@ def run_episodes(env, pi_net, count,
 
 def _mp_run_episodes(pidx, rqueue, env, pi_net, count=1, **kwargs):
   try:
-    with pybc.BreakControl() as bc:
+    with pynb.NoBreak():
       # Send the ACK to the parent, so that it knows the child got to a point where
       # it can expect a result on the output queue. It can happen (ie. in case of CTRL-C)
       # that the child gets the signal and it is interrupted during the bootstrap phase,
