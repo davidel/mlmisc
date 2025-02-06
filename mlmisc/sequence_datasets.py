@@ -35,7 +35,7 @@ class SequenceDataset(dsb.Dataset):
 
   def get_sample(self, i):
     offset = i + self._context_size
-    ybase = i + i if self._mode == 'sequence' else offset
+    ybase = i + 1 if self._mode == 'sequence' else offset
     x, y = self._data[i: offset], self._data[ybase: offset + 1]
 
     if self._pad is not None:
@@ -78,7 +78,7 @@ class SequenceIterDataset(dsb.IterableDataset):
 
       for i in range(len(tokens) - self._context_size):
         offset = i + self._context_size
-        ybase = i + i if self._mode == 'sequence' else offset
+        ybase = i + 1 if self._mode == 'sequence' else offset
         x, y = tokens[i: offset], tokens[ybase: offset + 1]
 
         x, y = torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.long)
