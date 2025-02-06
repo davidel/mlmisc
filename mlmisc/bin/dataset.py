@@ -29,6 +29,19 @@ def add_parser_arguments(parser):
 
 
 def create_dataset(args):
+  if args.dataset_selector:
+    code = pyfsu.readall(args.dataset_selector).decode()
+    module = pydm.create_module('mlmisc.dataset.dataset_selector', code)
+
+    select_fn = getattr(module, 'SELECTOR', None)
+  elif args.dataset_key_selector:
+    select_fn = mldb.items_selector(pyu.comma_split(args.dataset_key_selector))
+  elif args.dataset_index_selector:
+    indices = [int(i) for i in pyu.comma_split(args.dataset_index_selector)]
+    select_fn = mldb.items_selector(indices)
+  else:
+    select_fn = None
+
   train_trans = test_trans = tgt_train_trans = tgt_test_trans = nn.Identity()
   if args.dataset_transform:
     code = pyfsu.readall(args.dataset_transform).decode()
@@ -45,19 +58,6 @@ def create_dataset(args):
     alog.info(f'Train Dataset Target Transforms:\n{tgt_train_trans}')
     alog.info(f'Test Dataset Transforms:\n{test_trans}')
     alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans}')
-
-  if args.dataset_selector:
-    code = pyfsu.readall(args.dataset_selector).decode()
-    module = pydm.create_module('mlmisc.dataset.dataset_selector', code)
-
-    select_fn = getattr(module, 'SELECTOR', None)
-  elif args.dataset_key_selector:
-    select_fn = mldb.items_selector(pyu.comma_split(args.dataset_key_selector))
-  elif args.dataset_index_selector:
-    indices = [int(i) for i in pyu.comma_split(args.dataset_index_selector)]
-    select_fn = mldb.items_selector(indices)
-  else:
-    select_fn = None
 
   dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
   alog.debug0(f'Dataset Args: {dataset_kwargs}')
