@@ -1,7 +1,11 @@
+import py_misc_utils.assert_checks as tas
 import torch
 import torch.nn.functional as F
 
 from . import dataset_base as dsb
+
+
+MODES = {'sequence', 'token'}
 
 
 class SequenceDataset(dsb.Dataset):
@@ -11,6 +15,8 @@ class SequenceDataset(dsb.Dataset):
                pad=None,
                mode='sequence',
                **kwargs):
+    tas.check(mode in MODES, msg=f'Sequence mode ({mode}) must be one of {MODES}')
+
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     super().__init__(pipeline=pipeline, **kwargs)
@@ -46,6 +52,8 @@ class SequenceIterDataset(dsb.IterableDataset):
                pad=None,
                mode='sequence',
                **kwargs):
+    tas.check(mode in MODES, msg=f'Sequence mode ({mode}) must be one of {MODES}')
+
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     super().__init__(pipeline=pipeline, tokenizer=tokenizer, **kwargs)
