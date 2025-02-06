@@ -11,8 +11,7 @@ import torch
 
 from . import core_utils as cu
 from . import dataset_base as dsb
-from . import next_sequence_dataset as nsd
-from . import next_token_dataset as ntd
+from . import sequence_datasets as seqds
 from . import tokenizers as tkz
 
 
@@ -31,11 +30,19 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
     tokenizer=tokenizer,
   )
   if is_sequence:
-    train_dataset = nsd.NextSequenceDataset(train_data, context_size, **ds_args)
-    test_dataset = nsd.NextSequenceDataset(test_data, context_size, **ds_args)
+    train_dataset = seqds.SequenceDataset(train_data, context_size,
+                                          mode='sequence',
+                                          **ds_args)
+    test_dataset = seqds.SequenceDataset(test_data, context_size,
+                                         mode='sequence',
+                                         **ds_args)
   else:
-    train_dataset = ntd.NextTokenDataset(train_data, context_size, **ds_args)
-    test_dataset = ntd.NextTokenDataset(test_data, context_size, **ds_args)
+    train_dataset = seqds.SequenceDataset(train_data, context_size,
+                                          mode='token',
+                                          **ds_args)
+    test_dataset = seqds.SequenceDataset(test_data, context_size,
+                                         mode='token',
+                                         **ds_args)
 
   return dict(train=train_dataset, test=test_dataset)
 
