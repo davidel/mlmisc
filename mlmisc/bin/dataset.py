@@ -28,6 +28,16 @@ def add_parser_arguments(parser):
                       help='The number of sample images to be shown before starting training')
 
 
+def _comma_split(value):
+  tokens = pyu.comma_split(value)
+  if len(tokens) == 1:
+    return tokens[0]
+  elif tokens[-1] == '':
+    return tokens[: -1]
+  else:
+    return tokens
+
+
 def create_dataset(args):
   if args.dataset_selector:
     code = pyfsu.readall(args.dataset_selector).decode()
@@ -35,10 +45,11 @@ def create_dataset(args):
 
     select_fn = getattr(module, 'SELECTOR', None)
   elif args.dataset_key_selector:
-    select_fn = mldb.items_selector(pyu.comma_split(args.dataset_key_selector))
+    select_fn = mldb.items_selector(_comma_split(args.dataset_key_selector))
   elif args.dataset_index_selector:
-    indices = [int(i) for i in pyu.comma_split(args.dataset_index_selector)]
-    select_fn = mldb.items_selector(indices)
+    sres = _comma_split(args.dataset_index_selector)
+    index = [int(i) for i in sres] if isinstance(sres, (list, tuple)) else int(sres)
+    select_fn = mldb.items_selector(index)
   else:
     select_fn = None
 
