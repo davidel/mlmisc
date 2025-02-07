@@ -31,7 +31,7 @@ class SequenceDatasetBase:
     offset = idx + self._context_size
     ybase = idx + 1 if self._mode == SEQUENCE else offset
 
-    return data[idx: offset], data[ybase: offset + 1]
+    return tokens[idx: offset], tokens[ybase: offset + 1]
 
   def _padded(self, x, y):
     if self._pad is not None:
