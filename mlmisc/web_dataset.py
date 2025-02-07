@@ -15,6 +15,7 @@ import py_misc_utils.img_utils as pyimg
 import py_misc_utils.utils as pyu
 import torch
 
+from . import dataset_adapters as dsad
 from . import dataset_base as dsb
 
 
@@ -162,8 +163,8 @@ def create(url,
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
   if shuffle:
-    ds['train'] = dsb.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
-    ds['test'] = dsb.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
+    ds['train'] = dsad.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
+    ds['test'] = dsad.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
 
   return ds
 
