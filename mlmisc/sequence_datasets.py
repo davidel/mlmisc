@@ -67,7 +67,7 @@ class SequenceIterDataset(dsb.IterableDataset, SequenceDatasetBase):
                pad=None,
                mode=SEQUENCE,
                **kwargs):
-    dsb.Dataset.__init__(self, pipeline=pipeline, tokenizer=tokenizer, **kwargs)
+    dsb.IterableDataset.__init__(self, pipeline=pipeline, tokenizer=tokenizer, **kwargs)
     SequenceDatasetBase.__init__(self, data, context_size, pad=pad, mode=mode)
     self._tokenizer = tokenizer
 
