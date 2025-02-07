@@ -131,7 +131,7 @@ def transformer(sample=pycu.ident, target=pycu.ident):
 
 
 def _items_selector_fn(items, x):
-  return [x[i] for i in items]
+  return [x[i] for i in items] if isinstance(items, (list, tuple)) else x[items]
 
 
 def items_selector(items):
