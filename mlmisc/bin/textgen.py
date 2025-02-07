@@ -39,7 +39,9 @@ def _load_model(args):
 
 
 def _load_tokenizer(args):
-  if args.tokenizer_name is None:
+  if args.tokenizer_config is not None:
+    tokenizer = tkz.from_config(args.tokenizer_config)
+  elif args.tokenizer_name is None:
     tokenizer = tkz.load_tokenizer(args.tokenizer_path)
   else:
     tokenizer = tkz.from_pretrained(args.tokenizer_path, args.tokenizer_name,
@@ -102,6 +104,8 @@ if __name__ == '__main__':
                       f'path for a pre-trained one')
   parser.add_argument('--tokenizer_name',
                       help='The tokenizer name in case a pre-trained one needs to be loaded')
+  parser.add_argument('--tokenizer_config',
+                      help='The tokenizer configuration to be used')
   parser.add_argument('--input_sequence', required=True,
                       help='The path to be used to store the model checkpoint')
   parser.add_argument('--context_size', type=int, required=True,

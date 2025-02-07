@@ -11,6 +11,8 @@ import py_misc_utils.utils as pyu
 import sentencepiece as spm
 import torch
 
+from . import config as conf
+
 
 def load_tokenizer(proto_path):
   alog.debug(f'Loading tokenizer from "{proto_path}"')
@@ -51,7 +53,7 @@ class FpTokenizerWrapper:
     return self._tokenizer.decode(data)
 
 
-def from_pretrained(module_path, model_name, cache_dir=None):
+def from_pretrained(module_path, model_name, cache_dir=None, **kwargs):
   cache_dir = gfs.cache_dir(path=cache_dir)
 
   tclass, = pymu.import_module_names(module_path)
@@ -59,7 +61,14 @@ def from_pretrained(module_path, model_name, cache_dir=None):
     model_name,
     use_fast=True,
     trust_remote_code=False,
-    cache_dir=cache_dir)
+    cache_dir=cache_dir,
+    **kwargs)
+
+  return FpTokenizerWrapper(tokenizer)
+
+
+def from_config(tokenizer_config, **kwargs):
+  tokenizer = conf.create_object('Tokenizer', args.tokenizer_config, **kwargs)
 
   return FpTokenizerWrapper(tokenizer)
 
