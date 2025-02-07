@@ -169,6 +169,8 @@ class _MapDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
+      self._input_queue.cancel_join_thread()
+      self._output_queue.cancel_join_thread()
 
   def close(self):
     self._input_queue.put(None)
@@ -206,6 +208,8 @@ class _DataTransformer:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
+      self._input_queue.cancel_join_thread()
+      self._output_queue.cancel_join_thread()
 
   def close(self):
     self._input_queue.put(None)
