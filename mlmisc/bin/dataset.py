@@ -29,6 +29,8 @@ def add_parser_arguments(parser):
 
 
 def _comma_split(value):
+  # If the split contains a single value it is returned as scalar.
+  # To return a single value as list, use "VALUE,", like in Python one would tuples.
   tokens = pyu.comma_split(value)
   if len(tokens) == 1:
     return tokens[0]
