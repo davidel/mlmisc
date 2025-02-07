@@ -10,6 +10,7 @@ import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
 import py_misc_utils.core_utils as pycu
+import py_misc_utils.data_cache as pydc
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.utils as pyu
@@ -91,14 +92,19 @@ class WebDataset(torch.utils.data.IterableDataset):
     return self._size
 
 
-def expand_huggingface_urls(url):
+def expand_huggingface_urls(url, cache_dir=None):
   import huggingface_hub as hfhub
 
-  fs = hfhub.HfFileSystem()
-  files = [fs.resolve_path(path) for path in fs.glob(url)]
+  with pydc.DataCache(url, cache_dir=cache_dir, max_age=28800) as dc:
+    if (hf_files := dc.data()) is None:
+      fs = hfhub.HfFileSystem()
+      files = [fs.resolve_path(path) for path in fs.glob(url)]
+      hf_files = tuple(hfhub.hf_hub_url(rfile.repo_id, rfile.path_in_repo, repo_type='dataset')
+                       for rfile in files)
 
-  return tuple(hfhub.hf_hub_url(rfile.repo_id, rfile.path_in_repo, repo_type='dataset')
-               for rfile in files)
+      dc.store(hf_files)
+
+    return hf_files
 
 
 def expand_urls(url):
