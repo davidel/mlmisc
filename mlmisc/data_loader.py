@@ -133,7 +133,7 @@ class _IterDataFeeder:
     finally:
       for outq in self._output_queues:
         outq.put(exit_result)
-        outq.close()
+        _queue_close(outq)
 
   def close(self):
     self._input_queue.put(None)
@@ -170,7 +170,7 @@ class _MapDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
-      self._output_queue.close()
+      _queue_close(self._output_queue)
 
   def close(self):
     self._input_queue.put(None)
@@ -208,7 +208,7 @@ class _DataTransformer:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
-      self._output_queue.close()
+      _queue_close(self._output_queue)
 
   def close(self):
     self._input_queue.put(None)
@@ -260,7 +260,8 @@ class _IterDataLoader:
     pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
     pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
 
-    _closer([self._input_queue, self._output_queue] + self._trans_queues)
+    for q in [self._input_queue, self._output_queue] + self._trans_queues:
+      _queue_close(q)
 
   def _generate(self):
     idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
@@ -332,7 +333,8 @@ class _MapDataLoader:
   def close(self):
     pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
 
-    _closer(self._input_queues + [self._output_queue])
+    for q in self._input_queues + [self._output_queue]:
+      _queue_close(q)
 
   def _feed_indices(self, indices, index, n):
     stop = min(index + n, len(indices))
@@ -479,6 +481,11 @@ class _IterIndexGenerator:
       self._index += csize
 
       return indices
+
+
+def _queue_close(q):
+  q.cancel_join_thread()
+  q.close()
 
 
 def _closer(objs):
