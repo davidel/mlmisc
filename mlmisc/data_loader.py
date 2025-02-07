@@ -482,11 +482,6 @@ class _IterIndexGenerator:
 
 def _queue_close(q):
   q.cancel_join_thread()
-  while True:
-    try:
-      q.get(timeout=0.2)
-    except:
-      break
   q.close()
 
 
