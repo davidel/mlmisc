@@ -9,10 +9,13 @@ import py_misc_utils.uncompress as pyunc
 import py_misc_utils.utils as pyu
 import torch
 
+from . import config as conf
 from . import core_utils as cu
+from . import dataset_adapters as dsad
 from . import dataset_base as dsb
 from . import sequence_datasets as seqds
 from . import tokenizers as tkz
+from . import web_dataset as wds
 
 
 def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
@@ -119,4 +122,23 @@ def create(content_path, context_size,
           tfd.write(tokenizer_str)
 
   return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
+
+
+def web_create(url, tokenizer_config, field_selector, context_size, **kwargs):
+  alog.debug(f'Creating web dataset from "{url}" ...')
+  dataset = wds.create(url, **kwargs)
+
+  alog.info(f'Creating tokenizer from "{tokenizer_config}" ...')
+  tokenizer = conf.create_object('Tokenizer', tokenizer_config)
+
+  pipeline = pypl.Pipeline(dsb.items_selector(field_selector))
+
+  webds = dict()
+  for kind, dset in dataset.items():
+    trans_dataset = dsad.IterableTransformDataset(dset, pipeline)
+    seq_dataset = seqds.IterableSequenceDataset(trans_dataset, context_size,
+                                                tokenizer=tokenizer)
+    webds[kind] = seq_dataset
+
+  return webds
 
