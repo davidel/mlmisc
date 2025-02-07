@@ -485,7 +485,7 @@ def _queue_close(q):
   while True:
     try:
       q.get(timeout=0.2)
-    except queue.Empty:
+    except:
       break
   q.close()
 
