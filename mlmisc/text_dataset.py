@@ -31,17 +31,17 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
   )
   if is_sequence:
     train_dataset = seqds.SequenceDataset(train_data, context_size,
-                                          mode='sequence',
+                                          mode=seqds.SEQUENCE,
                                           **ds_args)
     test_dataset = seqds.SequenceDataset(test_data, context_size,
-                                         mode='sequence',
+                                         mode=seqds.SEQUENCE,
                                          **ds_args)
   else:
     train_dataset = seqds.SequenceDataset(train_data, context_size,
-                                          mode='token',
+                                          mode=seqds.TOKEN,
                                           **ds_args)
     test_dataset = seqds.SequenceDataset(test_data, context_size,
-                                         mode='token',
+                                         mode=seqds.TOKEN,
                                          **ds_args)
 
   return dict(train=train_dataset, test=test_dataset)
