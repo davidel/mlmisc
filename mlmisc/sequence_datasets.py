@@ -59,7 +59,7 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
     return self._padded(x, y)
 
 
-class SequenceIterDataset(dsb.IterableDataset, SequenceDatasetBase):
+class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
 
   def __init__(self, data, context_size,
                pipeline=None,

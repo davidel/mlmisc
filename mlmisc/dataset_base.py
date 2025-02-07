@@ -112,6 +112,29 @@ class SubDataset(torch.utils.data.Dataset):
     return self._data[self._indices[i]]
 
 
+class TransformDataset(Dataset):
+
+  def __init__(self, data, pipeline, **kwargs):
+    super().__init__(pipeline=pipeline, **kwargs)
+    self._data = data
+
+  def get_sample(self, i):
+    return self._data[i]
+
+  def __len__(self):
+    return len(self._data)
+
+
+class IterableTransformDataset(IterableDataset):
+
+  def __init__(self, data, pipeline, **kwargs):
+    super().__init__(pipeline=pipeline, **kwargs)
+    self._data = data
+
+  def enum_samples(self):
+    yield from self._data
+
+
 def _to_transform_fn(x, **kwargs):
   return x.to(**kwargs)
 
