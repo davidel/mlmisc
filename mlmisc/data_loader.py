@@ -254,15 +254,11 @@ class _IterDataLoader:
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
 
   def close(self):
-    all_queues = [self._input_queue, self._output_queue] + self._trans_queues
-    for q in all_queues:
-      q.cancel_join_thread()
-
     pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
     pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
 
-    for q in all_queues:
-      q.close()
+    for q in [self._input_queue, self._output_queue] + self._trans_queues:
+      _queue_close(q)
 
   def _generate(self):
     idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
@@ -332,14 +328,10 @@ class _MapDataLoader:
                   finfn=functools.partial(_closer, feeders))
 
   def close(self):
-    all_queues = self._input_queues + [self._output_queue]
-    for q in all_queues:
-      q.cancel_join_thread()
-
     pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
 
-    for q in all_queues:
-      q.close()
+    for q in self._input_queues + [self._output_queue]:
+      _queue_close(q)
 
   def _feed_indices(self, indices, index, n):
     stop = min(index + n, len(indices))
@@ -486,6 +478,11 @@ class _IterIndexGenerator:
       self._index += csize
 
       return indices
+
+
+def _queue_close(q):
+  q.cancel_join_thread()
+  q.close()
 
 
 def _closer(objs):
