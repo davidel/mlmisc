@@ -99,7 +99,7 @@ if __name__ == '__main__':
                       help='The path containing the model definition')
   parser.add_argument('--checkpoint_path', required=True,
                       help='The path to be used to load the model checkpoint')
-  parser.add_argument('--tokenizer_path', required=True,
+  parser.add_argument('--tokenizer_path',
                       help='The path containing the tokenizer protobuf file, or the module '\
                       f'path for a pre-trained one')
   parser.add_argument('--tokenizer_name',
