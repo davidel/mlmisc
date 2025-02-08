@@ -484,6 +484,17 @@ class _IterIndexGenerator:
 
 
 def _queue_close(q):
+  # Within child processes, all the queues used as output will have a new thread
+  # created, which is used to flush the output data into the underline connection.
+  # When such child process exists, by default it tries to join such thread, but
+  # if the other side of the connection (queue transport) has quit fetching data,
+  # it might hang while flushing the queue.
+  #
+  #   https://github.com/python/cpython/blob/8a7146c5eb340aa5115a5baf61e4f74c589d440f/Lib/multiprocessing/queues.py#L200
+  #   https://github.com/python/cpython/blob/8a7146c5eb340aa5115a5baf61e4f74c589d440f/Lib/multiprocessing/queues.py#L213
+  #
+  # By using cancel_join_thread() will prevent the existing child process in trying
+  # to join the flushing thread, and hence prevent possible hangs.
   q.cancel_join_thread()
   q.close()
 
