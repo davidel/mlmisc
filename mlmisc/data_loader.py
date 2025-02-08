@@ -280,8 +280,8 @@ class _IterDataLoader:
   def close(self):
     drainer = _QueueDrainer((self._output_queue,))
 
-    pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
     pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
+    pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
 
     drainer.stop_and_join()
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
