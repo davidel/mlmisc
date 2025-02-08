@@ -1,7 +1,6 @@
 import functools
 import multiprocessing
 import queue
-import threading
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -20,29 +19,6 @@ class _QueueException(Exception):
 
   def __init__(self, ex):
     super().__init__(repr(ex))
-
-
-class _QueueDrainer:
-
-  def __init__(self, queues, timeout=0.2):
-    self._queues = tuple(queues)
-    self._timeout = timeout
-    self._stopped = False
-    self._thread = threading.Thread(target=self._run, daemon=True)
-    self._thread.start()
-
-  def _run(self):
-    while not self._stopped:
-      for q in self._queues:
-        try:
-          while True:
-            q.get(timeout=self._timeout)
-        except queue.Empty:
-          pass
-
-  def stop_and_join(self):
-    self._stopped = True
-    self._thread.join()
 
 
 class _QueueGetter:
@@ -157,6 +133,7 @@ class _IterDataFeeder:
     finally:
       for outq in self._output_queues:
         outq.put(exit_result)
+        _queue_close(outq)
 
   def close(self):
     self._input_queue.put(None)
@@ -193,6 +170,7 @@ class _MapDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
+      _queue_close(self._output_queue)
 
   def close(self):
     self._input_queue.put(None)
@@ -230,6 +208,7 @@ class _DataTransformer:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
+      _queue_close(self._output_queue)
 
   def close(self):
     self._input_queue.put(None)
@@ -278,14 +257,11 @@ class _IterDataLoader:
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
 
   def close(self):
-    drainer = _QueueDrainer((self._output_queue,))
-
-    pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
     pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
+    pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
 
-    drainer.stop_and_join()
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
-      q.close()
+      _queue_close(q)
 
   def _generate(self):
     idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
@@ -355,13 +331,10 @@ class _MapDataLoader:
                   finfn=functools.partial(_closer, feeders))
 
   def close(self):
-    drainer = _QueueDrainer((self._output_queue,))
-
     pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
 
-    drainer.stop_and_join()
     for q in self._input_queues + [self._output_queue]:
-      q.close()
+      _queue_close(q)
 
   def _feed_indices(self, indices, index, n):
     stop = min(index + n, len(indices))
@@ -508,6 +481,22 @@ class _IterIndexGenerator:
       self._index += csize
 
       return indices
+
+
+def _queue_close(q):
+  # Within child processes, all the queues used as output will have a new thread
+  # created, which is used to flush the output data into the underline connection.
+  # When such child process exists, by default it tries to join such thread, but
+  # if the other side of the connection (queue transport) has quit fetching data,
+  # it might hang while flushing the queue.
+  #
+  #   https://github.com/python/cpython/blob/8a7146c5eb340aa5115a5baf61e4f74c589d440f/Lib/multiprocessing/queues.py#L200
+  #   https://github.com/python/cpython/blob/8a7146c5eb340aa5115a5baf61e4f74c589d440f/Lib/multiprocessing/queues.py#L213
+  #
+  # By using cancel_join_thread() will prevent the existing child process in trying
+  # to join the flushing thread, and hence prevent possible hangs.
+  q.cancel_join_thread()
+  q.close()
 
 
 def _closer(objs):
