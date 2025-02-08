@@ -31,17 +31,16 @@ class ShardSeq(sb.SequenceBase):
     self.vocab_head = sequ.build_vocab_head(embed_size, vocab_size,
                                             activation=act)
     if use_attn_mask:
-      self.mask = torch.triu(torch.ones(context_size, context_size),
-                             diagonal=1).bool()
+      self.register_buffer('mask',
+                           torch.triu(torch.ones(context_size, context_size),
+                                      diagonal=1).bool(),
+                           persistent=False)
     else:
       self.mask = None
 
   def forward(self, x, targets=None):
     y = super().forward(x)
-
-    mask = self.mask.to(y.device) if self.mask is not None else None
-
-    y = self.blocks(y, mask=mask)
+    y = self.blocks(y, mask=self.mask)
     # (B, T, C) @ (C, V) => (B, T, V)
     y = self.vocab_head(y)
 
