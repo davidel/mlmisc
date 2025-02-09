@@ -82,9 +82,10 @@ class DatasetWrapper:
     self._kwargs[name] = value
 
   def __len__(self):
-    data_length = getattr(self._data, '__len__', None)
-    if data_length is not None:
-      return data_length()
+    for source in (super(), self._data):
+      data_length = getattr(source, '__len__', None)
+      if data_length is not None:
+        return data_length()
 
     return self.extra_arg('size')
 
