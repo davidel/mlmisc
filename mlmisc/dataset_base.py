@@ -76,7 +76,7 @@ class DatasetWrapper:
       if extra_arg is not None and (value := extra_arg(name)) is not None:
         return value
 
-    return getattr(self._data, name, None) if value is None else value
+    return getattr(self._data, name, None)
 
   def add_extra_arg(self, name, value):
     self._kwargs[name] = value
