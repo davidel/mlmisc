@@ -42,7 +42,7 @@ class SeqLoss(nn.Module):
 
   def forward(self, y, targets):
     if targets is not None:
-      # Flatten batch and sequence dimensions together, if the is a sequence
+      # Flatten batch and sequence dimensions together, if there is a sequence
       # dimension (in case the model predict a sequence instead of a single token).
       y = y.view(-1, y.shape[-1])
 

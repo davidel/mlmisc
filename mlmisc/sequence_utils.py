@@ -8,10 +8,8 @@ from . import layer_utils as lu
 
 
 def build_vocab_head(embed_size, vocab_size,
-                     activation=None,
-                     mid_size_factor=None):
-  activation = activation or nn.GELU
-  mid_size_factor = mid_size_factor or 2
+                     activation='gelu',
+                     mid_size_factor=2):
   mid_size = min(mid_size_factor * embed_size, vocab_size)
 
   return nn.Sequential(
