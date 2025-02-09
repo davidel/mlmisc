@@ -96,10 +96,10 @@ def create_model(args, trainer, dataset):
 
     model_args, model_kwargs = pyu.parse_args(cmdline_args)
 
-    alog.info(f'Model Args: {model_args}\nModel Kwargs: {model_kwargs}')
-
     config = create_config(dataset)
     model_args, model_kwargs = replace_args(model_args, model_kwargs, config)
+
+    alog.info(f'Model Args: {model_args}\nModel Kwargs: {model_kwargs}')
 
     model_ctor = operator.attrgetter(model_function)(module)
 
