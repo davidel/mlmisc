@@ -18,6 +18,9 @@ class DatasetBase:
   def extra_arg(self, name):
     return self._kwargs.get(name)
 
+  def add_extra_arg(self, name, value):
+    self._kwargs[name] = value
+
   def process_sample(self, data):
     return self._pipeline(data)
 
@@ -57,17 +60,41 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
     return self.extra_arg('size')
 
 
-class SubDataset(torch.utils.data.Dataset):
+class DatasetWrapper:
 
-  def __init__(self, data, indices):
-    super().__init__()
+  def __init__(self, data, **kwargs):
     self._data = data
-    self._indices = indices
+    self._kwargs = kwargs
 
   def extra_arg(self, name):
-    extra_arg = getattr(self._data, 'extra_arg', None)
+    value = self._kwargs.get(name)
+    if value is not None:
+      return value
 
-    return extra_arg(name) if extra_arg is not None else getattr(self._data, name, None)
+    for source in (super(), self._data):
+      extra_arg = getattr(source, 'extra_arg', None)
+      if extra_arg is not None and (value := extra_arg(name)) is not None:
+        return value
+
+    return getattr(self._data, name, None) if value is None else value
+
+  def add_extra_arg(self, name, value):
+    self._kwargs[name] = value
+
+  def __len__(self):
+    data_length = getattr(self._data, '__len__', None)
+    if data_length is not None:
+      return data_length()
+
+    return self.extra_arg('size')
+
+
+class SubDataset(torch.utils.data.Dataset, DatasetWrapper):
+
+  def __init__(self, data, indices):
+    torch.utils.data.Dataset.__init__(self)
+    DatasetWrapper.__init__(self, data)
+    self._indices = indices
 
   def __len__(self):
     return len(self._indices)

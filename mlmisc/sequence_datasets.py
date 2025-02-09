@@ -22,11 +22,6 @@ class SequenceDatasetBase:
     self._pad = pad
     self._mode = mode
 
-  def extra_arg(self, name):
-    extra_arg = getattr(self._data, 'extra_arg', None)
-
-    return extra_arg(name) if extra_arg is not None else None
-
   def _sample(self, tokens, idx):
     offset = idx + self._context_size
     ybase = idx + 1 if self._mode == SEQUENCE else offset
@@ -45,7 +40,7 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
   def __init__(self, data, context_size,
                pipeline=None,
                pad=None,
-               mode='sequence',
+               mode=SEQUENCE,
                **kwargs):
     dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
     SequenceDatasetBase.__init__(self, data, context_size, pad=pad, mode=mode)

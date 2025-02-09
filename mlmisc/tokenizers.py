@@ -68,6 +68,7 @@ def from_pretrained(module_path, model_name, cache_dir=None, **kwargs):
 
 
 def from_config(tokenizer_config, **kwargs):
+  alog.info(f'Creating tokenizer from "{tokenizer_config}" ...')
   tokenizer = conf.create_object('Tokenizer', tokenizer_config, **kwargs)
 
   return FpTokenizerWrapper(tokenizer)

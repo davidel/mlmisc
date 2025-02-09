@@ -128,8 +128,7 @@ def web_create(url, tokenizer_config, field_selector, context_size, **kwargs):
   alog.debug(f'Creating web dataset from "{url}" ...')
   dataset = wds.create(url, **kwargs)
 
-  alog.info(f'Creating tokenizer from "{tokenizer_config}" ...')
-  tokenizer = conf.create_object('Tokenizer', tokenizer_config)
+  tokenizer = tkz.from_config(tokenizer_config)
 
   pipeline = pypl.Pipeline(dsb.items_selector(field_selector))
 

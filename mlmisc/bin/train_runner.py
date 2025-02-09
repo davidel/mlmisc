@@ -44,6 +44,26 @@ def create_stepfn(tprof):
   return stepfn
 
 
+def create_config(dataset):
+  x, y = pycu.seqfirst(dataset)
+  x_shape = tuple(getattr(x, 'shape', ()))
+  y_shape = tuple(getattr(y, 'shape', ()))
+  alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')
+
+  config = dict(dataset=dataset, x_shape=x_shape, y_shape=y_shape)
+
+  extra_arg = getattr(dataset, 'extra_arg', None)
+  if extra_arg is not None:
+    if (tokenizer := extra_arg('tokenizer')) is not None:
+      for attr in ('vocab_size', 'bos_id', 'eos_id', 'unk_id'):
+        if (attrfn := getattr(tokenizer, attr, None)) is not None:
+          config[attr] = attrfn()
+
+  alog.debug(f'Dataset Config: {config}')
+
+  return config
+
+
 def replace_args(model_args, model_kwargs, config):
   args, kwargs = [], dict()
   for arg in model_args:
@@ -78,13 +98,7 @@ def create_model(args, trainer, dataset):
 
     alog.info(f'Model Args: {model_args}\nModel Kwargs: {model_kwargs}')
 
-    x, y = pycu.seqfirst(dataset)
-    x_shape = tuple(getattr(x, 'shape', ()))
-    y_shape = tuple(getattr(y, 'shape', ()))
-    alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')
-
-    config = dict(dataset=dataset, x_shape=x_shape, y_shape=y_shape)
-
+    config = create_config(dataset)
     model_args, model_kwargs = replace_args(model_args, model_kwargs, config)
 
     model_ctor = operator.attrgetter(model_function)(module)
