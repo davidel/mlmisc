@@ -257,7 +257,10 @@ class _IterDataLoader:
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
 
   def close(self):
-    self._output_queue.put(None)
+    # Ensure we fill the _QueueGetter trigger in terms of number of None to be received
+    # before quitting.
+    for _ in range(max(1, len(self._trans_queues))):
+      self._output_queue.put(None)
 
     pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
     pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
@@ -333,7 +336,10 @@ class _MapDataLoader:
                   finfn=functools.partial(_closer, feeders))
 
   def close(self):
-    self._output_queue.put(None)
+    # Ensure we fill the _QueueGetter trigger in terms of number of None to be received
+    # before quitting.
+    for _ in range(len(self._input_queues)):
+      self._output_queue.put(None)
 
     pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
 
