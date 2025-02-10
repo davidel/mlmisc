@@ -69,7 +69,7 @@ class MosaicManager:
 
   def __init__(self, mods_budget, dtype=None, div_factor=None, init=None):
     self._mods_budget = mods_budget
-    self._dtype = dtype
+    self.dtype = dtype
     self._init = init
     self._div_factor = div_factor or 16
     self._mods = dict()
@@ -97,7 +97,7 @@ class MosaicManager:
                             msg=f'Unlisted module size {n}: ' \
                             f'available={list(self._mods_budget.keys())}')
 
-      mod = TilesPod(n, budget, dtype=self._dtype, init=self._init)
+      mod = TilesPod(n, budget, dtype=self.dtype, init=self._init)
       self._mods[n] = mod
 
     return mod
