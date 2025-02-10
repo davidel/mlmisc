@@ -101,5 +101,13 @@ class LinearConv(nn.Module):
                                   compression)
 
   def forward(self, x):
-    return self.net(x)
+    if x.ndim <= 2:
+      return self.net(x)
+    else:
+      ishape = x.shape[: -1]
+
+      y = torch.reshape(x, (-1, x.shape[-1]))
+      y = self.net(y)
+
+      return torch.reshape(y, ishape + y.shape[-1:])
 
