@@ -1,5 +1,3 @@
-import functools
-
 import py_misc_utils.alog as alog
 import torch
 import torch.nn as nn
@@ -43,8 +41,7 @@ def _build_dense_layers(net, num_layers, size, act):
 
     nsid = len(net.resns) - 2
     if nsid >= 0:
-      adder = functools.partial(_norm_adder, net.resns[nsid])
-      net.add(lmbd.Lambda(adder, info='Adder'))
+      net.add(lmbd.Lambda(_norm_adder, net.resns[nsid], _info='Adder'))
 
 
 def _build_state_net(num_states, size, act):
