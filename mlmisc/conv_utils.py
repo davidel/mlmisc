@@ -239,6 +239,13 @@ def deconv_wndsize(size, kernel_size, stride,
           output_padding + 1)
 
 
+def squarest_shape(n):
+  s = round(math.sqrt(n))
+  for i in range(round(s / 2)):
+    if n % (s - i) == 0:
+      return n // (s - i), s - i
+
+
 ReduceConvParams = collections.namedtuple(
   'ReduceConvParams',
   'error, stride, kernel_size, channels, wndsize')
