@@ -106,7 +106,7 @@ class LinearConv(nn.Module):
     else:
       ishape = x.shape[: -1]
 
-      y = torch.reshape(x, (-1, x.shape[-1]))
+      y = torch.flatten(x, start_dim=0, end_dim=-2)
       y = self.net(y)
 
       return torch.reshape(y, ishape + y.shape[-1:])
