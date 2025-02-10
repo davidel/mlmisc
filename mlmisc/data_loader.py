@@ -559,8 +559,13 @@ class DataLoader:
   def close(self):
     pyfw.fin_wrap(self, '_loader', None, cleanup=True)
 
+  def generate(self):
+    yield from self._loader
+
   def __iter__(self):
-    return iter(self._loader)
+    # It is tempting to return `iter(self._loader)` but this would not keep `self`
+    # alive and cause the cleanup of the embedded loader.
+    return iter(self.generate())
 
   def __len__(self):
     return len(self._loader)
