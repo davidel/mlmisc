@@ -5,36 +5,26 @@ import torch.nn.functional as F
 import py_misc_utils.alog as alog
 
 from . import layer_utils as lu
+from . import split_linear as spln
 
 
 def build_vocab_head(embed_size, vocab_size,
                      activation='gelu',
-                     mid_size_factor=2):
-  from . import split_linear as spln
-
+                     mid_size_factor=2,
+                     final='split'):
   mid_size = min(mid_size_factor * embed_size, vocab_size)
-
-  return nn.Sequential(
+  layers = [
     lu.create(activation),
     nn.Linear(embed_size, mid_size, bias=False),
     nn.LayerNorm(mid_size),
     lu.create(activation),
-    spln.SplitLinear(mid_size, vocab_size),
-  )
+  ]
+  if final == 'split':
+    layers.append(spln.SplitLinear(mid_size, vocab_size))
+  else:
+    layers.append(nn.Linear(mid_size, vocab_size, bias=False))
 
-
-def Xbuild_vocab_head(embed_size, vocab_size,
-                      activation='gelu',
-                      mid_size_factor=2):
-  mid_size = min(mid_size_factor * embed_size, vocab_size)
-
-  return nn.Sequential(
-    lu.create(activation),
-    nn.Linear(embed_size, mid_size, bias=False),
-    nn.LayerNorm(mid_size),
-    lu.create(activation),
-    nn.Linear(mid_size, vocab_size, bias=False),
-  )
+  return nn.Sequential(*layers)
 
 
 def mask_top_k_logits(logits, k):
