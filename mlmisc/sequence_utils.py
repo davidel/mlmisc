@@ -11,7 +11,7 @@ from . import split_linear as spln
 def build_vocab_head(embed_size, vocab_size,
                      activation='gelu',
                      mid_size_factor=2,
-                     final='split'):
+                     final='linear'):
   mid_size = min(mid_size_factor * embed_size, vocab_size)
   layers = [
     lu.create(activation),

@@ -14,7 +14,8 @@ class ShardSeq(sb.SequenceBase):
 
   def __init__(self, context_size, embed_size, num_heads, vocab_size, num_layers,
                use_attn_mask=True,
-               act='gelu'):
+               act='gelu',
+               vocab_final='linear'):
     def post():
       return aseq.ArgsSequential(
         nn.LayerNorm(embed_size),
@@ -29,7 +30,8 @@ class ShardSeq(sb.SequenceBase):
        for _ in range(num_layers)]
     )
     self.vocab_head = sequ.build_vocab_head(embed_size, vocab_size,
-                                            activation=act)
+                                            activation=act,
+                                            final=vocab_final)
     if use_attn_mask:
       self.register_buffer('mask',
                            torch.triu(torch.ones(context_size, context_size),
