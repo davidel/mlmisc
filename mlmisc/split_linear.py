@@ -50,3 +50,10 @@ class SplitLinear(nn.Module):
 
     return y[..., : self.out_features]
 
+  def extra_repr(self):
+    return cu.extra_repr(num_parts=self.num_parts,
+                         in_features=self.splitfc.weight.shape[1],
+                         split_features=self.splitfc.weight.shape[0],
+                         cat_features=self.num_parts * self.splitfc.weight.shape[0],
+                         out_features=self.out_features)
+
