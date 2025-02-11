@@ -30,7 +30,7 @@ class ShardSeq(sb.SequenceBase):
        for _ in range(num_layers)]
     )
     self.vocab_head = sequ.build_vocab_head(embed_size, vocab_size,
-                                            activation=act,
+                                            act=act,
                                             final=vocab_final)
     if use_attn_mask:
       self.register_buffer('mask',

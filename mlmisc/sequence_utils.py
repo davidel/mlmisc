@@ -9,15 +9,15 @@ from . import split_linear as spln
 
 
 def build_vocab_head(embed_size, vocab_size,
-                     activation='gelu',
+                     act='gelu',
                      mid_size_factor=2,
                      final='linear'):
   mid_size = min(mid_size_factor * embed_size, vocab_size)
   layers = [
-    lu.create(activation),
+    lu.create(act),
     nn.Linear(embed_size, mid_size, bias=False),
     nn.LayerNorm(mid_size),
-    lu.create(activation),
+    lu.create(act),
   ]
   if final == 'split':
     layers.append(spln.SplitLinear(mid_size, vocab_size))
