@@ -37,7 +37,7 @@ class SplitLinear(nn.Module):
     ex = self.indexer(self.pos_embedding)
 
     # (..., IN_FEAT) -> (..., NPARTS, IN_FEAT)
-    bx = cu.add_dimension(x, -2, self.num_parts)
+    bx = einops.repeat(x, '... inf -> ... n inf', n=self.num_parts)
 
     # (..., NPARTS, IN_FEAT) + (NPARTS, IN_FEAT) => (..., NPARTS, IN_FEAT)
     xx = bx + ex
