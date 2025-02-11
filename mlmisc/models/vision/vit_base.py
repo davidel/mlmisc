@@ -1,5 +1,4 @@
 import einops
-import einops.layers.torch as einpt
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.num_utils as pynu
@@ -10,6 +9,7 @@ import torch.nn as nn
 from ... import args_sequential as aseq
 from ... import conv_utils as cvu
 from ... import core_utils as cu
+from ... import einops_layers as eil
 from ... import layer_utils as lu
 from ... import loss_wrappers as lsw
 from ... import net_base as nb
@@ -20,7 +20,7 @@ def build_conv_patcher(convs, shape, embed_size, act):
     convs = cvu.convs_from_string(convs)
 
   patcher = cvu.build_conv_stack(convs, shape=shape)
-  patcher.add(einpt.Rearrange('b c h w -> b (h w) c'))
+  patcher.add(eil.Rearrange('b c h w -> b (h w) c'))
   patcher.linear(embed_size)
   patcher.add(lu.create(act))
 

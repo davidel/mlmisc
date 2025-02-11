@@ -1,8 +1,11 @@
 import math
 
+import einops
 import py_misc_utils.alog as alog
 import torch
 import torch.nn as nn
+
+from . import core_utils as cu
 
 
 class SplitLinear(nn.Module):
@@ -30,12 +33,20 @@ class SplitLinear(nn.Module):
     self.register_buffer('pos_embedding', pos_embedding.reshape((num_parts, 1)))
 
   def forward(self, x):
-    parts = []
-    for i in range(self.num_parts):
-      px = self.indexer(self.pos_embedding[i]) + x
-      parts.append(self.splitfc(px))
+    # (NPARTS, 1) @ (1, IN_FEAT) => (NPARTS, IN_FEAT)
+    ex = self.indexer(self.pos_embedding)
 
-    y = torch.cat(parts, dim=-1)
+    # (..., IN_FEAT) -> (..., NPARTS, IN_FEAT)
+    bx = cu.add_dimension(x, -2, self.num_parts)
+
+    # (..., NPARTS, IN_FEAT) + (NPARTS, IN_FEAT) => (..., NPARTS, IN_FEAT)
+    xx = bx + ex
+
+    # (..., NPARTS, IN_FEAT) @ (IN_FEAT, SPLIT_FEAT) => (..., NPARTS, SPLIT_FEAT)
+    y = self.splitfc(xx)
+
+    # (..., NPARTS, SPLIT_FEAT) => (..., NPARTS * SPLIT_FEAT)
+    y = einops.rearrange(y, '... n sf -> ... (n sf)')
 
     return y[..., : self.out_features]
 

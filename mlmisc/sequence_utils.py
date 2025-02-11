@@ -10,6 +10,22 @@ from . import layer_utils as lu
 def build_vocab_head(embed_size, vocab_size,
                      activation='gelu',
                      mid_size_factor=2):
+  from . import split_linear as spln
+
+  mid_size = min(mid_size_factor * embed_size, vocab_size)
+
+  return nn.Sequential(
+    lu.create(activation),
+    nn.Linear(embed_size, mid_size, bias=False),
+    nn.LayerNorm(mid_size),
+    lu.create(activation),
+    spln.SplitLinear(mid_size, vocab_size),
+  )
+
+
+def Xbuild_vocab_head(embed_size, vocab_size,
+                      activation='gelu',
+                      mid_size_factor=2):
   mid_size = min(mid_size_factor * embed_size, vocab_size)
 
   return nn.Sequential(

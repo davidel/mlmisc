@@ -297,6 +297,14 @@ def mul(*args):
   return functools.reduce(operator.mul, args)
 
 
+def add_dimension(x, dim, size):
+  xx = torch.unsqueeze(x, dim)
+  shape = list(xx.shape)
+  shape[dim] = size
+
+  return torch.broadcast_to(xx, tuple(shape))
+
+
 def create_graph(x, path=None, params=None, model=None, format='svg'):
   import torchviz
 

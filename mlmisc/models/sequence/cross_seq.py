@@ -1,4 +1,3 @@
-import einops
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.inspect_utils as pyiu
@@ -8,7 +7,7 @@ import torch
 import torch.nn as nn
 
 from ... import cross_linear as xl
-from ... import einops_layers as el
+from ... import einops_layers as eil
 from ... import layer_utils as lu
 from ... import module_builder as mb
 from ... import tiled_linear as tl
@@ -53,7 +52,7 @@ def create_net_v2(context_size, embed_size, vocab_size, num_layers, bottleneck,
     rid = net.layernorm()
     result_ids.append(rid)
 
-  net.add(el.Rearrange('b c e -> b (e c)'))
+  net.add(eil.Rearrange('b c e -> b (e c)'))
   net.add(nn.Dropout(dropout))
   net.add(tl.TiledLinear(net.shape[-1], bottleneck, num_tiles, crossed=crossed))
   net.add(lu.create(act))

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from ... import args_sequential as aseq
-from ... import einops_layers as el
+from ... import einops_layers as eil
 from ... import layer_utils as lu
 from ... import module_builder as mb
 from ... import utils as ut
@@ -19,7 +19,7 @@ def create_net_skipgram_v1(window_size, embed_size, vocab_size, act, net_kwargs)
   net.add(nn.Flatten())
   net.linear(2 * window_size * proj_embed_size)
   net.add(lu.create(act))
-  net.add(el.Rearrange('b (w jes) -> b w jes', jes=proj_embed_size))
+  net.add(eil.Rearrange('b (w jes) -> b w jes', jes=proj_embed_size))
   net.linear(vocab_size)
 
   return net
