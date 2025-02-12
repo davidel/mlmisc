@@ -10,8 +10,8 @@ class CrossLinear(nn.Module):
 
   def __init__(self, context_size, embed_size, bias=True):
     super().__init__()
-    self.fc = nn.Parameter(cu.kuni_tensor((embed_size, embed_size)))
-    self.alt_fc = nn.Parameter(cu.kuni_tensor((context_size, context_size)))
+    self.fc = cu.kuni_parameter(embed_size, embed_size)
+    self.alt_fc = cu.kuni_parameter(context_size, context_size)
     self.bias = nn.Parameter(torch.zeros(embed_size)) if bias else None
 
   def forward(self, x):

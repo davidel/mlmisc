@@ -21,7 +21,7 @@ class ShardAttention(nn.Module):
 
     super().__init__()
     self.num_heads = num_heads
-    self.weight = nn.Parameter(cu.kuni_tensor(num_heads * embed_size, embed_size))
+    self.weight = cu.kuni_parameter(num_heads * embed_size, embed_size)
     self.attend = nn.Softmax(dim=-1)
     self.post = lu.create(post)
     self.post_feed = post_feed

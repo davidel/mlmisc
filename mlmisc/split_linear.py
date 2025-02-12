@@ -22,7 +22,7 @@ class SplitLinear(nn.Module):
     super().__init__()
     self.out_features = out_features
     self.num_parts = num_parts
-    self.pos_embedding = nn.Parameter(cu.kuni_tensor(num_parts, indexer_features))
+    self.pos_embedding = cu.kuni_parameter(num_parts, indexer_features)
     self.indexer = nn.Sequential(
       nn.Linear(indexer_features, in_features),
       nn.ReLU(),

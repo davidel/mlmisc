@@ -289,6 +289,10 @@ def kuni_tensor(*shape, dtype=None, device=None, a=None):
   return t
 
 
+def kuni_parameter(*args, **kwargs):
+  return nn.Parameter(kuni_tensor(*args, **kwargs))
+
+
 def add(*args):
   return functools.reduce(operator.add, args)
 
