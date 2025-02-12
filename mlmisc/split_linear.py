@@ -13,33 +13,22 @@ class SplitLinear(nn.Module):
   def __init__(self, in_features, out_features, compression=0.1):
     split_features = math.ceil(out_features * compression)
     num_parts = math.ceil(out_features / split_features)
-    indexer_features = max(32, in_features // 8)
 
     alog.debug(f'SplitFeatures: {split_features}, NumParts: {num_parts}')
     alog.debug(f'TotFeatures: {num_parts * split_features} vs. {out_features}')
-    alog.debug(f'IdxFeatures: {indexer_features}')
 
     super().__init__()
     self.out_features = out_features
     self.num_parts = num_parts
-    self.pos_embedding = cu.kuni_parameter(num_parts, indexer_features)
-    self.indexer = nn.Sequential(
-      nn.Linear(indexer_features, in_features),
-      nn.ReLU(),
-      nn.Linear(in_features, in_features),
-      nn.ReLU(),
-    )
+    self.pos_embedding = cu.kuni_parameter(num_parts, in_features)
     self.splitfc = nn.Linear(in_features, split_features)
 
   def forward(self, x):
-    # (NPARTS, IDX_FEAT) @ (IDX_FEAT, IN_FEAT) => (NPARTS, IN_FEAT)
-    ex = self.indexer(self.pos_embedding)
-
     # (..., IN_FEAT) -> (..., NPARTS, IN_FEAT)
     bx = einops.repeat(x, '... inf -> ... n inf', n=self.num_parts)
 
     # (..., NPARTS, IN_FEAT) + (NPARTS, IN_FEAT) => (..., NPARTS, IN_FEAT)
-    xx = bx + ex
+    xx = bx + self.pos_embedding
 
     # (..., NPARTS, IN_FEAT) @ (IN_FEAT, SPLIT_FEAT) => (..., NPARTS, SPLIT_FEAT)
     y = self.splitfc(xx)
@@ -53,7 +42,6 @@ class SplitLinear(nn.Module):
     return cu.extra_repr(num_parts=self.num_parts,
                          in_features=self.splitfc.weight.shape[1],
                          split_features=self.splitfc.weight.shape[0],
-                         indexer_features=self.pos_embedding.shape[-1],
                          tot_features=self.num_parts * self.splitfc.weight.shape[0],
                          out_features=self.out_features)
 
