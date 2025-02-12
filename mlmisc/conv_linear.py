@@ -1,9 +1,7 @@
 import math
 
-import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
-import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -33,8 +31,7 @@ def calc_best_shape(flat_size, in_channels, min_dim):
   return shape, pad
 
 
-def create_conv(shape, out_channels, kernel_size, stride, out_features,
-                force, dropout, act):
+def create_conv(shape, out_channels, kernel_size, stride, out_features, force):
   layers = [
     nn.Conv2d(shape.c, out_channels, kernel_size=kernel_size, stride=stride, padding='valid'),
     eil.Rearrange('b c h w -> b (c h w)'),
@@ -45,11 +42,6 @@ def create_conv(shape, out_channels, kernel_size, stride, out_features,
       layers.append(nn.Linear(flat_size, out_features, bias=False))
       flat_size = out_features
 
-  if dropout is not None:
-    layers.append(nn.Dropout(dropout))
-  if act is not None:
-    layers.append(lu.create(act))
-
   return aseq.ArgsSequential(layers), flat_size
 
 
@@ -58,9 +50,7 @@ class ConvLinear(nn.Module):
   def __init__(self, in_features, out_features,
                in_channels=tuple(range(1, 4)),
                min_dim_size=6,
-               dropout=None,
                bias=True,
-               act=None,
                force=False):
     shape, pad = calc_best_shape(in_features, in_channels, min_dim_size)
     conv_params = cvu.conv_flat_reduce(shape, out_features, force=force)
@@ -73,9 +63,7 @@ class ConvLinear(nn.Module):
       conv_params.kernel_size,
       conv_params.stride,
       out_features,
-      force,
-      dropout,
-      act)
+      force)
 
     alog.debug(f'Input reshape at {shape} with {pad} padding, for {in_features} -> ' \
                f'{out_features} ({flat_size})')
