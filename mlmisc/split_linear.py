@@ -20,7 +20,7 @@ class SplitLinear(nn.Module):
     super().__init__()
     self.out_features = out_features
     self.num_parts = num_parts
-    self.pos_embedding = cu.kuni_parameter(num_parts, in_features)
+    self.pos_bias = cu.kuni_parameter(num_parts, in_features)
     self.splitfc = nn.Linear(in_features, split_features)
 
   def forward(self, x):
@@ -28,7 +28,7 @@ class SplitLinear(nn.Module):
     bx = einops.repeat(x, '... inf -> ... n inf', n=self.num_parts)
 
     # (..., NPARTS, IN_FEAT) + (NPARTS, IN_FEAT) => (..., NPARTS, IN_FEAT)
-    xx = bx + self.pos_embedding
+    xx = bx + self.pos_bias
 
     # (..., NPARTS, IN_FEAT) @ (IN_FEAT, SPLIT_FEAT) => (..., NPARTS, SPLIT_FEAT)
     y = self.splitfc(xx)
