@@ -13,27 +13,26 @@ class SplitLinear(nn.Module):
   def __init__(self, in_features, out_features, compression=0.1):
     split_features = math.ceil(out_features * compression)
     num_parts = math.ceil(out_features / split_features)
+    indexer_features = max(32, in_features // 8)
 
     alog.debug(f'SplitFeatures: {split_features}, NumParts: {num_parts}')
     alog.debug(f'TotFeatures: {num_parts * split_features} vs. {out_features}')
-
-    indexer_features = max(16, in_features // 8)
-    pos_embedding = torch.linspace(0.0, 1.0, num_parts, dtype=torch.float32)
+    alog.debug(f'IdxFeatures: {indexer_features}')
 
     super().__init__()
     self.out_features = out_features
     self.num_parts = num_parts
+    self.pos_embedding = nn.Parameter(cu.kuni_tensor(num_parts, indexer_features))
     self.indexer = nn.Sequential(
-      nn.Linear(1, indexer_features),
-      nn.ReLU(),
       nn.Linear(indexer_features, in_features),
+      nn.ReLU(),
+      nn.Linear(in_features, in_features),
       nn.ReLU(),
     )
     self.splitfc = nn.Linear(in_features, split_features)
-    self.register_buffer('pos_embedding', pos_embedding.reshape((num_parts, 1)))
 
   def forward(self, x):
-    # (NPARTS, 1) @ (1, IN_FEAT) => (NPARTS, IN_FEAT)
+    # (NPARTS, IDX_FEAT) @ (IDX_FEAT, IN_FEAT) => (NPARTS, IN_FEAT)
     ex = self.indexer(self.pos_embedding)
 
     # (..., IN_FEAT) -> (..., NPARTS, IN_FEAT)
@@ -54,6 +53,7 @@ class SplitLinear(nn.Module):
     return cu.extra_repr(num_parts=self.num_parts,
                          in_features=self.splitfc.weight.shape[1],
                          split_features=self.splitfc.weight.shape[0],
+                         indexer_features=self.pos_embedding.shape[-1],
                          tot_features=self.num_parts * self.splitfc.weight.shape[0],
                          out_features=self.out_features)
 
