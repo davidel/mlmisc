@@ -309,18 +309,21 @@ def add_dimension(x, dim, size):
   return torch.broadcast_to(bx, tuple(shape))
 
 
-def broadcast(x, ref, mode='left'):
-  bx = x
-  shape = list(bx.shape)
-  while ref.ndim > bx.ndim:
-    if mode == 'left':
-      bx = torch.unsqueeze(bx, 0)
-      shape.insert(0, ref.shape[-bx.ndim])
-    else:
-      shape.append(ref.shape[bx.ndim])
-      bx = torch.unsqueeze(bx, -1)
+def unsqueeze(x, n, mode='left'):
+  ux = x
+  for _ in range(n):
+    ux = torch.unsqueeze(ux, 0 if mode == 'left' else -1)
 
-  return torch.broadcast_to(bx, tuple(shape))
+  return ux
+
+def broadcast_as(x, ref, mode='left'):
+  bx = unsqueeze(x, ref.ndim - x.ndim, mode=mode)
+  if mode == 'left':
+    shape = tuple(ref.shape[: -x.ndim]) + tuple(x.shape)
+  else:
+    shape = tuple(x.shape) + tuple(ref.shape[x.ndim: ])
+
+  return torch.broadcast_to(bx, shape)
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
