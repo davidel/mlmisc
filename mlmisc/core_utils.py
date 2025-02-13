@@ -302,11 +302,25 @@ def mul(*args):
 
 
 def add_dimension(x, dim, size):
-  xx = torch.unsqueeze(x, dim)
-  shape = list(xx.shape)
+  bx = torch.unsqueeze(x, dim)
+  shape = list(bx.shape)
   shape[dim] = size
 
-  return torch.broadcast_to(xx, tuple(shape))
+  return torch.broadcast_to(bx, tuple(shape))
+
+
+def broadcast(x, ref, mode='left'):
+  bx = x
+  shape = list(bx.shape)
+  while ref.ndim > bx.ndim:
+    if mode == 'left':
+      bx = torch.unsqueeze(bx, 0)
+      shape.insert(0, ref.shape[-bx.ndim])
+    else:
+      shape.append(ref.shape[bx.ndim])
+      bx = torch.unsqueeze(bx, -1)
+
+  return torch.broadcast_to(bx, tuple(shape))
 
 
 def create_graph(x, path=None, params=None, model=None, format='svg'):
