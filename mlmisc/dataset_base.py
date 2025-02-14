@@ -54,7 +54,7 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
       yield self.process_sample(data)
 
   def __iter__(self):
-    return iter(self.generate())
+    return self.generate()
 
   def __len__(self):
     return self.extra_arg('size')

@@ -86,7 +86,7 @@ class WebDataset(torch.utils.data.IterableDataset):
         yield self._decode(data, ctid)
 
   def __iter__(self):
-    return iter(self.generate())
+    return self.generate()
 
   def __len__(self):
     return self._size

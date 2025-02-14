@@ -304,7 +304,7 @@ class _IterDataLoader:
         yield bdata
 
   def __iter__(self):
-    return iter(self._generate())
+    return self._generate()
 
   def __len__(self):
     return _loader_size(self._dataset, self._batch_size, self._drop_last)
@@ -396,7 +396,7 @@ class _MapDataLoader:
       yield bdata
 
   def __iter__(self):
-    return iter(self._generate())
+    return self._generate()
 
   def __len__(self):
     return _loader_size(self._dataset, self._batch_size, self._drop_last)
@@ -462,9 +462,9 @@ class _SimpleDataLoader:
 
   def __iter__(self):
     if isinstance(self._dataset, torch.utils.data.IterableDataset):
-      return iter(self._iter_generate())
+      return self._iter_generate()
     else:
-      return iter(self._map_generate())
+      return self._map_generate()
 
   def __len__(self):
     return _loader_size(self._dataset, self._batch_size, self._drop_last)
@@ -565,7 +565,7 @@ class DataLoader:
   def __iter__(self):
     # It is tempting to return `iter(self._loader)` but this would not keep `self`
     # alive and cause the cleanup of the embedded loader.
-    return iter(self.generate())
+    return self.generate()
 
   def __len__(self):
     return len(self._loader)

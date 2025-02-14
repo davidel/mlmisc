@@ -59,7 +59,7 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
             pyu.mlog(lambda: f'Exception: {exception}', level=alog.VERBOSE)
 
   def __iter__(self):
-    return iter(self.generate())
+    return self.generate()
 
   def __len__(self):
     return len(self._urls)

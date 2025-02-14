@@ -28,7 +28,7 @@ class ShufflerDataset(torch.utils.data.IterableDataset, dsb.DatasetWrapper):
       yield data
 
   def __iter__(self):
-    return iter(self.generate())
+    return self.generate()
 
 
 class TransformDataset(dsb.DatasetWrapper, dsb.Dataset):
