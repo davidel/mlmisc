@@ -8,7 +8,7 @@ import torch.nn as nn
 from . import core_utils as cu
 
 
-class SplitLinear_V2(nn.Module):
+class SplitLinear(nn.Module):
 
   def __init__(self, in_features, out_features, compression=0.1):
     split_features = math.ceil(out_features * compression)
@@ -56,7 +56,7 @@ class SplitLinear_V2(nn.Module):
                          out_features=self.out_features)
 
 
-class SplitLinear(nn.Module):
+class SplitLinear_Orig(nn.Module):
 
   def __init__(self, in_features, out_features, compression=0.1):
     split_features = math.ceil(out_features * compression)
