@@ -559,13 +559,15 @@ class DataLoader:
   def close(self):
     pyfw.fin_wrap(self, '_loader', None, cleanup=True)
 
-  def generate(self):
-    yield from self._loader
+  def _generate(self):
+    # Avoid using `yield from self._loader` since this will not keep a DataLoader
+    # reference around, so the _loader could be closed while there is a Generator
+    # alive.
+    for data in self._loader:
+      yield data
 
   def __iter__(self):
-    # It is tempting to return `iter(self._loader)` but this would not keep `self`
-    # alive and cause the cleanup of the embedded loader.
-    return self.generate()
+    return self._generate()
 
   def __len__(self):
     return len(self._loader)
