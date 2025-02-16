@@ -1,3 +1,5 @@
+import math
+
 import einops
 import py_misc_utils.utils as pyu
 import torch
@@ -10,23 +12,27 @@ class CrossLinear(nn.Module):
 
   def __init__(self, context_size, embed_size, bias=True):
     super().__init__()
-    self.fc = cu.kuni_parameter(embed_size, embed_size)
-    self.alt_fc = cu.kuni_parameter(context_size, context_size)
-    self.bias = nn.Parameter(torch.zeros(embed_size)) if bias else None
+    self.context_size = context_size
+    self.morpher = cu.kuni_parameter(embed_size, embed_size)
 
-  def forward(self, x):
-    # (B, C, E) @ (E, E) => (B, C, E)
-    y = x @ self.fc
-    # ((B, C, E) -> (B, E, C) @ (C, C) = (B, E, C) -> (B, C, E)
-    ya = torch.einsum('bce,ck->bke', x, self.alt_fc)
-    y = y + ya
-    if self.bias is not None:
-      y = y + self.bias
+  def forward(self, x, mask=None):
+    # (B, T, C) @ (B, C, T) => (B, T, T)
+    y = x @ einops.rearrange(x, 'b t c -> b c t')
+
+    if mask is not None:
+      y = y.masked_fill(mask, float('-inf'))
+
+    y = nn.functional.softmax(y, dim=-1)
+
+    # (B, T, C) @ (C, C) => (B, T, C)
+    xx = x @ self.morpher
+
+    # (B, T, T) @ (B, T, C) => (B, T, C)
+    y = y @ xx
 
     return y
 
   def extra_repr(self):
-    return cu.extra_repr(context_size=self.alt_fc.shape[-1],
-                         embed_size=self.fc.shape[-1],
-                         bias=self.bias is not None)
+    return cu.extra_repr(context_size=self.context_size,
+                         embed_size=self.morpher.shape[-1])
 
