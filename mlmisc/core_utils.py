@@ -188,8 +188,8 @@ def train_step(net, x, y, optimizer,
 
       optimizer.step()
 
-      if zero_grad:
-        optimizer.zero_grad()
+    if zero_grad:
+      optimizer.zero_grad()
 
   return loss
 
