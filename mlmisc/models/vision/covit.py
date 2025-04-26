@@ -50,9 +50,9 @@ def create_layers(shape, num_layers, embed_size, num_patches, num_classes,
     net.conv2d(c, 3, stride=1, padding='same')
     net.add(lu.create(act))
     net.add(eil.Rearrange('b c h w -> b (h w) c'))
-    # b (h w) c -> b (h w) (h w)
+    # b (h w) c -> b (h w) c
     net.add(atn.SelfAttention(c, attn_heads, attn_dropout=dropout))
-    # b (h w) (h w) -> b (h w) c
+    # b (h w) c -> b (h w) c
     net.linear(c)
     net.add(lu.create(act))
     net.add(nn.Dropout(dropout))

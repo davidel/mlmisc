@@ -160,7 +160,7 @@ def inputsum(rid):
 def inputsum_back(result_ids, back=2):
   iid = len(result_ids) - back
 
-  return functools.partial(_inputsum, iid) if iid >= 0 else None
+  return functools.partial(_inputsum, result_ids[iid]) if iid >= 0 else None
 
 
 def _inputtuple(rid, x, results):
