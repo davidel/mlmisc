@@ -18,6 +18,7 @@ class EncoderBlock(nn.Module):
 
   def __init__(self, input_dim, num_heads,
                dim_feedforward=None,
+               attn_kind=None,
                attn_dropout=0.0,
                dropout=0.0,
                act='gelu',
@@ -29,8 +30,10 @@ class EncoderBlock(nn.Module):
 
     super().__init__()
     self.norm_mode = norm_mode
-    self.attn = atn.SelfAttention(input_dim, num_heads,
-                                  dropout=attn_dropout)
+    self.attn = atn.create(input_dim, num_heads,
+                           attn_kind=attn_kind,
+                           dropout=attn_dropout,
+                           is_self=True)
 
     self.linear_net = aseq.ArgsSequential(
       ifc=nn.Linear(input_dim, dim_feedforward),
