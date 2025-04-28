@@ -5,6 +5,7 @@ import re
 
 import numpy as np
 import py_misc_utils.alog as alog
+import py_misc_utils.assert_checks as tas
 import py_misc_utils.core_utils as pycu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.module_utils as pymu
@@ -310,6 +311,8 @@ def add_dimension(x, dim, size):
 
 
 def unsqueeze(x, n, mode='left'):
+  tas.check_in(mode, {'left', 'right'}, msg=f'Invalid mode')
+
   ux = x
   for _ in range(n):
     ux = torch.unsqueeze(ux, 0 if mode == 'left' else -1)
