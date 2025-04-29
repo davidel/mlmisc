@@ -30,7 +30,7 @@ class ShardAttention(nn.Module):
     v = einops.repeat(x, 'b t c -> b nh t c', nh=self.num_heads)
     y = nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
     y = einops.rearrange(y, 'b nh t c -> b t (nh c)')
-    y = y @ weight
+    y = y @ self.weight
 
     return self.post(self.post_feed(x, y))
 
