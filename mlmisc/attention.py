@@ -7,9 +7,18 @@ import py_misc_utils.assert_checks as tas
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
-import torch.nn.attention as nnatn
 
 from . import core_utils as cu
+
+
+def naive_attention(queries, keys, values, mask=None):
+  att = queries @ torch.transpose(keys, -1, -2)
+  if mask is not None:
+    att = att.masked_fill(mask, float('-inf'))
+  att = nn.functional.softmax(att / math.sqrt(queries.shape[-1]), dim=-1)
+  out = att @ values
+
+  return out
 
 
 class Attention(nn.Module):
@@ -23,14 +32,12 @@ class Attention(nn.Module):
                  f'the number of heads ({num_heads})')
 
     super().__init__()
-    self._num_heads = num_heads
+    self.dropout = dropout if dropout != 0.0 else None
     self.k_prj = nn.Linear(embed_size, embed_size, bias=add_bias_kv)
     self.q_prj = nn.Linear(embed_size, embed_size, bias=False)
     self.v_prj = nn.Linear(embed_size, embed_size, bias=add_bias_kv)
-    self.attend = nn.Softmax(dim=-1)
-    self.out_prj = nn.Linear(embed_size, embed_size, bias=bias)
-
     self.dropout = nn.Dropout(dropout)
+    self.out_prj = nn.Linear(embed_size, embed_size, bias=bias)
 
   def forward(self, k, q, v, mask=None):
     # (B, T, C) -> (B, T, C)
@@ -44,17 +51,10 @@ class Attention(nn.Module):
     queries = einops.rearrange(queries, 'b t (h n) -> b h t n', h=self._num_heads)
     values = einops.rearrange(values, 'b t (h n) -> b h t n', h=self._num_heads)
 
-    # (B, H, T, N) @ (B, H, N, T) => (B, H, T, T)
-    att = queries @ einops.rearrange(keys, 'b h t n -> b h n t')
-    if mask is not None:
-      att = att.masked_fill(mask, float('-inf'))
-    att = self.attend(att / math.sqrt(queries.shape[-1]))
-    att = self.dropout(att)
+    att = naive_attention(queries, keys, values, mask=mask)
 
-    # (B, H, T, T) @ (B, H, T, N) => (B, H, T, N)
-    out = att @ values
-
-    out = einops.rearrange(out, 'b h t n -> b t (h n)')
+    out = einops.rearrange(att, 'b h t n -> b t (h n)')
+    out = self.dropout(out)
     # (B, T, C) @ (C, C) => (B, T, C)
     out = self.out_prj(out)
 
@@ -122,17 +122,7 @@ def create(embed_size, num_heads,
   return SelfAttention(attn, **attn_kwargs) if is_self else attn
 
 
-_SDPA_KERNELS = {
-  'MATH': nnatn.SDPBackend.MATH,
-  'FLASH_ATTENTION': nnatn.SDPBackend.FLASH_ATTENTION,
-  'EFFICIENT_ATTENTION': nnatn.SDPBackend.EFFICIENT_ATTENTION,
-}
-_SDPA_ALGO = os.getenv('SDPA_ALGO')
-
 def raw_attention(q, k, v, mask=None):
-  if _SDPA_ALGO is not None:
-    with nnatn.sdpa_kernel(_SDPA_KERNELS[_SDPA_ALGO]):
-      return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
-  else:
-    return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+  # att = naive_attention(q, k, v, mask=mask)
+  return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
 

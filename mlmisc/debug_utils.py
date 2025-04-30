@@ -6,6 +6,7 @@ import py_misc_utils.core_utils as pycu
 import py_misc_utils.object_tracker as pyot
 import py_misc_utils.utils as pyu
 import torch
+import torch.nn as nn
 
 from . import core_utils as cu
 
@@ -109,4 +110,46 @@ def track_tensors(min_size=None, max_references=None):
   tracker = TensorTracker(min_size=min_size)
 
   return pyot.track_objects(tracker, max_references=max_references)
+
+
+def _tensor_finder(obj, name, fn):
+  if not fn(obj, name):
+    if isinstance(obj, (list, tuple)):
+      for i, v in enumerate(obj):
+        _tensor_finder(v, f'{name}[{i}]', fn)
+    elif isinstance(obj, dict):
+      for k, v in obj.items():
+        _tensor_finder(v, f'{name}.{k}', fn)
+    elif hasattr(obj, '__dict__'):
+      for k, v in obj.__dict__.items():
+        _tensor_finder(v, f'{name}.{k}', fn)
+
+
+def _nan_hook(module, x, y):
+
+  def nan_finder(obj, name):
+    if isinstance(obj, torch.Tensor):
+      if torch.isnan(obj).any().item():
+        raise ValueError(f'{module} has NaN: {name}')
+
+      return True
+
+    return False
+
+
+  _tensor_finder(x, 'X', nan_finder)
+  _tensor_finder(y, 'Y', nan_finder)
+
+
+_HOOK_HANDLE = None
+
+def set_detect_anomaly(activate):
+  global _HOOK_HANDLE
+
+  if activate:
+    if _HOOK_HANDLE is None:
+      _HOOK_HANDLE = nn.modules.module.register_module_forward_hook(_nan_hook)
+  else:
+    _HOOK_HANDLE.remove()
+    _HOOK_HANDLE = None
 
