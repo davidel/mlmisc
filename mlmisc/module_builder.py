@@ -63,7 +63,10 @@ class ModuleBuilder(nn.Module):
     return len(self.layers)
 
   def last_id(self):
-    return max(len(self.layers) - 1, 0)
+    # IDs refers to the indices within the "results" stack (see forward() API below),
+    # which has been populated with the input value as first entry.
+    # So the effective index within "results" of the layer N-1 (indexed from 0) is N.
+    return len(self.layers)
 
   def add(self, net,
           input_fn=None,
@@ -77,6 +80,7 @@ class ModuleBuilder(nn.Module):
     self.layers.add_net(net)
     self._config.append(NetConfig(input_fn=input_fn, net_args=net_args))
 
+    # See comment in the last_id() API above.
     return len(self.layers)
 
   def capture(self, ns):
