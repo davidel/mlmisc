@@ -14,7 +14,7 @@ from ... import sequence_utils as sequ
 from . import sequence_base as sb
 
 
-def create_net(context_size, embed_size, vocab_size, num_layers, shortcut, act):
+def create_net(context_size, embed_size, num_layers, shortcut, act):
   net = mb.ModuleBuilder((context_size, embed_size))
   result_ids = []
   for i in range(num_layers):
@@ -37,7 +37,7 @@ class CrossSeq(sb.SequenceBase):
                act='relu',
                padding_idx=None,
                vocab_final='linear'):
-    net = create_net(context_size, embed_size, vocab_size, num_layers, shortcut, act)
+    net = create_net(context_size, embed_size, num_layers, shortcut, act)
 
     super().__init__(context_size, embed_size, vocab_size,
                      padding_idx=padding_idx)
