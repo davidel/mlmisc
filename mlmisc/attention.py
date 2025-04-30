@@ -252,8 +252,12 @@ def naive_attention(queries, keys, values, mask=None):
 
 
 def raw_attention(q, k, v, mask=None):
-  return naive_attention(q, k, v, mask=mask)
-  # return AttentionFunction.apply(q, k, v, mask, tile_size, split_count)
+  if False:
+    return AttentionFunction.apply(q, k, v, mask, 512, 1)
+  if False:
+    # In theory, this should be used ... but it is a NaN generator at the time of
+    # writing, so I use the naive one for now.
+    return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
 
-  # return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+  return naive_attention(q, k, v, mask=mask)
 
