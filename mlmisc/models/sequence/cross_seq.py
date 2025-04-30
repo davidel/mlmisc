@@ -46,10 +46,7 @@ class CrossSeq(sb.SequenceBase):
                                             act=act,
                                             final=vocab_final)
     if use_attn_mask:
-      self.register_buffer('mask',
-                           torch.triu(torch.ones(context_size, context_size),
-                                      diagonal=1).bool(),
-                           persistent=False)
+      self.register_buffer('mask', sequ.causal_mask(context_size), persistent=False)
     else:
       self.mask = None
 

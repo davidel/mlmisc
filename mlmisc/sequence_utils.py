@@ -27,6 +27,11 @@ def build_vocab_head(embed_size, vocab_size,
   return nn.Sequential(*layers)
 
 
+def causal_mask(context_size):
+  return torch.triu(torch.ones(context_size, context_size),
+                    diagonal=1).bool()
+
+
 def mask_top_k_logits(logits, k):
   v, _ = torch.topk(logits, k)
   logits[logits < v[..., -1:]] = float('-inf')

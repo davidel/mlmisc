@@ -13,7 +13,7 @@ from . import sequence_base as sb
 
 def create_net(context_size, embed_size, num_heads, num_layers, shortcut, act):
   net = mb.ModuleBuilder((context_size, embed_size))
-  result_ids = []
+  result_ids = [net.last_id()]
   for i in range(num_layers):
     rid = net.add(satn.ShardAttention(embed_size, num_heads),
                   net_args=('mask',),
@@ -39,10 +39,7 @@ class ShardSeq(sb.SequenceBase):
                                        act=act,
                                        final=vocab_final))
     if use_attn_mask:
-      self.register_buffer('mask',
-                           torch.triu(torch.ones(context_size, context_size),
-                                      diagonal=1).bool(),
-                           persistent=False)
+      self.register_buffer('mask', sequ.causal_mask(context_size), persistent=False)
     else:
       self.mask = None
 

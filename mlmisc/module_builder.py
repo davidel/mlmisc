@@ -63,7 +63,7 @@ class ModuleBuilder(nn.Module):
     return len(self.layers)
 
   def last_id(self):
-    return len(self.layers) - 1
+    return max(len(self.layers) - 1, 0)
 
   def add(self, net,
           input_fn=None,
@@ -77,7 +77,7 @@ class ModuleBuilder(nn.Module):
     self.layers.add_net(net)
     self._config.append(NetConfig(input_fn=input_fn, net_args=net_args))
 
-    return len(self.layers) - 1
+    return len(self.layers)
 
   def capture(self, ns):
     return self.add(Capture(ns))
@@ -123,7 +123,8 @@ class ModuleBuilder(nn.Module):
     return self.add(nn.LayerNorm(self.shape[-ndims:], **kwargs), **aargs)
 
   def forward(self, *args, **kwargs):
-    y, results = args, []
+    y = args[0] if len(args) == 1 else args
+    results = [y]
     for net, cfg in zip(self.layers.values(), self._config):
       net_kwargs = dict()
       if cfg.input_fn is None:
