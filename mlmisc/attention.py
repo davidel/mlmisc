@@ -119,3 +119,7 @@ def create(embed_size, num_heads,
 
   return SelfAttention(attn, **attn_kwargs) if is_self else attn
 
+
+def raw_attention(q, k, v, mask=None):
+  return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+
