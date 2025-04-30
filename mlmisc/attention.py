@@ -1,4 +1,5 @@
 import math
+import os
 
 import einops
 import py_misc_utils.alog as alog
@@ -6,6 +7,7 @@ import py_misc_utils.assert_checks as tas
 import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
+import torch.nn.attention as nnatn
 
 from . import core_utils as cu
 
@@ -120,6 +122,17 @@ def create(embed_size, num_heads,
   return SelfAttention(attn, **attn_kwargs) if is_self else attn
 
 
+_SDPA_KERNELS = {
+  'MATH': nnatn.SDPBackend.MATH,
+  'FLASH_ATTENTION': nnatn.SDPBackend.FLASH_ATTENTION,
+  'EFFICIENT_ATTENTION': nnatn.SDPBackend.EFFICIENT_ATTENTION,
+}
+_SDPA_ALGO = os.getenv('SDPA_ALGO')
+
 def raw_attention(q, k, v, mask=None):
-  return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+  if _SDPA_ALGO is not None:
+    with nnatn.sdpa_kernel(_SDPA_KERNELS[_SDPA_ALGO]):
+      return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
+  else:
+    return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
 
