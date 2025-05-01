@@ -25,7 +25,7 @@ class ShardAttention(nn.Module):
   def forward(self, x, mask=None):
     q = k = einops.rearrange(x, 'b t (nh hs) -> b nh t hs', nh=self.num_heads)
     v = einops.repeat(x, 'b t c -> b nh t c', nh=self.num_heads)
-    y = atn.raw_attention(q, k, v, mask=mask)
+    y = atn.raw_attention(q, torch.clone(k), v, mask=mask)
     y = einops.rearrange(y, 'b nh t c -> b t (nh c)')
     y = y @ self.weight
 
