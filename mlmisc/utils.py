@@ -23,7 +23,9 @@ pypw.add_known_module(__name__)
 def model_save(model, path):
   alog.debug(f'Saving model to {path} ...')
   with pyfow.FileOverwrite(path, mode='wb') as ptfd:
-    torch.save(model.state_dict(), ptfd)
+    state = model.state_dict()
+    cu.nan_check(state, name='STATE')
+    torch.save(state, ptfd)
   alog.debug(f'Model saved to {path}')
 
 
@@ -54,7 +56,9 @@ def save_data(path, **kwargs):
   for name, ndata in kwargs.items():
     sdfn = getattr(ndata, 'state_dict', None)
     if sdfn is not None and callable(sdfn):
-      data[name] = sdfn()
+      state = sdfn()
+      cu.nan_check(state, name='STATE')
+      data[name] = state
     else:
       data[name] = pypw.wrap(ndata)
 
