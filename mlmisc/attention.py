@@ -39,7 +39,7 @@ class AttentionFunction(agrad.function.Function):
 
     out_tiles = []
     for iq, q_tile in enumerate(q_tiles):
-      out_tile = torch.zeros_like(q_tile)
+      out_tile = torch.zeros_like(v_tiles[iq])
       smax_sum_tile = smax_sum_tiles[iq]
       smax_max_tile = smax_max_tiles[iq]
 
