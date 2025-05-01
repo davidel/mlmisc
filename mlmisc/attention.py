@@ -151,7 +151,7 @@ class Attention(nn.Module):
                  f'the number of heads ({num_heads})')
 
     super().__init__()
-    self.dropout = dropout if dropout != 0.0 else None
+    self._num_heads = num_heads
     self.k_prj = nn.Linear(embed_size, embed_size, bias=add_bias_kv)
     self.q_prj = nn.Linear(embed_size, embed_size, bias=False)
     self.v_prj = nn.Linear(embed_size, embed_size, bias=add_bias_kv)
