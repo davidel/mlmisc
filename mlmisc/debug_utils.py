@@ -112,19 +112,6 @@ def track_tensors(min_size=None, max_references=None):
   return pyot.track_objects(tracker, max_references=max_references)
 
 
-def _tensor_finder(obj, name, fn):
-  if not fn(obj, name):
-    if isinstance(obj, (list, tuple)):
-      for i, v in enumerate(obj):
-        _tensor_finder(v, f'{name}[{i}]', fn)
-    elif isinstance(obj, dict):
-      for k, v in obj.items():
-        _tensor_finder(v, f'{name}.{k}', fn)
-    elif hasattr(obj, '__dict__'):
-      for k, v in obj.__dict__.items():
-        _tensor_finder(v, f'{name}.{k}', fn)
-
-
 def _nan_hook(module, x, y):
 
   def nan_finder(obj, name):
@@ -137,8 +124,8 @@ def _nan_hook(module, x, y):
     return False
 
 
-  _tensor_finder(x, 'X', nan_finder)
-  _tensor_finder(y, 'Y', nan_finder)
+  pycu.recurse_apply(x, 'X', nan_finder)
+  pycu.recurse_apply(y, 'Y', nan_finder)
 
 
 _HOOK_HANDLE = None
