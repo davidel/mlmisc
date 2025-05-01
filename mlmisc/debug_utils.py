@@ -113,19 +113,12 @@ def track_tensors(min_size=None, max_references=None):
 
 
 def _nan_hook(module, x, y):
-
-  def nan_finder(obj, name):
-    if isinstance(obj, torch.Tensor):
-      if torch.isnan(obj).any().item():
-        raise ValueError(f'{module} has NaN: {name}')
-
-      return True
-
-    return False
-
-
-  pycu.recurse_apply(x, 'X', nan_finder)
-  pycu.recurse_apply(y, 'Y', nan_finder)
+  try:
+    cu.nan_check(x, name='X')
+    cu.nan_check(y, name='Y')
+  except ValueError as ex:
+    ex.add_note(f'In module: {module}')
+    raise ex
 
 
 _HOOK_HANDLE = None

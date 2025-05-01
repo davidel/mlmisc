@@ -110,6 +110,21 @@ def torch_load_to(dest, path, **kwargs):
   return dest
 
 
+def nan_check(t, name='input'):
+  def nan_finder(obj, name):
+    if isinstance(obj, torch.Tensor):
+      nan_map = torch.isnan(obj)
+      if nan_map.any().item():
+        raise ValueError(f'NaN found: {name}')
+
+      return True
+
+    return False
+
+
+  pycu.recurse_apply(t, name, nan_finder)
+
+
 def net_shape(net, *shapes, device=None, dtype=None, **kwargs):
   with torch.no_grad(), Training(net, False):
     # Add and remove the artificial batch dimension.
