@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 
 from ... import args_sequential as aseq
+from ... import attention as atn
 from ... import config as conf
 from ... import layer_utils as lu
 from ... import module_builder as mb
@@ -50,7 +51,7 @@ class AttentionStack(sb.SequenceBase):
 
   def forward(self, x, targets=None):
     y = super().forward(x)
-    y = self.net(y, mask=self.mask)
+    y = self.net(y, mask=atn.clip_mask(x, self.mask))
 
     return y, self.loss(y, targets)
 

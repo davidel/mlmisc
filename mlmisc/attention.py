@@ -251,18 +251,28 @@ def naive_attention(queries, keys, values, mask=None):
   return out
 
 
+def clip_mask(t, mask):
+  if mask is not None:
+    context_size = t.shape[-2]
+    tas.check_le(context_size, mask.shape[-1])
+
+    return mask[..., : context_size, : context_size]
+
+
 _ATTENTION_MODE = os.getenv('ATTENTION_MODE')
 
 def raw_attention(queries, keys, values, mask=None):
+  clipped_mask = clip_mask(queries, mask)
+
   if _ATTENTION_MODE in (None, 'naive'):
-    return naive_attention(queries, keys, values, mask=mask)
+    return naive_attention(queries, keys, values, mask=clipped_mask)
   elif _ATTENTION_MODE == 'flash':
-    return AttentionFunction.apply(queries, keys, values, mask, 512, None)
+    return AttentionFunction.apply(queries, keys, values, clipped_mask, 512, None)
   elif _ATTENTION_MODE == 'sdp':
     # In theory, this should be used ... but it is a NaN generator at the time of
     # writing, so I use the naive one for now.
     return nn.functional.scaled_dot_product_attention(queries, keys, values,
-                                                      attn_mask=mask)
+                                                      attn_mask=clipped_mask)
   else:
     alog.xraise(ValueError, f'Invalid attention mode: "{_ATTENTION_MODE}"')
 
