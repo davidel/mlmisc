@@ -36,10 +36,10 @@ class SequenceBase(nb.NetBase):
       ut.torch_load_to(self.tok_emb.weight, embedding_path)
 
   def forward(self, x):
+    y = self.tok_emb(x)
     if self.pos_emb is not None:
-      y = self.tok_emb(x) + self.pos_emb
-    else:
-      y = self.tok_emb(x)
+      context_size = y.shape[-2]
+      y = y + self.pos_emb[..., : context_size, :]
 
     return y
 
