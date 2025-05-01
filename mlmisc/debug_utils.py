@@ -126,6 +126,8 @@ _HOOK_HANDLE = None
 def set_detect_anomaly(activate):
   global _HOOK_HANDLE
 
+  alog.info(f'{"Enabling" if activate else "Disabling"} value anomaly detection')
+
   if activate:
     if _HOOK_HANDLE is None:
       _HOOK_HANDLE = nn.modules.module.register_module_forward_hook(_nan_hook)
