@@ -170,7 +170,7 @@ class Attention(nn.Module):
     queries = einops.rearrange(queries, 'b t (h n) -> b h t n', h=self._num_heads)
     values = einops.rearrange(values, 'b t (h n) -> b h t n', h=self._num_heads)
 
-    att = naive_attention(queries, keys, values, mask=mask)
+    att = raw_attention(queries, keys, values, mask=mask)
 
     out = einops.rearrange(att, 'b h t n -> b t (h n)')
     out = self.dropout(out)
@@ -251,13 +251,18 @@ def naive_attention(queries, keys, values, mask=None):
   return out
 
 
-def raw_attention(q, k, v, mask=None):
-  if False:
-    return AttentionFunction.apply(q, k, v, mask, 512, 1)
-  if False:
+_ATTENTION_MODE = os.getenv('ATTENTION_MODE')
+
+def raw_attention(queries, keys, values, mask=None):
+  if _ATTENTION_MODE in (None, 'naive'):
+    return naive_attention(queries, keys, values, mask=mask)
+  elif _ATTENTION_MODE == 'flash':
+    return AttentionFunction.apply(queries, keys, values, mask, 512, None)
+  elif _ATTENTION_MODE == 'sdp':
     # In theory, this should be used ... but it is a NaN generator at the time of
     # writing, so I use the naive one for now.
-    return nn.functional.scaled_dot_product_attention(q, k, v, attn_mask=mask)
-
-  return naive_attention(q, k, v, mask=mask)
+    return nn.functional.scaled_dot_product_attention(queries, keys, values,
+                                                      attn_mask=mask)
+  else:
+    alog.xraise(ValueError, f'Invalid attention mode: "{_ATTENTION_MODE}"')
 
