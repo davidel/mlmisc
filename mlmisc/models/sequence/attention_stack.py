@@ -51,7 +51,7 @@ class AttentionStack(sb.SequenceBase):
 
   def forward(self, x, targets=None):
     y = super().forward(x)
-    y = self.net(y, mask=atn.clip_mask(x, self.mask))
+    y = self.net(y, mask=atn.clip_mask(y, self.mask))
 
     return y, self.loss(y, targets)
 
