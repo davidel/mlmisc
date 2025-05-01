@@ -4,6 +4,7 @@ import torch.nn.functional as F
 
 import py_misc_utils.alog as alog
 
+from . import args_sequential as aseq
 from . import layer_utils as lu
 from . import split_linear as spln
 
@@ -24,7 +25,7 @@ def build_vocab_head(embed_size, vocab_size,
   else:
     layers.append(nn.Linear(mid_size, vocab_size, bias=False))
 
-  return nn.Sequential(*layers)
+  return aseq.ArgsSequential(layers)
 
 
 def causal_mask(context_size):

@@ -11,7 +11,7 @@ from . import core_utils as cu
 from . import layer_utils as lu
 
 
-class _ShardAttention(nn.Module):
+class ShardAttention(nn.Module):
 
   def __init__(self, embed_size, num_heads):
     tas.check_eq(embed_size % num_heads, 0,
@@ -34,9 +34,4 @@ class _ShardAttention(nn.Module):
   def extra_repr(self):
     return cu.extra_repr(num_heads=self.num_heads,
                          embed_size=self.weight.shape[-1])
-
-
-
-def ShardAttention(embed_size, num_heads):
-  return atn.create(embed_size, num_heads, is_self=True)
 
