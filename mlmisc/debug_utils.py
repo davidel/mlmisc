@@ -133,3 +133,5 @@ def set_detect_anomaly(activate):
     _HOOK_HANDLE.remove()
     _HOOK_HANDLE = None
 
+  torch.autograd.set_detect_anomaly(activate)
+

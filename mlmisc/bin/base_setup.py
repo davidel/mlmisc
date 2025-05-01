@@ -32,7 +32,6 @@ def setup(args):
   if args.seed is not None:
     mlcu.randseed(args.seed)
   if args.nan_debug:
-    torch.autograd.set_detect_anomaly(True)
     mldu.set_detect_anomaly(True)
   if args.cpu_num_threads is not None:
     torch.set_num_threads(args.cpu_num_threads)
