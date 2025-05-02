@@ -1,3 +1,5 @@
+import py_misc_utils.inspect_utils as pyiu
+import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
@@ -55,9 +57,25 @@ class Mix(nn.Module):
 
 class ArgsSequential(netd.NetsDict):
 
-  def forward(self, x, *args, **kwargs):
-    for net in self.values():
-      x = net(x, *args, **kwargs)
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._net_args = dict()
 
-    return x
+  def _get_arg_names(self, name, net):
+    args = self._net_args.get(name)
+    if args is None and hasattr(net, 'forward'):
+      args= pyiu.get_arg_names(net.forward, positional=False)
+      self._net_args[name] = args
+
+    return args or ()
+
+  def forward(self, x, *args, **kwargs):
+    y = x
+    for name, net in self.items():
+      net_args = self._get_arg_names(name, net)
+      net_kwargs = pyu.mget(kwargs, *net_args, as_dict=True)
+
+      y = net(y, *args, **net_kwargs)
+
+    return y
 
