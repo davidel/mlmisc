@@ -83,6 +83,15 @@ class ModuleBuilder(nn.Module):
     # See comment in the last_id() API above.
     return len(self.layers)
 
+  def supported_kwargs(self):
+    args = []
+    for cfg in self._config:
+      for k in cfg.net_args or ():
+        nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
+        args.append(wk)
+
+    return tuple(sorted(set(args)))
+
   def capture(self, ns):
     return self.add(Capture(ns))
 

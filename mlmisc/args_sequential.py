@@ -61,10 +61,20 @@ class ArgsSequential(netd.NetsDict):
     super().__init__(*args, **kwargs)
     self._net_args = dict()
 
+  def supported_kwargs(self):
+    args = []
+    for name, net in self.items():
+      args.extend(self._get_arg_names(name, net))
+
+    return tuple(sorted(set(args)))
+
   def _get_arg_names(self, name, net):
     args = self._net_args.get(name)
     if args is None:
-      if hasattr(net, 'forward'):
+      kwargs_fn = getattr(net, 'supported_kwargs', None)
+      if callable(kwargs_fn):
+        args = kwargs_fn()
+      elif hasattr(net, 'forward'):
         args = pyiu.get_arg_names(net.forward, positional=False)
       else:
         args = ()
@@ -76,8 +86,11 @@ class ArgsSequential(netd.NetsDict):
   def forward(self, x, *args, **kwargs):
     y = x
     for name, net in self.items():
-      net_args = self._get_arg_names(name, net)
-      net_kwargs = pyu.mget(kwargs, *net_args, as_dict=True)
+      if kwargs:
+        net_args = self._get_arg_names(name, net)
+        net_kwargs = pyu.mget(kwargs, *net_args, as_dict=True)
+      else:
+        net_kwargs = dict()
 
       y = net(y, *args, **net_kwargs)
 
