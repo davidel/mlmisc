@@ -75,7 +75,7 @@ class ArgsSequential(netd.NetsDict):
       if callable(kwargs_fn):
         args = kwargs_fn()
       elif hasattr(net, 'forward'):
-        args = pyiu.get_arg_names(net.forward, positional=False)
+        args = tuple(p.name for p in pyiu.get_defaulted_params(net.forward))
       else:
         args = ()
 
