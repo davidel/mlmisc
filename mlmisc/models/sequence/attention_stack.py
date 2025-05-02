@@ -34,7 +34,7 @@ class AttentionStack(sb.SequenceBase):
   def __init__(self, context_size, embed_size, num_heads, vocab_size, num_layers,
                attn_config='mlmisc.attention.create:is_self=True',
                use_attn_mask=True,
-               shortcut=1,
+               shortcut=2,
                act='gelu',
                vocab_final='linear'):
     super().__init__(context_size, embed_size, vocab_size)
