@@ -64,7 +64,7 @@ class ArgsSequential(netd.NetsDict):
   def _get_arg_names(self, name, net):
     args = self._net_args.get(name)
     if args is None and hasattr(net, 'forward'):
-      args= pyiu.get_arg_names(net.forward, positional=False)
+      args= pyiu.get_arg_names(net.forward, positional=False, pos_or_kword=False)
       self._net_args[name] = args
 
     return args or ()
