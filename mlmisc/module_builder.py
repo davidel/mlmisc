@@ -84,13 +84,13 @@ class ModuleBuilder(nn.Module):
     return len(self.layers)
 
   def supported_kwargs(self):
-    args = []
+    args = set()
     for cfg in self._config:
       for k in cfg.net_args or ():
         nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
-        args.append(wk)
+        args.add(wk)
 
-    return tuple(sorted(set(args)))
+    return tuple(sorted(args))
 
   def capture(self, ns):
     return self.add(Capture(ns))
