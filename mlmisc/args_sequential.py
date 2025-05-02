@@ -71,7 +71,7 @@ class ArgsSequential(netd.NetsDict):
 
       self._net_args[name] = args
 
-    return args or ()
+    return args
 
   def forward(self, x, *args, **kwargs):
     y = x
