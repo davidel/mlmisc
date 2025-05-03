@@ -3,9 +3,9 @@ import py_misc_utils.utils as pyu
 import torch
 import torch.nn as nn
 
+from ... import core_utils as cu
 from ... import loss_wrappers as lsw
 from ... import net_base as nb
-from ... import utils as ut
 
 
 class SequenceBase(nb.NetBase):
@@ -33,7 +33,7 @@ class SequenceBase(nb.NetBase):
   def init(self, args):
     embedding_path = args.get('embedding_path')
     if embedding_path is not None:
-      ut.torch_load_to(self.tok_emb.weight, embedding_path)
+      cu.torch_load_to(self.tok_emb.weight, embedding_path)
 
   def forward(self, x):
     y = self.tok_emb(x)
