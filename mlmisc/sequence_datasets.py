@@ -72,7 +72,7 @@ _SAMPLERS = {
 
 class SequenceDatasetBase:
 
-  def __init__(self, data, context_size, pad=None, mode=SEQUENCE):
+  def __init__(self, data, context_size, mode, pad=None):
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     self._sampler = _SAMPLERS[mode](context_size)
@@ -93,13 +93,12 @@ class SequenceDatasetBase:
 
 class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
 
-  def __init__(self, data, context_size,
+  def __init__(self, data, context_size, mode,
                pipeline=None,
                pad=None,
-               mode=SEQUENCE,
                **kwargs):
     dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, pad=pad, mode=mode)
+    SequenceDatasetBase.__init__(self, data, context_size, mode, pad=pad)
 
   def __len__(self):
     return max(len(self._data) - self._context_size, 0)
@@ -112,14 +111,13 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
 
 class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
 
-  def __init__(self, data, context_size,
+  def __init__(self, data, context_size, mode,
                pipeline=None,
                tokenizer=None,
                pad=None,
-               mode=SEQUENCE,
                **kwargs):
     dsb.IterableDataset.__init__(self, pipeline=pipeline, tokenizer=tokenizer, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, pad=pad, mode=mode)
+    SequenceDatasetBase.__init__(self, data, context_size, mode, pad=pad)
     self._tokenizer = tokenizer
 
   def enum_samples(self):

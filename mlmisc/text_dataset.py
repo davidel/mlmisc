@@ -18,7 +18,7 @@ from . import tokenizers as tkz
 from . import web_dataset as wds
 
 
-def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
+def build_dataset(tokenizer, tokens, split_pct, context_size, mode):
   train_limit = int(len(tokens) * split_pct)
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit:]
@@ -32,40 +32,29 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence):
     pipeline=pipeline,
     tokenizer=tokenizer,
   )
-  if is_sequence:
-    train_dataset = seqds.SequenceDataset(train_data, context_size,
-                                          mode=seqds.SEQUENCE,
-                                          **ds_args)
-    test_dataset = seqds.SequenceDataset(test_data, context_size,
-                                         mode=seqds.SEQUENCE,
-                                         **ds_args)
-  else:
-    train_dataset = seqds.SequenceDataset(train_data, context_size,
-                                          mode=seqds.TOKEN,
-                                          **ds_args)
-    test_dataset = seqds.SequenceDataset(test_data, context_size,
-                                         mode=seqds.TOKEN,
-                                         **ds_args)
+
+  train_dataset = seqds.SequenceDataset(train_data, context_size, mode,
+                                        **ds_args)
+  test_dataset = seqds.SequenceDataset(test_data, context_size, mode,
+                                       **ds_args)
 
   return dict(train=train_dataset, test=test_dataset)
 
 
-def load(proto_path, tokens_path, context_size,
-         is_sequence=True,
+def load(proto_path, tokens_path, context_size, mode,
          split_pct=0.9,
          **kwargs):
   tokenizer = tkz.load_tokenizer(proto_path)
   tokens = cu.torch_load(tokens_path)
 
-  return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
+  return build_dataset(tokenizer, tokens, split_pct, context_size, mode)
 
 
-def create(content_path, context_size,
+def create(content_path, context_size, mode,
            max_vocab_size=None,
            module_path=None,
            model_name=None,
            cache_dir=None,
-           is_sequence=True,
            split_pct=0.9,
            **kwargs):
   cache_dir = gfs.cache_dir(path=cache_dir)
@@ -121,10 +110,11 @@ def create(content_path, context_size,
         with open(tokenizer_path, mode='w') as tfd:
           tfd.write(tokenizer_str)
 
-  return build_dataset(tokenizer, tokens, split_pct, context_size, is_sequence)
+  return build_dataset(tokenizer, tokens, split_pct, context_size, mode)
 
 
-def web_create(url, tokenizer_config, field_selector, context_size, **kwargs):
+def web_create(url, tokenizer_config, field_selector, context_size, mode,
+               **kwargs):
   alog.debug(f'Creating web dataset from "{url}" ...')
   dataset = wds.create(url, **kwargs)
 
@@ -135,7 +125,7 @@ def web_create(url, tokenizer_config, field_selector, context_size, **kwargs):
   webds = dict()
   for kind, dset in dataset.items():
     trans_dataset = dsad.IterableTransformDataset(dset, pipeline)
-    seq_dataset = seqds.IterableSequenceDataset(trans_dataset, context_size,
+    seq_dataset = seqds.IterableSequenceDataset(trans_dataset, context_size, mode,
                                                 tokenizer=tokenizer)
     webds[kind] = seq_dataset
 
