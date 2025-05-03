@@ -87,7 +87,7 @@ class ModuleBuilder(nn.Module):
     args = set()
     for cfg in self._config:
       for k in cfg.net_args or ():
-        nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
+        nk, wk = pycu.expand(k, 2)
         args.add(wk)
 
     return tuple(sorted(args))
@@ -151,7 +151,7 @@ class ModuleBuilder(nn.Module):
       xx = pyu.as_sequence(xx)
 
       for k in cfg.net_args or ():
-        nk, wk = k if isinstance(k, (list, tuple)) else (k, k)
+        nk, wk = pycu.expand(k, 2)
         net_kwargs[nk] = kwargs.get(wk)
 
       y = net(*xx, **net_kwargs)
