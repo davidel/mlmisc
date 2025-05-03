@@ -36,23 +36,18 @@ class CbowSampler:
     window_size = (self.context_size - 1) // 2
     mid, eow = idx + window_size, idx + self.context_size
 
-    wnd = torch.cat((data[idx: mid], data[mid + 1: eow]))
+    left, right = torch.as_tensor(data[idx: mid]), torch.as_tensor(data[mid + 1: eow])
+
+    wnd = torch.cat((left, right))
     tok = data[mid: mid + 1]
 
     return wnd, tok
 
 
-class SkipgramSampler:
-
-  def __init__(self, context_size):
-    self.context_size = 2 * context_size + 1
+class SkipgramSampler(CbowSampler):
 
   def __call__(self, data, idx):
-    window_size = (self.context_size - 1) // 2
-    mid, eow = idx + window_size, idx + self.context_size
-
-    wnd = torch.cat((data[idx: mid], data[mid + 1: eow]))
-    tok = data[mid: mid + 1]
+    wnd, tok = super()(data, idx)
 
     return tok, wnd
 
