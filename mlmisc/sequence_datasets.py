@@ -5,28 +5,84 @@ import torch.nn.functional as F
 from . import dataset_base as dsb
 
 
-SEQUENCE = 'sequence'
+class TokenSampler:
+
+  def __init__(self, context_size):
+    self.context_size = context_size
+
+  def __call__(self, data, idx):
+    offset = idx + self.context_size
+
+    return data[idx: offset], data[offset: offset + 1]
+
+
+class SequenceSampler:
+
+  def __init__(self, context_size):
+    self.context_size = context_size
+
+  def __call__(self, data, idx):
+    offset = idx + self.context_size
+
+    return data[idx: offset], data[idx + 1: offset + 1]
+
+
+class CbowSampler:
+
+  def __init__(self, context_size):
+    self.context_size = 2 * context_size + 1
+
+  def __call__(self, data, idx):
+    window_size = (self.context_size - 1) // 2
+    mid, eow = idx + window_size, idx + self.context_size
+
+    wnd = torch.cat((data[idx: mid], data[mid + 1: eow]))
+    tok = data[mid: mid + 1]
+
+    return wnd, tok
+
+
+class SkipgramSampler:
+
+  def __init__(self, context_size):
+    self.context_size = 2 * context_size + 1
+
+  def __call__(self, data, idx):
+    window_size = (self.context_size - 1) // 2
+    mid, eow = idx + window_size, idx + self.context_size
+
+    wnd = torch.cat((data[idx: mid], data[mid + 1: eow]))
+    tok = data[mid: mid + 1]
+
+    return tok, wnd
+
+
 TOKEN = 'token'
-MODES = {SEQUENCE, TOKEN}
+SEQUENCE = 'sequence'
+CBOW = 'cbow'
+SKIPGRAM = 'skipgram'
+
+_SAMPLERS = {
+  TOKEN: TokenSampler,
+  SEQUENCE: SequenceSampler,
+  CBOW: CbowSampler,
+  SKIPGRAM: SkipgramSampler,
+}
 
 
 class SequenceDatasetBase:
 
   def __init__(self, data, context_size, pad=None, mode=SEQUENCE):
-    tas.check(mode in MODES, msg=f'Sequence mode ({mode}) must be one of {MODES}')
-
     pad_size = sum(pad['pad']) if pad is not None else 0
 
+    self._sampler = _SAMPLERS[mode](context_size)
     self._data = data
-    self._context_size = context_size - pad_size
+    self._context_size = self._sampler.context_size - pad_size
     self._pad = pad
     self._mode = mode
 
-  def _sample(self, tokens, idx):
-    offset = idx + self._context_size
-    ybase = idx + 1 if self._mode == SEQUENCE else offset
-
-    return tokens[idx: offset], tokens[ybase: offset + 1]
+  def _sample(self, data, idx):
+    return self._sampler(data, idx)
 
   def _padded(self, x, y):
     if self._pad is not None:
