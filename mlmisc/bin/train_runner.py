@@ -103,7 +103,7 @@ def init_model(model, init_mappings):
       if sname is not None:
         sparam = state.get(sname)
         tas.check_is_not_none(sparam, msg=f'Parameter \"{sname}\" not found ' \
-                              f'in \"{path}\" checkpoint (required by \"{name}\")')
+                              f'in \"{source}\" checkpoint (required by \"{name}\")')
 
         param.data.copy_(getattr(sparam, 'data', sparam))
 
