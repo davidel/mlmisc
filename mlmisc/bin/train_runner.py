@@ -102,8 +102,11 @@ def init_model(model, init_mappings):
       sname = maps.get(name)
       if sname is not None:
         sparam = state.get(sname)
-        tas.check_is_not_none(sparam, msg=f'Parameter \"{sname}\" not found ' \
-                              f'in \"{source}\" checkpoint (required by \"{name}\")')
+        tas.check_is_not_none(sparam, msg=f'Parameter "{sname}" not found ' \
+                              f'in "{source}" checkpoint (required by "{name}")')
+
+        alog.info(f'Loading data from parameter "{sname}" in "{source}" to ' \
+                  f'model parameter "{name}"')
 
         param.data.copy_(getattr(sparam, 'data', sparam))
 
