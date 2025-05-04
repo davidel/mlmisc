@@ -131,7 +131,7 @@ def set_detect_anomaly(activate):
   if activate:
     if _HOOK_HANDLE is None:
       _HOOK_HANDLE = nn.modules.module.register_module_forward_hook(_nan_hook)
-  else:
+  elif _HOOK_HANDLE is not None:
     _HOOK_HANDLE.remove()
     _HOOK_HANDLE = None
 
