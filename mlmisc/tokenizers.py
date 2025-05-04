@@ -67,8 +67,10 @@ def from_pretrained(module_path, model_name, cache_dir=None, **kwargs):
   return FpTokenizerWrapper(tokenizer)
 
 
-def from_model(path):
-  return spm.SentencePieceProcessor(model_file=path)
+def from_model(path, cache_dir=None):
+  local_path = gfs.as_local(path, cache_dir=cache_dir)
+
+  return spm.SentencePieceProcessor(model_file=local_path)
 
 
 def from_config(tokenizer_config, **kwargs):
