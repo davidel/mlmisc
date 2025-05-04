@@ -81,7 +81,7 @@ def replace_args(model_args, model_kwargs, config):
 def load_model_state(source):
   if gfs.is_path(source):
     # Load straight from checkpoint.
-    return cu.torch_load(source, weights_only=True)
+    return mlcu.torch_load(source, weights_only=True)
 
   # Support loading from external model checkpoints (like from_pretrained() things
   # from Hugginface for example).
