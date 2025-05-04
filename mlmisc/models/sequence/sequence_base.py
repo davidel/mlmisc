@@ -12,28 +12,13 @@ class SequenceBase(nb.NetBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
                use_positions=True,
-               embeddings=None,
-               freeze=False,
                padding_idx=None):
     super().__init__()
-    if embeddings is None:
-      self.tok_emb = nn.Embedding(vocab_size, embed_size,
-                                  padding_idx=padding_idx)
-    else:
-      tas.check_eq(tuple(embeddings.shape), (vocab_size, embed_size),
-                   msg=f'Wrong embeddings shape: {tuple(embeddings.shape)} vs. ' \
-                   f'{(vocab_size, embed_size)}')
-      self.tok_emb = nn.Embedding.from_pretrained(embeddings,
-                                                  freeze=freeze,
-                                                  padding_idx=padding_idx)
+    self.tok_emb = nn.Embedding(vocab_size, embed_size,
+                                padding_idx=padding_idx)
     self.pos_emb = nn.Parameter(torch.zeros((1, context_size, embed_size))) \
       if use_positions else None
     self.loss = lsw.SeqLoss(nn.CrossEntropyLoss())
-
-  def init(self, args):
-    embedding_path = args.get('embedding_path')
-    if embedding_path is not None:
-      cu.torch_load_to(self.tok_emb.weight, embedding_path)
 
   def forward(self, x):
     y = self.tok_emb(x)

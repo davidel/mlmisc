@@ -65,10 +65,3 @@ class NetBase(nn.Module):
   def pop_net_state(self, state, names):
     return (state.pop(name, None) for name in pyu.expand_strings(names))
 
-  def try_call(self, api_name, *args, **kwargs):
-
-    def callfn(module):
-      pycu.maybe_call(module, api_name, *args, **kwargs)
-
-    self.apply(callfn)
-

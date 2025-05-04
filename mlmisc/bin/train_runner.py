@@ -78,6 +78,29 @@ def replace_args(model_args, model_kwargs, config):
   return args, kwargs
 
 
+def init_model(model, init_mappings):
+  mappings = pyu.parse_config(init_mappings)
+
+  for imap in pyu.as_sequence(mappings):
+    path, maps = imap['path'], imap['maps']
+
+    state = cu.torch_load(path, weights_only=True)
+
+    for name, param in model.named_parameters():
+      icfg = maps.get(name)
+      if icfg is not None:
+        if isinstance(icfg, str):
+          sparam = state.get(icfg)
+          tas.check_is_not_none(sparam, msg=f'Parameter \"{icfg}\" not found ' \
+                                f'in \"{path}\" checkpoint (required by \"{name}\")')
+
+          param.data.copy_(getattr(sparam, 'data', sparam))
+        else:
+          # Handle `icfg` being a more complex init operation driven by a
+          # configuration dictionary.
+          alog.xraise(ValueError, f'Not implemented: {icfg}')
+
+
 def create_model(args, trainer, dataset):
   module = pymu.import_module(args.model_path, modname='train_module')
 
@@ -105,9 +128,8 @@ def create_model(args, trainer, dataset):
 
     model = mlam.create(model_ctor, *model_args, **model_kwargs)
 
-    if args.init_kwargs:
-      init_kwargs = pyu.parse_config(args.init_kwargs)
-      model.try_call('init', init_kwargs)
+    if args.init_mappings:
+      init_model(model, args.init_mappings)
 
     model_state = trainer.model_state(state)
     if model_state is not None:
@@ -213,8 +235,9 @@ if __name__ == '__main__':
   parser.add_argument('--rebuild_model', action=argparse.BooleanOptionalAction, default=False,
                       help='Force model rebuild while loading parameters from existing ' \
                       f'checkpoint (if any)')
-  parser.add_argument('--init_kwargs',
-                      help='The comma-separated key=value arguments to call the module init() API ' \
+  parser.add_argument('--init_mappings',
+                      help='The configuration JSON string describing how to copy data ' \
+                      f'into the new model parameters ' \
                       f'(or the path to a YAML/JSON file containing such configuration)')
   parser.add_argument('--amp_dtype',
                       help='The type to be used with the AMP (Automatic Mixed Precision) module')

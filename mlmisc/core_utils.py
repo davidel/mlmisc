@@ -95,9 +95,9 @@ def is_integer(t):
   return False
 
 
-def torch_load(path, **kwargs):
+def torch_load(path, weights_only=False, **kwargs):
   with gfs.open_local(path, mode='rb') as ptfd:
-    return torch.load(ptfd, weights_only=False, **kwargs)
+    return torch.load(ptfd, weights_only=weights_only, **kwargs)
 
 
 def torch_load_to(dest, path, **kwargs):
