@@ -78,27 +78,34 @@ def replace_args(model_args, model_kwargs, config):
   return args, kwargs
 
 
+def load_model_state(source):
+  if gfs.is_path(source):
+    # Load straight from checkpoint.
+    return cu.torch_load(source, weights_only=True)
+
+  # Support loading from external model checkpoints (like from_pretrained() things
+  # from Hugginface for example).
+  model = mlco.create_object('Source Model', source)
+
+  return model.state_dict()
+
+
 def init_model(model, init_mappings):
   mappings = pyu.parse_config(init_mappings)
 
   for imap in pyu.as_sequence(mappings):
-    path, maps = imap['path'], imap['maps']
+    source, maps = imap['source'], imap['maps']
 
-    state = cu.torch_load(path, weights_only=True)
+    state = load_model_state(source)
 
     for name, param in model.named_parameters():
-      icfg = maps.get(name)
-      if icfg is not None:
-        if isinstance(icfg, str):
-          sparam = state.get(icfg)
-          tas.check_is_not_none(sparam, msg=f'Parameter \"{icfg}\" not found ' \
-                                f'in \"{path}\" checkpoint (required by \"{name}\")')
+      sname = maps.get(name)
+      if sname is not None:
+        sparam = state.get(sname)
+        tas.check_is_not_none(sparam, msg=f'Parameter \"{sname}\" not found ' \
+                              f'in \"{path}\" checkpoint (required by \"{name}\")')
 
-          param.data.copy_(getattr(sparam, 'data', sparam))
-        else:
-          # Handle `icfg` being a more complex init operation driven by a
-          # configuration dictionary.
-          alog.xraise(ValueError, f'Not implemented: {icfg}')
+        param.data.copy_(getattr(sparam, 'data', sparam))
 
 
 def create_model(args, trainer, dataset):
