@@ -36,9 +36,7 @@ class CbowSampler:
     window_size = (self.context_size - 1) // 2
     mid, eow = idx + window_size, idx + self.context_size
 
-    left, right = torch.as_tensor(data[idx: mid]), torch.as_tensor(data[mid + 1: eow])
-
-    wnd = torch.cat((left, right))
+    wnd = data[idx: mid] + data[mid + 1: eow]
     tok = data[mid: mid + 1]
 
     return wnd, tok
