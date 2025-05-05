@@ -1,6 +1,7 @@
 import argparse
 import operator
 import os
+import re
 
 import mlmisc.auto_module as mlam
 import mlmisc.config as mlco
@@ -147,10 +148,18 @@ def create_model(args, trainer, dataset):
 
   model = model.to(args.device)
 
+  frozen = pyu.comma_split(args.freeze) if args.freeze else ()
+
   alog.info(f'Model Network:\n{model}')
   alog.info(f'Model Parameters:')
   for name, param in model.named_parameters():
-    alog.info(f'  {name}\t{tuple(param.shape)}')
+    is_frozen = any(re.match(frx, name) is not None for frx in frozen)
+    if is_frozen:
+      param.requires_grad = False
+      alog.info(f'  {name}\t{tuple(param.shape)}\tFROZEN')
+    else:
+      alog.info(f'  {name}\t{tuple(param.shape)}')
+
   alog.info(f'Model {pyiu.cname(model)} has {mlcu.count_params(model):.2e} parameters')
 
   return model, state
@@ -273,6 +282,8 @@ if __name__ == '__main__':
                       help='The configuration for the optimizer (class_path:arg0,...,name0=value0,...)')
   parser.add_argument('--load_optim_state', action=argparse.BooleanOptionalAction, default=True,
                       help='Whether to load the optimizer state')
+  parser.add_argument('--freeze',
+                      help='The comma-separated list of parameters to be frozen (regex supported)')
   parser.add_argument('--lr_scheduler',
                       help='The configuration for the learning rate scheduler ' \
                       '(class_path:arg0,...,name0=value0,...)')
