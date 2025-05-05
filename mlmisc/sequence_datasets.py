@@ -68,6 +68,9 @@ _SAMPLERS = {
 class SequenceDatasetBase:
 
   def __init__(self, data, context_size, mode, pad=None):
+    tas.check_in(mode, set(_SAMPLERS.keys()),
+                 msg=f'Invalid mode')
+
     pad_size = sum(pad['pad']) if pad is not None else 0
 
     self._sampler = _SAMPLERS[mode](context_size)
