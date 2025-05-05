@@ -148,10 +148,9 @@ def create_model(args, trainer, dataset):
 
   model = model.to(args.device)
 
-  frozen = pyu.comma_split(args.freeze) if args.freeze else ()
-
   alog.info(f'Model Network:\n{model}')
   alog.info(f'Model Parameters:')
+  frozen = pyu.comma_split(args.freeze) if args.freeze else ()
   for name, param in model.named_parameters():
     is_frozen = any(re.match(frx, name) is not None for frx in frozen)
     if is_frozen:
