@@ -123,6 +123,8 @@ class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
     for data in self._data:
       if isinstance(data, str):
         tokens.extend(self._tokenizer.encode(data))
+      elif isinstance(data, bytes):
+        tokens.extend(self._tokenizer.encode(data.decode()))
       else:
         tokens.extend(data)
 
