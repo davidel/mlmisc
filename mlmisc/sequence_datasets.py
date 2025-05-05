@@ -7,34 +7,36 @@ from . import dataset_base as dsb
 
 class TokenSampler:
 
-  def __init__(self, context_size):
-    self.context_size = context_size
+  def __init__(self, window_size):
+    self.context_size = window_size + 1
+    self._window_size = window_size
 
   def __call__(self, data, idx):
-    offset = idx + self.context_size
+    offset = idx + self._window_size
 
     return data[idx: offset], data[offset: offset + 1]
 
 
 class SequenceSampler:
 
-  def __init__(self, context_size):
-    self.context_size = context_size
+  def __init__(self, window_size):
+    self.context_size = window_size + 1
+    self._window_size = window_size
 
   def __call__(self, data, idx):
-    offset = idx + self.context_size
+    offset = idx + self._window_size
 
     return data[idx: offset], data[idx + 1: offset + 1]
 
 
 class CbowSampler:
 
-  def __init__(self, context_size):
-    self.context_size = 2 * context_size + 1
+  def __init__(self, window_size):
+    self.context_size = 2 * window_size + 1
+    self._window_size = window_size
 
   def __call__(self, data, idx):
-    window_size = (self.context_size - 1) // 2
-    mid, eow = idx + window_size, idx + self.context_size
+    mid, eow = idx + self._window_size, idx + self.context_size
 
     wnd = data[idx: mid] + data[mid + 1: eow]
     tok = data[mid: mid + 1]
@@ -94,7 +96,7 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
     SequenceDatasetBase.__init__(self, data, context_size, mode, pad=pad)
 
   def __len__(self):
-    return max(len(self._data) - self._context_size, 0)
+    return max(len(self._data) + 1 - self._context_size, 0)
 
   def get_sample(self, i):
     x, y = self._sample(self._data, i)
