@@ -84,10 +84,11 @@ if __name__ == '__main__':
   # Do basic logging setup ... will be setup later once the modules are parsed.
   alog.basic_setup()
 
-  bs.add_parser_arguments(parser)
-
   parser = argparse.ArgumentParser(description='Text Generator',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+  bs.add_parser_arguments(parser)
+
   parser.add_argument('--model_path', required=True,
                       help='The path containing the model definition')
   parser.add_argument('--checkpoint_path', required=True,
