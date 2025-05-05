@@ -74,10 +74,9 @@ def create_dataset(args):
 
   dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
   alog.debug0(f'Dataset Args: {dataset_kwargs}')
-  cache_dir = gfs.cache_dir(path=getattr(args, 'cache_dir', None))
 
   dsets = mldu.create_dataset(args.dataset,
-                              cache_dir=cache_dir,
+                              cache_dir=gfs.cache_dir(),
                               select_fn=select_fn,
                               transform=dict(train=train_trans, test=test_trans),
                               target_transform=dict(train=tgt_train_trans, test=tgt_test_trans),

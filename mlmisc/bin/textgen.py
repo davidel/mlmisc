@@ -15,16 +15,7 @@ from .. import sequence_utils as sequ
 from .. import tokenizers as tkz
 from .. import utils as ut
 
-
-def _common_main(args):
-  if args.seed is not None:
-    cu.randseed(args.seed)
-  if args.cpu_num_threads is not None:
-    torch.set_num_threads(args.cpu_num_threads)
-  if args.device is None:
-    args.device = cu.get_device()
-  else:
-    args.device = torch.device(args.device)
+from . import base_setup as bs
 
 
 def _load_model(args):
@@ -82,7 +73,7 @@ def _generate(args, model, tokenizer):
 
 
 def _main(args):
-  _common_main(args)
+  bs.setup(args)
 
   model = _load_model(args)
   tokenizer = _load_tokenizer(args)
@@ -92,6 +83,8 @@ def _main(args):
 if __name__ == '__main__':
   # Do basic logging setup ... will be setup later once the modules are parsed.
   alog.basic_setup()
+
+  bs.add_parser_arguments(parser)
 
   parser = argparse.ArgumentParser(description='Text Generator',
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -123,14 +116,6 @@ if __name__ == '__main__':
                       help='The top number of tokens to restrict the selection to')
   parser.add_argument('--output_file', default='STDOUT',
                       help='The file where the output should be written (supports STDOUT, STDERR)')
-  parser.add_argument('--device',
-                      help='The device to be used')
-  parser.add_argument('--seed', type=int,
-                      help='The seed for the random number generators')
-  parser.add_argument('--cpu_num_threads', type=int,
-                      help='The number of threads to dedicate to the PyTorch CPU device')
-  parser.add_argument('--cache_dir',
-                      help='The cache folder for the data to be eventually downloaded')
 
   pyam.main(parser, _main)
 

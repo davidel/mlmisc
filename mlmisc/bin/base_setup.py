@@ -27,6 +27,7 @@ def add_parser_arguments(parser):
 
 
 def setup(args):
+  gfs.set_cache_dir(args.cache_dir)
   if args.mp_start_method != 'default':
     multiprocessing.set_start_method(args.mp_start_method, force=True)
   if args.seed is not None:
