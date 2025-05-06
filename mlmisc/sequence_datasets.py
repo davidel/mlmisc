@@ -117,7 +117,6 @@ class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
 
       for i in range(len(tokens) + 1 - self._context_size):
         x, y = self._sample(tokens, i)
-        x, y = torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.long)
 
         yield x, y
 

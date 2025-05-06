@@ -125,7 +125,12 @@ def web_create(url, tokenizer_config, field_selector, context_size, mode,
   webds = dict()
   for kind, dset in dataset.items():
     trans_dataset = dsad.IterableTransformDataset(dset, pipeline)
+
+    to_long = dsb.to_transform(dtype=torch.long)
+    sds_pipeline = pypl.Pipeline(dsb.transformer(sample=to_long, target=to_long))
+
     seq_dataset = seqds.IterableSequenceDataset(trans_dataset, context_size, mode,
+                                                pipeline=sds_pipeline,
                                                 tokenizer=tokenizer)
     webds[kind] = seq_dataset
 

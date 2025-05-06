@@ -108,7 +108,7 @@ class SubDataset(torch.utils.data.Dataset, DatasetWrapper):
 
 
 def _to_transform_fn(x, **kwargs):
-  return x.to(**kwargs)
+  return torch.as_tensor(x, **kwargs)
 
 
 def to_transform(**kwargs):
