@@ -72,8 +72,8 @@ class DatasetWrapper:
       return value
 
     for source in (super(), self._data):
-      extra_arg = getattr(source, 'extra_arg', None)
-      if extra_arg is not None and (value := extra_arg(name)) is not None:
+      extra_arg_fn = getattr(source, 'extra_arg', None)
+      if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
         return value
 
     return getattr(self._data, name, None)

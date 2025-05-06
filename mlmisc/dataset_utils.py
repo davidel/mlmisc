@@ -30,9 +30,9 @@ class Dataset(dsb.Dataset):
 
   def extra_arg(self, name):
     for source in (super(), self._data):
-      extra_arg = getattr(source, 'extra_arg', None)
-      if extra_arg is not None:
-        xarg = extra_arg(name)
+      extra_arg_fn = getattr(source, 'extra_arg', None)
+      if callable(extra_arg_fn):
+        xarg = extra_arg_fn(name)
         if xarg is not None:
           return xarg
 
@@ -59,9 +59,9 @@ class IterableDataset(dsb.IterableDataset):
 
   def extra_arg(self, name):
     for source in (super(), self._data):
-      extra_arg = getattr(source, 'extra_arg', None)
-      if extra_arg is not None:
-        xarg = extra_arg(name)
+      extra_arg_fn = getattr(source, 'extra_arg', None)
+      if callable(extra_arg_fn):
+        xarg = extra_arg_fn(name)
         if xarg is not None:
           return xarg
 

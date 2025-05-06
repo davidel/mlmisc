@@ -1,3 +1,4 @@
+import bisect
 import random
 
 import py_misc_utils.alog as alog
@@ -49,4 +50,74 @@ class IterableTransformDataset(dsb.DatasetWrapper, dsb.IterableDataset):
 
   def enum_samples(self):
     yield from self._data
+
+
+class MultiDatasetBase:
+
+  def __init__(self, datasets):
+    self._datasets = datasets
+
+  def bases(self):
+    return self._datasets
+
+  def extra_arg(self, name):
+    args = []
+    for data in self._datasets:
+      extra_arg_fn = getattr(data, 'extra_arg', None)
+      if callable(extra_arg_fn):
+        args.append(extra_arg_fn(name))
+      else:
+        args.append(None)
+
+    if all(args[0] == arg for arg in args):
+      return args[0] if args else None
+
+    return args
+
+
+class MultiDataset(torch.utils.data.Dataset, MultiDatasetBase):
+
+  def __init__(self, datasets):
+    torch.utils.data.Dataset.__init__(self)
+    MultiDatasetBase.__init__(self, datasets)
+    self._sizes = [0];
+    for data in datasets:
+      self._sizes.append(self._sizes[-1] + len(data))
+
+  def __getitem__(self, i):
+    pos = bisect.bisect_right(self._sizes, i) - 1
+    data = self._datasets[pos]
+
+    return data[i - self._sizes[pos]]
+
+  def __len__(self):
+    return self._sizes[-1]
+
+
+class IterableMultiDataset(torch.utils.data.IterableDataset, MultiDatasetBase):
+
+  def __init__(self, datasets):
+    torch.utils.data.IterableDataset.__init__(self)
+    MultiDatasetBase.__init__(self, datasets)
+
+  def __len__(self):
+    size = 0
+    for data in self._datasets:
+      len_fn, csize = getattr(data, '__len__', None), None
+      if callable(len_fn):
+        csize = len_fn()
+
+      if csize is None:
+        return None
+
+      size += csize
+
+    return size
+
+  def generate(self):
+    for data in self._datasets:
+      yield from data
+
+  def __iter__(self):
+    return self.generate()
 
