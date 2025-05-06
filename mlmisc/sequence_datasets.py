@@ -67,44 +67,32 @@ _SAMPLERS = {
 
 class SequenceDatasetBase:
 
-  def __init__(self, data, context_size, mode, pad=None):
+  def __init__(self, data, context_size, mode):
     tas.check_in(mode, set(_SAMPLERS.keys()),
                  msg=f'Invalid mode')
 
-    pad_size = sum(pad['pad']) if pad is not None else 0
-
     self._sampler = _SAMPLERS[mode](context_size)
     self._data = data
-    self._context_size = self._sampler.context_size - pad_size
-    self._pad = pad
+    self._context_size = self._sampler.context_size
     self._mode = mode
 
   def _sample(self, data, idx):
     return self._sampler(data, idx)
-
-  def _padded(self, x, y):
-    if self._pad is not None:
-      x = F.pad(x, self._pad['pad'], value=self._pad['value'])
-
-    return x, y
 
 
 class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
 
   def __init__(self, data, context_size, mode,
                pipeline=None,
-               pad=None,
                **kwargs):
     dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, mode, pad=pad)
+    SequenceDatasetBase.__init__(self, data, context_size, mode)
 
   def __len__(self):
     return max(len(self._data) + 1 - self._context_size, 0)
 
   def get_sample(self, i):
-    x, y = self._sample(self._data, i)
-
-    return self._padded(x, y)
+    return self._sample(self._data, i)
 
 
 class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
@@ -112,10 +100,9 @@ class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
   def __init__(self, data, context_size, mode,
                pipeline=None,
                tokenizer=None,
-               pad=None,
                **kwargs):
     dsb.IterableDataset.__init__(self, pipeline=pipeline, tokenizer=tokenizer, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, mode, pad=pad)
+    SequenceDatasetBase.__init__(self, data, context_size, mode)
     self._tokenizer = tokenizer
 
   def enum_samples(self):
@@ -132,7 +119,18 @@ class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
         x, y = self._sample(tokens, i)
         x, y = torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.long)
 
-        yield self._padded(x, y)
+        yield x, y
 
       tokens = tokens[-self._context_size + 1:]
+
+
+class Padder:
+
+  def __init__(self, pad):
+    self._pad = pad
+
+  def __call__(self, data):
+    x, y = data
+
+    return F.pad(x, self._pad['pad'], value=self._pad['value']), y
 
