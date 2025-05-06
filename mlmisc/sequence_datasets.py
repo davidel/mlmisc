@@ -128,11 +128,11 @@ class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
       else:
         tokens.extend(data)
 
-      for i in range(len(tokens) - self._context_size):
+      for i in range(len(tokens) + 1 - self._context_size):
         x, y = self._sample(tokens, i)
         x, y = torch.tensor(x, dtype=torch.long), torch.tensor(y, dtype=torch.long)
 
         yield self._padded(x, y)
 
-      tokens = tokens[-self._context_size:]
+      tokens = tokens[-self._context_size + 1:]
 
