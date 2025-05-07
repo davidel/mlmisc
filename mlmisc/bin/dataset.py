@@ -76,7 +76,6 @@ def create_dataset(args):
   alog.debug0(f'Dataset Args: {dataset_kwargs}')
 
   dsets = mldu.create_dataset(args.dataset,
-                              cache_dir=gfs.cache_dir(),
                               select_fn=select_fn,
                               transform=dict(train=train_trans, test=test_trans),
                               target_transform=dict(train=tgt_train_trans, test=tgt_test_trans),
