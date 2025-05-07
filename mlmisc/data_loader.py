@@ -233,6 +233,7 @@ class _IterDataLoader:
     self._input_queue = mpctx.Queue()
     self._output_queue = mpctx.Queue()
     self._trans_queues = []
+    self._output_feeders = 0
 
     # In the case of an iterator dataset (that is, strictly sequential stream of
     # samples) we only have one _IterDataFeeder. If the dataset has a processing
@@ -242,6 +243,7 @@ class _IterDataLoader:
     if num_workers == 1:
       feeder = _IterDataFeeder(mpctx, dataset, self._input_queue, (self._output_queue,))
       pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
+      self._output_feeders += 1
     else:
       pipeline = dataset.pipeline()
       transformers = []
@@ -252,6 +254,7 @@ class _IterDataLoader:
                                pipeline)
 
         transformers.append(trs)
+        self._output_feeders += 1
 
       pyfw.fin_wrap(self, '_transformers', transformers,
                     finfn=functools.partial(_closer, transformers))
@@ -273,7 +276,7 @@ class _IterDataLoader:
 
   def _generate(self):
     idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
-    queue_getter = _QueueGetter(self._output_queue, max(1, len(self._trans_queues)))
+    queue_getter = _QueueGetter(self._output_queue, self._output_feeders)
     collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
     self._input_queue.put(self._prefetch_factor * self._batch_size)
