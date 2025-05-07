@@ -29,17 +29,14 @@ class _QueueGetter:
     self._nones = 0
 
   def get(self):
-    data = None
     while self._max_nones > self._nones:
       data = self._input_queue.get()
       if isinstance(data, Exception):
         raise data
       if data is not None:
-        break
+        return data
 
       self._nones += 1
-
-    return data
 
 
 class _BatchCollater:
@@ -63,8 +60,8 @@ class _BatchCollater:
           break
 
     self._index = idx
-    self._pending = set(self._indices[self._index: self._index + self._batch_size]) - \
-      set(self._cached.keys())
+    self._pending = (set(self._indices[self._index: self._index + self._batch_size]) -
+                     set(self._cached.keys()))
 
     return (self._collate_fn(bdata), len(bdata)) if bdata else None
 
