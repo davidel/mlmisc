@@ -2,22 +2,19 @@ import io
 import json
 import os
 import random
-import re
 import yaml
 
 import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
-import py_misc_utils.core_utils as pycu
-import py_misc_utils.data_cache as pydc
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
-import py_misc_utils.utils as pyu
 import torch
 
 from . import dataset_adapters as dsad
 from . import dataset_base as dsb
+from . import dataset_utils as dsu
 
 
 class WebDataset(torch.utils.data.IterableDataset):
@@ -27,7 +24,7 @@ class WebDataset(torch.utils.data.IterableDataset):
     self._shuffle = shuffle
     self._size = size
     self._kwargs = kwargs
-    self._urls = tuple(expand_urls(urls)) if isinstance(urls, str) else tuple(urls)
+    self._urls = tuple(dsu.expand_urls(urls)) if isinstance(urls, str) else tuple(urls)
 
   def _decode(self, data, tid):
     ddata = dict()
@@ -92,60 +89,6 @@ class WebDataset(torch.utils.data.IterableDataset):
     return self._size
 
 
-def expand_huggingface_urls(url):
-  import huggingface_hub as hfhub
-
-  with pydc.DataCache(url, max_age=28800) as dc:
-    if (hf_files := dc.data()) is None:
-      fs = hfhub.HfFileSystem()
-      files = [fs.resolve_path(path) for path in fs.glob(url)]
-      hf_files = tuple(hfhub.hf_hub_url(rfile.repo_id, rfile.path_in_repo, repo_type='dataset')
-                       for rfile in files)
-
-      dc.store(hf_files)
-
-    return hf_files
-
-
-def expand_urls(url):
-  if gfs.get_proto(url) == 'hf':
-    return expand_huggingface_urls(url)
-  else:
-    m = re.match(r'(.*)\{(\d+)\.\.(\d+)\}(.*)', url)
-    if m:
-      isize = len(m.group(2))
-      start = int(m.group(2))
-      end = int(m.group(3))
-      urls = []
-      for i in range(start, end + 1):
-        urls.append(m.group(1) + f'{i:0{isize}d}' + m.group(4))
-
-      return urls
-
-    return [url]
-
-
-def expand_dataset_urls(dsinfo, shuffle=True, seed=None):
-  train = test = None
-  if pycu.isdict(dsinfo):
-    train = expand_urls(dsinfo['train'])
-    test = expand_urls(dsinfo['test'])
-  else:
-    train = expand_urls(dsinfo)
-
-  if shuffle:
-    # Stable shuffling, given same seed. Even though the WebDataset (and the
-    # ShufflerDataset) do shuffle urls/samples, because of the way we split
-    # between train/test urls (by slicing), randomization is needed since the
-    # distribution might not be uniform among the dataset urls.
-    if train is not None:
-      train = dsb.shuffled_data(train, seed=seed)
-    if test is not None:
-      test = dsb.shuffled_data(test, seed=seed)
-
-  return pyu.make_object(train=train, test=test)
-
-
 def create(url,
            url_shuffle=True,
            shuffle=True,
@@ -155,7 +98,7 @@ def create(url,
            seed=None,
            shuffle_buffer_size=1024,
            **kwargs):
-  ds_urls = expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
+  ds_urls = dsu.expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
 
   if ds_urls.test is None:
     ntrain = int(train_pct * len(ds_urls.train))

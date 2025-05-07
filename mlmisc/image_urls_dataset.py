@@ -1,7 +1,6 @@
 import random
 
 import py_misc_utils.alog as alog
-import py_misc_utils.compression as pycomp
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.url_fetcher as pyuf
@@ -10,6 +9,7 @@ import py_misc_utils.work_results as pywres
 import torch
 
 from . import dataset_base as dsb
+from . import dataset_utils as dsu
 
 
 class ImageUrlsDataset(torch.utils.data.IterableDataset):
@@ -72,14 +72,8 @@ def create(urls_path,
            train_pct=0.9,
            seed=None,
            **kwargs):
-  urls = set()
-  with pycomp.dopen(urls_path, mode='rt', **kwargs) as fd:
-    for url in fd:
-      url = url.strip()
-      if gfs.has_proto(url):
-        urls.add(url)
+  urls = dsu.expand_urls(urls_path)
 
-  urls = sorted(urls)
   if url_shuffle:
     # Stable shuffling, given same seed. Even though the ImageUrlsDataset (and the
     # ShufflerDataset) do shuffle urls/samples, because of the way we split
