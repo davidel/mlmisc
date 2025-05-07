@@ -18,8 +18,8 @@ from . import tokenizers as tkz
 from . import web_dataset as wds
 
 
-def build_dataset(tokenizer, tokens, split_pct, context_size, mode):
-  train_limit = int(len(tokens) * split_pct)
+def build_dataset(tokenizer, tokens, train_pct, context_size, mode):
+  train_limit = int(len(tokens) * train_pct)
   train_data = tokens[: train_limit]
   test_data = tokens[train_limit:]
 
@@ -42,19 +42,19 @@ def build_dataset(tokenizer, tokens, split_pct, context_size, mode):
 
 
 def load(proto_path, tokens_path, context_size, mode,
-         split_pct=0.9,
+         train_pct=0.9,
          **kwargs):
   tokenizer = tkz.load_tokenizer(proto_path)
   tokens = cu.torch_load(tokens_path)
 
-  return build_dataset(tokenizer, tokens, split_pct, context_size, mode)
+  return build_dataset(tokenizer, tokens, train_pct, context_size, mode)
 
 
 def create(content_path, context_size, mode,
            max_vocab_size=None,
            module_path=None,
            model_name=None,
-           split_pct=0.9,
+           train_pct=0.9,
            **kwargs):
   cache_dir = gfs.cache_dir()
   datasets_dir = os.path.join(cache_dir, 'datasets')
@@ -108,7 +108,7 @@ def create(content_path, context_size, mode,
         with open(tokenizer_path, mode='w') as tfd:
           tfd.write(tokenizer_str)
 
-  return build_dataset(tokenizer, tokens, split_pct, context_size, mode)
+  return build_dataset(tokenizer, tokens, train_pct, context_size, mode)
 
 
 def web_create(url, tokenizer_config, field_selector, context_size, mode,

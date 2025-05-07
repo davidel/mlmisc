@@ -52,10 +52,10 @@ class IterableTransformDataset(dsb.DatasetWrapper, dsb.IterableDataset):
     yield from self._data
 
 
-class MultiDatasetBase:
+class JoinedDatasetBase:
 
   def __init__(self, datasets):
-    self._datasets = datasets
+    self._datasets = tuple(datasets)
 
   def bases(self):
     return self._datasets
@@ -75,11 +75,11 @@ class MultiDatasetBase:
     return args
 
 
-class MultiDataset(torch.utils.data.Dataset, MultiDatasetBase):
+class JoinedDataset(torch.utils.data.Dataset, JoinedDatasetBase):
 
   def __init__(self, datasets):
     torch.utils.data.Dataset.__init__(self)
-    MultiDatasetBase.__init__(self, datasets)
+    JoinedDatasetBase.__init__(self, datasets)
     self._sizes = [0];
     for data in datasets:
       self._sizes.append(self._sizes[-1] + len(data))
@@ -94,11 +94,11 @@ class MultiDataset(torch.utils.data.Dataset, MultiDatasetBase):
     return self._sizes[-1]
 
 
-class IterableMultiDataset(torch.utils.data.IterableDataset, MultiDatasetBase):
+class IterableJoinedDataset(torch.utils.data.IterableDataset, JoinedDatasetBase):
 
   def __init__(self, datasets):
     torch.utils.data.IterableDataset.__init__(self)
-    MultiDatasetBase.__init__(self, datasets)
+    JoinedDatasetBase.__init__(self, datasets)
 
   def __len__(self):
     size = 0

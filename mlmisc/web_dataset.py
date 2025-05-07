@@ -149,7 +149,7 @@ def expand_dataset_urls(dsinfo, shuffle=True, seed=None):
 def create(url,
            url_shuffle=True,
            shuffle=True,
-           split_pct=0.9,
+           train_pct=0.9,
            train_size=None,
            test_size=None,
            seed=None,
@@ -158,7 +158,7 @@ def create(url,
   ds_urls = expand_dataset_urls(url, shuffle=url_shuffle, seed=seed)
 
   if ds_urls.test is None:
-    ntrain = int(split_pct * len(ds_urls.train))
+    ntrain = int(train_pct * len(ds_urls.train))
     train_urls = ds_urls.train[: ntrain]
     test_urls = ds_urls.train[ntrain:]
   else:

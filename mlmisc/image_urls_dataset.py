@@ -2,6 +2,7 @@ import random
 
 import py_misc_utils.alog as alog
 import py_misc_utils.compression as pycomp
+import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.url_fetcher as pyuf
 import py_misc_utils.utils as pyu
@@ -68,14 +69,14 @@ class ImageUrlsDataset(torch.utils.data.IterableDataset):
 def create(urls_path,
            url_shuffle=True,
            shuffle=True,
-           split_pct=0.9,
+           train_pct=0.9,
            seed=None,
            **kwargs):
   urls = set()
   with pycomp.dopen(urls_path, mode='rt', **kwargs) as fd:
     for url in fd:
       url = url.strip()
-      if url:
+      if gfs.has_proto(url):
         urls.add(url)
 
   urls = sorted(urls)
@@ -86,7 +87,7 @@ def create(urls_path,
     # distribution might not be uniform among the dataset urls.
     urls = dsb.shuffled_data(urls, seed=seed)
 
-  ntrain = int(split_pct * len(urls))
+  ntrain = int(train_pct * len(urls))
   train_urls = urls[: ntrain]
   test_urls = urls[ntrain:]
 

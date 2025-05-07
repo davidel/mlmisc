@@ -126,7 +126,7 @@ def _get_dataset_path(name, cache_dir, dataset_kwargs):
   return ds_path
 
 
-def _try_torchvision(name, ds_path, split_pct, dataset_kwargs):
+def _try_torchvision(name, ds_path, train_pct, dataset_kwargs):
   dsclass = getattr(torchvision.datasets, name, None)
   if dsclass is not None:
     dataset_kwargs = dataset_kwargs.copy()
@@ -158,10 +158,10 @@ def _try_torchvision(name, ds_path, split_pct, dataset_kwargs):
       # is uniform within the dataset, so we shuffle indices and create a randomized one.
       shuffled_indices = dsb.shuffled_indices(len(full_ds),
                                               seed=dataset_kwargs.get('ds_seed'))
-      ntrain = int(split_pct * len(shuffled_indices))
+      ntrain = int(train_pct * len(shuffled_indices))
 
       alog.info(f'Loading torchvision "{name}" dataset whose API does not support splits. ' \
-                f'Shuffling indices and using {split_pct:.2f} split')
+                f'Shuffling indices and using {train_pct:.2f} split')
 
       train_ds = dsb.SubDataset(full_ds, shuffled_indices[: ntrain])
       test_ds = dsb.SubDataset(full_ds, shuffled_indices[ntrain:])
@@ -202,7 +202,7 @@ def build_pipelines(select_fn=None,
   return pyu.make_object(train=train, test=test)
 
 
-def _try_module(name, ds_path, split_pct, dataset_kwargs):
+def _try_module(name, ds_path, train_pct, dataset_kwargs):
   parts = name.split(':', maxsplit=1)
   if len(parts) == 2:
     modpath, ctor_fn = parts
@@ -215,7 +215,7 @@ def _try_module(name, ds_path, split_pct, dataset_kwargs):
 
     kwargs = pyu.dict_setmissing(dataset_kwargs,
                                  cache_dir=ds_path,
-                                 split_pct=split_pct)
+                                 train_pct=train_pct)
 
     mds = ctor(**kwargs)
     if isinstance(mds, (list, tuple)):
@@ -230,7 +230,7 @@ def create_dataset(name,
                    select_fn=None,
                    transform=None,
                    target_transform=None,
-                   split_pct=0.9,
+                   train_pct=0.9,
                    dataset_kwargs=None):
   dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
@@ -240,9 +240,9 @@ def create_dataset(name,
   train_kwargs = dataset_kwargs.pop('train', dict())
   test_kwargs = dataset_kwargs.pop('test', dict())
 
-  ds = _try_module(name, ds_path, split_pct, dataset_kwargs)
+  ds = _try_module(name, ds_path, train_pct, dataset_kwargs)
   if ds is None and name.find('/') < 0:
-    ds = _try_torchvision(name, ds_path, split_pct, dataset_kwargs)
+    ds = _try_torchvision(name, ds_path, train_pct, dataset_kwargs)
 
   if ds is None and name in [dset.id for dset in hfh.list_datasets(dataset_name=name)]:
     ds = dsets.load_dataset(name, cache_dir=ds_path, **dataset_kwargs)
