@@ -237,9 +237,10 @@ class _IterDataLoader:
     # pipeline it makes sense to have the _IterDataFeeder to feed N _DataTransformer
     # (whose task is the run the pipeline), which in turn feed the output queue.
     # Otherwise we have the _IterDataFeeder feed the output queue directly.
+    feeders = []
     if num_workers == 1:
-      feeder = _IterDataFeeder(mpctx, dataset, self._input_queue, (self._output_queue,))
-      pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
+      feeders.append(_IterDataFeeder(mpctx, dataset, self._input_queue,
+                                     (self._output_queue,)))
       self._output_feeders += 1
     else:
       pipeline = dataset.pipeline()
@@ -256,8 +257,11 @@ class _IterDataLoader:
       pyfw.fin_wrap(self, '_transformers', transformers,
                     finfn=functools.partial(_closer, transformers))
 
-      feeder = _IterDataFeeder(mpctx, dataset, self._input_queue, self._trans_queues)
-      pyfw.fin_wrap(self, '_feeder', feeder, finfn=feeder.close)
+      feeders.append(_IterDataFeeder(mpctx, dataset, self._input_queue,
+                                     self._trans_queues))
+
+    pyfw.fin_wrap(self, '_feeders', feeders,
+                  finfn=functools.partial(_closer, feeders))
 
   def close(self):
     # Ensure we fill the _QueueGetter trigger in terms of number of None to be received
@@ -265,7 +269,7 @@ class _IterDataLoader:
     for _ in range(max(1, len(self._trans_queues))):
       self._output_queue.put(None)
 
-    pyfw.fin_wrap(self, '_feeder', None, cleanup=True)
+    pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
     pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
 
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
