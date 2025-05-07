@@ -227,16 +227,15 @@ def _try_module(name, ds_path, split_pct, dataset_kwargs):
 
 
 def create_dataset(name,
-                   cache_dir=None,
                    select_fn=None,
                    transform=None,
                    target_transform=None,
                    split_pct=0.9,
                    dataset_kwargs=None):
-  cache_dir = cache_dir or os.path.join(pyfsu.home(), 'datasets')
   dataset_kwargs = pyu.value_or(dataset_kwargs, {})
 
-  ds_path = _get_dataset_path(name, cache_dir, dataset_kwargs)
+  ds_path = _get_dataset_path(name, os.path.join(gfs.cache_dir(), 'datasets'),
+                              dataset_kwargs)
 
   train_kwargs = dataset_kwargs.pop('train', dict())
   test_kwargs = dataset_kwargs.pop('test', dict())

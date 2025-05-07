@@ -51,16 +51,14 @@ def _load_module(rpath, modname):
 class WebModule(nn.Module):
 
   def __init__(self, repo, modname, ctor,
-               cache_dir=None,
                commit=None,
                force_clone=False,
                mod_args=None,
                mod_kwargs=None):
-    cache_dir = gfs.cache_dir(path=cache_dir)
     mod_args = pyu.value_or(mod_args, ())
     mod_kwargs = pyu.value_or(mod_kwargs, {})
 
-    modules_cache_dir = os.path.join(cache_dir, 'module_repos')
+    modules_cache_dir = os.path.join(gfs.cache_dir(), 'module_repos')
     alog.debug(f'Using Web Modules cache folder "{modules_cache_dir}"')
 
     rpath = _clone_repo(repo, modules_cache_dir, force_clone, commit)

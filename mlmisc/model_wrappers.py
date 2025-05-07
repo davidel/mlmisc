@@ -59,12 +59,10 @@ class Web(ModelHolder):
 
   def __init__(self, repo, module, ctor, loss, *args,
                frozen=None,
-               cache_dir=None,
                commit=None,
                force_clone=None,
                **kwargs):
     model = wmod.WebModule(repo, module, ctor,
-                           cache_dir=cache_dir,
                            commit=commit,
                            force_clone=force_clone,
                            mod_args=args,
@@ -83,9 +81,8 @@ class Web(ModelHolder):
 class HugginFaceModel(ModelHolder):
 
   def __init__(self, model_name, model_class, processor_class,
-               frozen=None,
-               cache_dir=None):
-    cache_dir = gfs.cache_dir(path=cache_dir)
+               frozen=None):
+    cache_dir = gfs.cache_dir()
 
     mclass, = pymu.import_module_names(model_class)
     model = mclass.from_pretrained(
@@ -129,11 +126,9 @@ class HugginFaceImgTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, head, loss,
                processor_class='transformers.AutoImageProcessor',
-               frozen=None,
-               cache_dir=None):
+               frozen=None):
     super().__init__(model_name, model_class, processor_class,
-                     frozen=frozen,
-                     cache_dir=cache_dir)
+                     frozen=frozen)
 
     alog.debug(f'Image Processor:\n{self.processor()}')
 
@@ -153,11 +148,9 @@ class HugginFaceSeqTune(HugginFaceModel):
 
   def __init__(self, model_name, model_class, context_size, head, loss,
                processor_class='transformers.AutoTokenizer',
-               frozen=None,
-               cache_dir=None):
+               frozen=None):
     super().__init__(model_name, model_class, processor_class,
-                     frozen=frozen,
-                     cache_dir=cache_dir)
+                     frozen=frozen)
 
     self.loss = lsw.SeqLoss(conf.create_loss(loss))
     self.head = conf.create_model(head,

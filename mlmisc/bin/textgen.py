@@ -35,8 +35,7 @@ def _load_tokenizer(args):
   elif args.tokenizer_name is None:
     tokenizer = tkz.load_tokenizer(args.tokenizer_path)
   else:
-    tokenizer = tkz.from_pretrained(args.tokenizer_path, args.tokenizer_name,
-                                    cache_dir=args.cache_dir)
+    tokenizer = tkz.from_pretrained(args.tokenizer_path, args.tokenizer_name)
 
   return tokenizer
 

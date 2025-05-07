@@ -92,10 +92,10 @@ class WebDataset(torch.utils.data.IterableDataset):
     return self._size
 
 
-def expand_huggingface_urls(url, cache_dir=None):
+def expand_huggingface_urls(url):
   import huggingface_hub as hfhub
 
-  with pydc.DataCache(url, cache_dir=cache_dir, max_age=28800) as dc:
+  with pydc.DataCache(url, max_age=28800) as dc:
     if (hf_files := dc.data()) is None:
       fs = hfhub.HfFileSystem()
       files = [fs.resolve_path(path) for path in fs.glob(url)]

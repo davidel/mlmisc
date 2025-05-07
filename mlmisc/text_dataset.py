@@ -54,14 +54,12 @@ def create(content_path, context_size, mode,
            max_vocab_size=None,
            module_path=None,
            model_name=None,
-           cache_dir=None,
            split_pct=0.9,
            **kwargs):
-  cache_dir = gfs.cache_dir(path=cache_dir)
-
+  cache_dir = gfs.cache_dir()
   datasets_dir = os.path.join(cache_dir, 'datasets')
 
-  local_content_path = gfs.as_local(content_path, cache_dir=cache_dir)
+  local_content_path = gfs.as_local(content_path)
   with pyunc.Uncompress(local_content_path) as datafile:
     ds_name = os.path.splitext(os.path.basename(datafile))[0]
 
@@ -90,7 +88,7 @@ def create(content_path, context_size, mode,
       ds_dir = os.path.join(datasets_dir, ds_name, 'pre_trained')
       os.makedirs(ds_dir, exist_ok=True)
 
-      tokenizer = tkz.from_pretrained(module_path, model_name, cache_dir=cache_dir)
+      tokenizer = tkz.from_pretrained(module_path, model_name)
 
       tokenizer_str = str(tokenizer)
       tokenizer_path = os.path.join(ds_dir, 'tokenizer.repr')

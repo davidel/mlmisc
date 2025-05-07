@@ -53,22 +53,20 @@ class FpTokenizerWrapper:
     return self._tokenizer.decode(data)
 
 
-def from_pretrained(module_path, model_name, cache_dir=None, **kwargs):
-  cache_dir = gfs.cache_dir(path=cache_dir)
-
+def from_pretrained(module_path, model_name, **kwargs):
   tclass, = pymu.import_module_names(module_path)
   tokenizer = tclass.from_pretrained(
     model_name,
     use_fast=True,
     trust_remote_code=False,
-    cache_dir=cache_dir,
+    cache_dir=gfs.cache_dir(),
     **kwargs)
 
   return FpTokenizerWrapper(tokenizer)
 
 
-def from_model(path, cache_dir=None):
-  local_path = gfs.as_local(path, cache_dir=cache_dir)
+def from_model(path):
+  local_path = gfs.as_local(path)
 
   return spm.SentencePieceProcessor(model_file=local_path)
 
