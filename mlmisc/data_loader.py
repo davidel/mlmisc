@@ -99,10 +99,13 @@ class _IterDataFeeder:
     self._proc.start()
 
   def _generate(self):
-    if isinstance(self._dataset, dsb.IterableDataset):
-      yield from self._dataset.enum_samples()
-    else:
-      yield from self._dataset
+    data_sources = (self._dataset if isinstance(self._dataset, (list, tuple))
+                    else (self._dataset,))
+    for source in data_sources:
+      if isinstance(source, dsb.IterableDataset):
+        yield from source.enum_samples()
+      else:
+        yield from source
 
   def _run(self):
     _init_process()
