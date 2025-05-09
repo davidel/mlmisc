@@ -35,8 +35,7 @@ class ShufflerDataset(torch.utils.data.IterableDataset, dsb.DatasetBase):
 class TransformDataset(dsb.Dataset):
 
   def __init__(self, data, pipeline, **kwargs):
-    dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
-    self._data = data
+    dsb.Dataset.__init__(self, data=data, pipeline=pipeline, **kwargs)
 
   def get_sample(self, i):
     return self._data[i]
@@ -45,8 +44,7 @@ class TransformDataset(dsb.Dataset):
 class IterableTransformDataset(dsb.IterableDataset):
 
   def __init__(self, data, pipeline, **kwargs):
-    dsb.IterableDataset.__init__(self, pipeline=pipeline, **kwargs)
-    self._data = data
+    dsb.IterableDataset.__init__(self, data=data, pipeline=pipeline, **kwargs)
 
   def enum_samples(self):
     yield from self._data
