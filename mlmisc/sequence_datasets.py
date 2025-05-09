@@ -1,4 +1,5 @@
 import py_misc_utils.assert_checks as tas
+import py_misc_utils.pipeline as pypl
 import torch
 import torch.nn.functional as F
 
@@ -64,17 +65,18 @@ _SAMPLERS = {
   SKIPGRAM: SkipgramSampler,
 }
 
+def _get_sampler(mode, context_size):
+  tas.check_in(mode, set(_SAMPLERS.keys()),
+               msg=f'Invalid mode')
+
+  return _SAMPLERS[mode](context_size)
+
 
 class SequenceDatasetBase:
 
-  def __init__(self, data, context_size, mode):
-    tas.check_in(mode, set(_SAMPLERS.keys()),
-                 msg=f'Invalid mode')
-
-    self._sampler = _SAMPLERS[mode](context_size)
-    self._data = data
+  def __init__(self, context_size, mode):
+    self._sampler = _get_sampler(mode, context_size)
     self._context_size = self._sampler.context_size
-    self._mode = mode
 
   def _sample(self, data, idx):
     return self._sampler(data, idx)
@@ -85,8 +87,8 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
   def __init__(self, data, context_size, mode,
                pipeline=None,
                **kwargs):
-    dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, mode)
+    dsb.Dataset.__init__(self, data=data, pipeline=pipeline, **kwargs)
+    SequenceDatasetBase.__init__(self, context_size, mode)
 
   def __len__(self):
     return max(len(self._data) + 1 - self._context_size, 0)
@@ -95,41 +97,41 @@ class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
     return self._sample(self._data, i)
 
 
-class IterableSequenceDataset(dsb.IterableDataset, SequenceDatasetBase):
+class SequenceProcessor(pypl.IterElement):
 
-  def __init__(self, data, context_size, mode,
-               pipeline=None,
-               tokenizer=None,
-               **kwargs):
-    dsb.IterableDataset.__init__(self, pipeline=pipeline, tokenizer=tokenizer, **kwargs)
-    SequenceDatasetBase.__init__(self, data, context_size, mode)
+  def __init__(self, context_size, mode, tokenizer):
+    super().__init__()
+    self._sampler = _get_sampler(mode, context_size)
+    self._context_size = self._sampler.context_size
     self._tokenizer = tokenizer
+    self._tokens = []
 
-  def enum_samples(self):
-    tokens = []
-    for data in self._data:
-      if isinstance(data, str):
-        tokens.extend(self._tokenizer.encode(data))
-      elif isinstance(data, bytes):
-        tokens.extend(self._tokenizer.encode(data.decode()))
+  def _process(self, data):
+    for idata in data:
+      if isinstance(idata, str):
+        self._tokens.extend(self._tokenizer.encode(idata))
+      elif isinstance(idata, bytes):
+        self._tokens.extend(self._tokenizer.encode(idata.decode()))
       else:
-        tokens.extend(data)
+        self._tokens.extend(idata)
 
-      for i in range(len(tokens) + 1 - self._context_size):
-        x, y = self._sample(tokens, i)
+      for i in range(len(self._tokens) + 1 - self._context_size):
+        x, y = self._sampler(self._tokens, i)
 
         yield x, y
 
-      tokens = tokens[-self._context_size + 1:]
+      self._tokens = self._tokens[-self._context_size + 1:]
 
 
-class Padder:
+class Padder(pypl.IterElement):
 
   def __init__(self, pad):
+    super().__init__()
     self._pad = pad
 
-  def __call__(self, data):
-    x, y = data
+  def _process(self, data):
+    for idata in data:
+      x, y = idata
 
-    return F.pad(x, self._pad['pad'], value=self._pad['value']), y
+      yield F.pad(x, self._pad['pad'], value=self._pad['value']), y
 

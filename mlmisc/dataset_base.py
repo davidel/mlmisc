@@ -11,15 +11,40 @@ import torch
 
 class DatasetBase:
 
-  def __init__(self, pipeline=None, **kwargs):
+  def __init__(self, data=None, pipeline=None, **kwargs):
+    self._data = data
     self._pipeline = pyu.value_or(pipeline, pypl.Pipeline())
     self._kwargs = kwargs
 
+  def _sources(self):
+    sources = [super()]
+    if self._data is not None:
+      sources.append(self._data)
+
+    return tuple(sources)
+
   def extra_arg(self, name):
-    return self._kwargs.get(name)
+    value = self._kwargs.get(name)
+    if value is not None:
+      return value
+
+    for source in self._sources():
+      extra_arg_fn = getattr(source, 'extra_arg', None)
+      if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
+        return value
+
+    return getattr(self._data, name, None)
 
   def add_extra_arg(self, name, value):
     self._kwargs[name] = value
+
+  def __len__(self):
+    for source in self._sources():
+      data_length = getattr(source, '__len__', None)
+      if data_length is not None:
+        return data_length()
+
+    return self.extra_arg('size')
 
   def process_sample(self, data):
     return self._pipeline(data)
@@ -30,9 +55,9 @@ class DatasetBase:
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
 
-  def __init__(self, pipeline=None, **kwargs):
+  def __init__(self, data=None, pipeline=None, **kwargs):
     torch.utils.data.Dataset.__init__(self)
-    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
+    DatasetBase.__init__(self, data=data, pipeline=pipeline, **kwargs)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
@@ -45,56 +70,27 @@ class Dataset(torch.utils.data.Dataset, DatasetBase):
 
 class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
 
-  def __init__(self, pipeline=None, **kwargs):
+  def __init__(self, data=None, pipeline=None, **kwargs):
     torch.utils.data.IterableDataset.__init__(self)
-    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
+    DatasetBase.__init__(self, data=data, pipeline=pipeline, **kwargs)
 
   def generate(self):
     for data in self.enum_samples():
-      yield self.process_sample(data)
+      pdata = self.process_sample(data)
+      if pycu.is_iterator(pdata):
+        yield from pdata
+      else:
+        yield pdata
 
   def __iter__(self):
     return self.generate()
 
-  def __len__(self):
-    return self.extra_arg('size')
 
+class SubDataset(torch.utils.data.Dataset, DatasetBase):
 
-class DatasetWrapper:
-
-  def __init__(self, data, **kwargs):
-    self._data = data
-    self._kwargs = kwargs
-
-  def extra_arg(self, name):
-    value = self._kwargs.get(name)
-    if value is not None:
-      return value
-
-    for source in (super(), self._data):
-      extra_arg_fn = getattr(source, 'extra_arg', None)
-      if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
-        return value
-
-    return getattr(self._data, name, None)
-
-  def add_extra_arg(self, name, value):
-    self._kwargs[name] = value
-
-  def __len__(self):
-    for source in (super(), self._data):
-      data_length = getattr(source, '__len__', None)
-      if data_length is not None:
-        return data_length()
-
-    return self.extra_arg('size')
-
-
-class SubDataset(torch.utils.data.Dataset, DatasetWrapper):
-
-  def __init__(self, data, indices):
+  def __init__(self, data, indices, **kwargs):
     torch.utils.data.Dataset.__init__(self)
-    DatasetWrapper.__init__(self, data)
+    DatasetBase.__init__(self, data=data, **kwargs)
     self._indices = indices
 
   def __len__(self):
@@ -107,30 +103,30 @@ class SubDataset(torch.utils.data.Dataset, DatasetWrapper):
     return self._data[self._indices[i]]
 
 
-def _to_transform_fn(x, **kwargs):
+def to_transform_fn(x, **kwargs):
   return torch.as_tensor(x, **kwargs)
 
 
 def to_transform(**kwargs):
-  return functools.partial(_to_transform_fn, **kwargs)
+  return functools.partial(to_transform_fn, **kwargs)
 
 
-def _transformer_fn(sample, target, x):
+def transformer_fn(sample, target, x):
   s, t = x
 
   return sample(s), target(t)
 
 
 def transformer(sample=pycu.ident, target=pycu.ident):
-  return functools.partial(_transformer_fn, sample, target)
+  return functools.partial(transformer_fn, sample, target)
 
 
-def _items_selector_fn(items, x):
+def items_selector_fn(items, x):
   return [x[i] for i in items] if isinstance(items, (list, tuple)) else x[items]
 
 
 def items_selector(items):
-  return functools.partial(_items_selector_fn, items)
+  return functools.partial(items_selector_fn, items)
 
 
 def sliced_dataset(dataset, dslice):

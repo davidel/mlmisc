@@ -39,44 +39,63 @@ class _QueueGetter:
       self._nones += 1
 
 
+class _Expanded:
+
+  def __init__(self, data):
+    self.expanded = tuple(data)
+
+
 class _BatchCollater:
 
   def __init__(self, batch_size, collate_fn, indices):
     self._batch_size = batch_size
     self._collate_fn = collate_fn
     self._indices = np.asarray(indices)
-    self._index = 0
+    self._offset = 0
     self._pending = set(self._indices[: batch_size])
     self._cached = dict()
 
   def _make_batch(self):
-    idx, bdata = self._index, []
-    for idx in range(self._index, len(self._indices)):
-      data = self._cached.pop(self._indices[idx], None)
-      if data is not None:
-        bdata.append(data)
+    next_offset, bdata = len(self._indices), []
+    for i in range(self._offset, len(self._indices)):
+      index = self._indices[i]
+      cdata = self._cached.get(index)
+      if cdata is not None:
+        count = min(len(cdata), self._batch_size - len(bdata))
+        bdata.extend(cdata[: count])
+
+        rdata = cdata[count: ]
+        if rdata:
+          self._cached[index] = rdata
+        else:
+          self._cached.pop(index)
+
         if len(bdata) == self._batch_size:
-          idx += 1
+          next_offset = i if rdata else i + 1
           break
 
-    self._index = idx
-    self._pending = (set(self._indices[self._index: self._index + self._batch_size]) -
+    self._offset = next_offset
+    self._pending = (set(self._indices[self._offset: self._offset + self._batch_size]) -
                      set(self._cached.keys()))
 
     return (self._collate_fn(bdata), len(bdata)) if bdata else None
 
   def add_indices(self, indices):
-    self._indices = np.concatenate((self._indices[self._index:], np.asarray(indices)))
-    self._index = 0
+    self._indices = np.concatenate((self._indices[self._offset:], np.asarray(indices)))
+    self._offset = 0
 
     return len(self._indices)
 
   def left_indices(self):
-    return len(self._indices) - self._index
+    return len(self._indices) - self._offset
 
   def add(self, batch):
     for index, data in batch:
-      self._cached[index] = data
+      if isinstance(data, _Expanded):
+        self._cached[index] = data.expanded
+      else:
+        self._cached[index] = (data,)
+
       self._pending.discard(index)
 
   def get_batch(self):
@@ -201,6 +220,11 @@ class _DataTransformer:
         index, data = idata
 
         data = self._pipeline(data)
+
+        # If the Pipeline returns an iterator, we need to unwrap it since it might
+        # contain generator objects which are not pickle-able.
+        if pycu.is_iterator(data):
+          data = _Expanded(data)
 
         self._output_queue.put((index, data))
     except Exception as ex:

@@ -28,18 +28,7 @@ from . import utils as ut
 class Dataset(dsb.Dataset):
 
   def __init__(self, data, pipeline=None, **kwargs):
-    super().__init__(pipeline=pipeline, **kwargs)
-    self._data = data
-
-  def extra_arg(self, name):
-    for source in (super(), self._data):
-      extra_arg_fn = getattr(source, 'extra_arg', None)
-      if callable(extra_arg_fn):
-        xarg = extra_arg_fn(name)
-        if xarg is not None:
-          return xarg
-
-    return getattr(self._data, name, None)
+    super().__init__(data=data, pipeline=pipeline, **kwargs)
 
   def get_sample(self, i):
     if pycu.isdict(self._data):
@@ -57,18 +46,7 @@ class Dataset(dsb.Dataset):
 class IterableDataset(dsb.IterableDataset):
 
   def __init__(self, data, pipeline=None, **kwargs):
-    super().__init__(pipeline=pipeline, **kwargs)
-    self._data = data
-
-  def extra_arg(self, name):
-    for source in (super(), self._data):
-      extra_arg_fn = getattr(source, 'extra_arg', None)
-      if callable(extra_arg_fn):
-        xarg = extra_arg_fn(name)
-        if xarg is not None:
-          return xarg
-
-    return getattr(self._data, name, None)
+    super().__init__(data=data, pipeline=pipeline, **kwargs)
 
   def enum_samples(self):
     yield from self._data
@@ -89,7 +67,7 @@ def is_random_access_dataset(dataset):
 def dataset_size(dataset):
   dslen = getattr(dataset, '__len__', None)
 
-  return dslen() if dslen is not None else None
+  return dslen() if callable(dslen) else None
 
 
 def _get_dataset_base(dataset):
