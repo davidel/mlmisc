@@ -117,7 +117,7 @@ class SequenceProcessor(pypl.IterElement):
 
   def clone(self):
     new_self = copy.copy(self)
-    self._tokens = []
+    new_self._tokens = []
 
     return new_self
 
