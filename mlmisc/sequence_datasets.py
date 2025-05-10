@@ -72,29 +72,20 @@ def _get_sampler(mode, context_size):
   return _SAMPLERS[mode](context_size)
 
 
-class SequenceDatasetBase:
+class SequenceDataset(dsb.Dataset):
 
-  def __init__(self, context_size, mode):
+  def __init__(self, data, context_size, mode, pipeline=None, **kwargs):
+    dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
+    self._data = data
     self._sampler = _get_sampler(mode, context_size)
     self._context_size = self._sampler.context_size
-
-  def _sample(self, data, idx):
-    return self._sampler(data, idx)
-
-
-class SequenceDataset(dsb.Dataset, SequenceDatasetBase):
-
-  def __init__(self, data, context_size, mode,
-               pipeline=None,
-               **kwargs):
-    dsb.Dataset.__init__(self, data=data, pipeline=pipeline, **kwargs)
-    SequenceDatasetBase.__init__(self, context_size, mode)
+    self.add_sources(data)
 
   def __len__(self):
     return max(len(self._data) + 1 - self._context_size, 0)
 
   def get_sample(self, i):
-    return self._sample(self._data, i)
+    return self._sampler(self._data, i)
 
 
 class SequenceProcessor(pypl.IterElement):

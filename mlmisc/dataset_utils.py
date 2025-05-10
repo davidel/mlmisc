@@ -28,7 +28,9 @@ from . import utils as ut
 class Dataset(dsb.Dataset):
 
   def __init__(self, data, pipeline=None, **kwargs):
-    super().__init__(data=data, pipeline=pipeline, **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
+    self._data = data
+    self.add_sources(data)
 
   def get_sample(self, i):
     if pycu.isdict(self._data):
@@ -46,7 +48,9 @@ class Dataset(dsb.Dataset):
 class IterableDataset(dsb.IterableDataset):
 
   def __init__(self, data, pipeline=None, **kwargs):
-    super().__init__(data=data, pipeline=pipeline, **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
+    self._data = data
+    self.add_sources(data)
 
   def enum_samples(self):
     yield from self._data

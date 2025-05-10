@@ -11,24 +11,20 @@ import torch
 
 class DatasetBase:
 
-  def __init__(self, data=None, pipeline=None, **kwargs):
-    self._data = data
+  def __init__(self, pipeline=None, **kwargs):
     self._pipeline = pyu.value_or(pipeline, pypl.Pipeline())
     self._kwargs = kwargs
+    self._sources = [super()]
 
-  def _sources(self):
-    sources = [super()]
-    if self._data is not None:
-      sources.append(self._data)
-
-    return tuple(sources)
+  def add_sources(self, *data):
+    self._sources.extend(data)
 
   def extra_arg(self, name):
     value = self._kwargs.get(name)
     if value is not None:
       return value
 
-    for source in self._sources():
+    for source in self._sources:
       extra_arg_fn = getattr(source, 'extra_arg', None)
       if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
         return value
@@ -39,10 +35,10 @@ class DatasetBase:
     self._kwargs[name] = value
 
   def __len__(self):
-    for source in self._sources():
-      data_length = getattr(source, '__len__', None)
-      if data_length is not None:
-        return data_length()
+    for source in self._sources:
+      len_fn = getattr(source, '__len__', None)
+      if callable(len_fn):
+        return len_fn()
 
     return self.extra_arg('size')
 
@@ -55,9 +51,9 @@ class DatasetBase:
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
 
-  def __init__(self, data=None, pipeline=None, **kwargs):
+  def __init__(self, pipeline=None, **kwargs):
     torch.utils.data.Dataset.__init__(self)
-    DatasetBase.__init__(self, data=data, pipeline=pipeline, **kwargs)
+    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
@@ -70,9 +66,9 @@ class Dataset(torch.utils.data.Dataset, DatasetBase):
 
 class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
 
-  def __init__(self, data=None, pipeline=None, **kwargs):
+  def __init__(self, pipeline=None, **kwargs):
     torch.utils.data.IterableDataset.__init__(self)
-    DatasetBase.__init__(self, data=data, pipeline=pipeline, **kwargs)
+    DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def generate(self):
     for data in self.enum_samples():
@@ -90,15 +86,17 @@ class SubDataset(torch.utils.data.Dataset, DatasetBase):
 
   def __init__(self, data, indices, **kwargs):
     torch.utils.data.Dataset.__init__(self)
-    DatasetBase.__init__(self, data=data, **kwargs)
+    DatasetBase.__init__(self, **kwargs)
+    self._data = data
     self._indices = indices
+    self.add_sources(data)
 
   def __len__(self):
     return len(self._indices)
 
   def __getitem__(self, i):
     if isinstance(i, slice):
-      return SubDataset(self._data, self._indices[i])
+      return SubDataset(self._data, self._indices[i], **self._kwargs)
 
     return self._data[self._indices[i]]
 
