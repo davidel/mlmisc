@@ -29,8 +29,6 @@ class DatasetBase:
       if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
         return value
 
-    return getattr(self._data, name, None)
-
   def add_extra_arg(self, name, value):
     self._kwargs[name] = value
 
