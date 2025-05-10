@@ -113,7 +113,7 @@ class SequenceProcessor(pypl.IterElement):
 
         yield x, y
 
-      self._tokens = self._tokens[-self._context_size + 1:]
+      self._tokens = self._tokens[len(self._tokens) - self._context_size + 1:]
 
   def clone(self):
     new_self = copy.copy(self)
