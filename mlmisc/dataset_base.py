@@ -14,7 +14,7 @@ class DatasetBase:
   def __init__(self, pipeline=None, **kwargs):
     self._pipeline = pyu.value_or(pipeline, pypl.Pipeline())
     self._kwargs = kwargs
-    self._sources = [super()]
+    self._sources = []
 
   def add_sources(self, *data):
     self._sources.extend(data)
@@ -24,7 +24,7 @@ class DatasetBase:
     if value is not None:
       return value
 
-    for source in self._sources:
+    for source in [super()] + self._sources:
       extra_arg_fn = getattr(source, 'extra_arg', None)
       if callable(extra_arg_fn) and (value := extra_arg_fn(name)) is not None:
         return value
@@ -35,7 +35,7 @@ class DatasetBase:
     self._kwargs[name] = value
 
   def __len__(self):
-    for source in self._sources:
+    for source in [super()] + self._sources:
       len_fn = getattr(source, '__len__', None)
       if callable(len_fn):
         return len_fn()

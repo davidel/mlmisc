@@ -1,3 +1,5 @@
+import copy
+
 import py_misc_utils.assert_checks as tas
 import py_misc_utils.pipeline as pypl
 import torch
@@ -112,6 +114,12 @@ class SequenceProcessor(pypl.IterElement):
         yield x, y
 
       self._tokens = self._tokens[-self._context_size + 1:]
+
+  def clone(self):
+    new_self = copy.copy(self)
+    self._tokens = []
+
+    return new_self
 
 
 class Padder(pypl.IterElement):
