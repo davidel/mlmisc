@@ -80,11 +80,10 @@ class SequenceDataset(dsb.Dataset):
     dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
     self._data = data
     self._sampler = _get_sampler(mode, context_size)
-    self._context_size = self._sampler.context_size
     self.add_sources(data)
 
   def __len__(self):
-    return max(len(self._data) + 1 - self._context_size, 0)
+    return max(len(self._data) + 1 - self._sampler.context_size, 0)
 
   def get_sample(self, i):
     return self._sampler(self._data, i)
@@ -95,7 +94,6 @@ class SequenceProcessor(pypl.IterElement):
   def __init__(self, context_size, mode, tokenizer):
     super().__init__()
     self._sampler = _get_sampler(mode, context_size)
-    self._context_size = self._sampler.context_size
     self._tokenizer = tokenizer
     self._tokens = []
 
@@ -108,12 +106,13 @@ class SequenceProcessor(pypl.IterElement):
       else:
         self._tokens.extend(idata)
 
-      for i in range(len(self._tokens) + 1 - self._context_size):
+      max_index = len(self._tokens) + 1 - self._sampler.context_size
+      for i in range(max_index):
         x, y = self._sampler(self._tokens, i)
 
         yield x, y
 
-      self._tokens = self._tokens[len(self._tokens) - self._context_size + 1:]
+      self._tokens = self._tokens[max_index:]
 
   def clone(self):
     new_self = copy.copy(self)
