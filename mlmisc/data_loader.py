@@ -17,10 +17,6 @@ from . import dataset_base as dsb
 from . import dataset_utils as dsu
 
 
-class _Closing:
-  pass
-
-
 class _QueueException(Exception):
 
   def __init__(self, ex):
@@ -140,8 +136,7 @@ class _IterDataFeeder:
       index = 0
       while True:
         feed_size = queue_getter.get()
-        if feed_size is None or isinstance(feed_size, _Closing):
-          exit_result = feed_size
+        if feed_size is None:
           break
 
         for i in range(feed_size):
@@ -158,14 +153,11 @@ class _IterDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       for output_queue in self._output_queues:
-        if isinstance(exit_result, _Closing):
-          _queue_close(output_queue)
-        else:
-          output_queue.put(exit_result)
-          output_queue.close()
+        output_queue.put(exit_result)
+        output_queue.close()
 
   def close(self):
-    self._input_queue.put(_Closing())
+    self._input_queue.put(None)
     self._proc.join()
 
 
@@ -187,8 +179,7 @@ class _MapDataFeeder:
 
       while True:
         indices = queue_getter.get()
-        if indices is None or isinstance(indices, _Closing):
-          exit_result = indices
+        if indices is None:
           break
 
         for index in indices:
@@ -199,14 +190,11 @@ class _MapDataFeeder:
       alog.exception(ex, exmsg=f'Exception in data loader map data feeder')
       exit_result = _QueueException(ex)
     finally:
-      if isinstance(exit_result, _Closing):
-        queue_close(self._output_queue)
-      else:
-        self._output_queue.put(exit_result)
-        self._output_queue.close()
+      self._output_queue.put(exit_result)
+      self._output_queue.close()
 
   def close(self):
-    self._input_queue.put(_Closing())
+    self._input_queue.put(None)
     self._proc.join()
 
 
@@ -236,8 +224,7 @@ class _DataTransformer:
 
       while True:
         idata = queue_getter.get()
-        if idata is None or isinstance(idata, _Closing):
-          exit_result = idata
+        if idata is None:
           break
 
         index, data = idata
@@ -254,14 +241,11 @@ class _DataTransformer:
       alog.exception(ex, exmsg=f'Exception in data transformer')
       exit_result = _QueueException(ex)
     finally:
-      if isinstance(exit_result, _Closing):
-        _queue_close(self._output_queue)
-      else:
-        self._output_queue.put(exit_result)
-        self._output_queue.close()
+      self._output_queue.put(exit_result)
+      self._output_queue.close()
 
   def close(self):
-    self._input_queue.put(_Closing())
+    self._input_queue.put(None)
     self._proc.join()
 
 
@@ -355,8 +339,14 @@ class _IterDataLoader:
       if bsize == self._batch_size or not self._drop_last:
         yield bdata
 
+  def _iter_generate(self):
+    try:
+      yield from self._generate()
+    finally:
+      _queue_flush(self._output_queue)
+
   def __iter__(self):
-    return self._generate()
+    return self._iter_generate()
 
   def __len__(self):
     return _loader_size(self._dataset, self._batch_size, self._drop_last)
@@ -442,8 +432,14 @@ class _MapDataLoader:
       bdata, bsize = cbatch
       yield bdata
 
+  def _iter_generate(self):
+    try:
+      yield from self._generate()
+    finally:
+      _queue_flush(self._output_queue)
+
   def __iter__(self):
-    return self._generate()
+    return self._iter_generate()
 
   def __len__(self):
     return _loader_size(self._dataset, self._batch_size, self._drop_last)
@@ -538,6 +534,14 @@ class _IterIndexGenerator:
       self._index += csize
 
       return indices
+
+
+def _queue_flush(q, timeout=1.0):
+  try:
+    while True:
+      q.get(True, timeout)
+  except queue.Empty:
+    pass
 
 
 def _queue_close(q):
