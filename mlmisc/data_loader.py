@@ -1,6 +1,7 @@
 import functools
 import multiprocessing
 import queue
+import signal
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -8,11 +9,16 @@ import py_misc_utils.core_utils as pycu
 import py_misc_utils.fin_wrap as pyfw
 import py_misc_utils.multiprocessing as pymp
 import py_misc_utils.num_utils as pynu
+import py_misc_utils.signal as pysig
 import py_misc_utils.utils as pyu
 import torch
 
 from . import dataset_base as dsb
 from . import dataset_utils as dsu
+
+
+class _Closing:
+  pass
 
 
 class _QueueException(Exception):
@@ -134,7 +140,8 @@ class _IterDataFeeder:
       index = 0
       while True:
         feed_size = queue_getter.get()
-        if feed_size is None:
+        if feed_size is None or isinstance(feed_size, _Closing):
+          exit_result = feed_size
           break
 
         for i in range(feed_size):
@@ -151,11 +158,14 @@ class _IterDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       for output_queue in self._output_queues:
-        output_queue.put(exit_result)
-        output_queue.close()
+        if isinstance(exit_result, _Closing):
+          _queue_close(output_queue)
+        else:
+          output_queue.put(exit_result)
+          output_queue.close()
 
   def close(self):
-    self._input_queue.put(None)
+    self._input_queue.put(_Closing())
     self._proc.join()
 
 
@@ -177,7 +187,8 @@ class _MapDataFeeder:
 
       while True:
         indices = queue_getter.get()
-        if indices is None:
+        if indices is None or isinstance(indices, _Closing):
+          exit_result = indices
           break
 
         for index in indices:
@@ -188,11 +199,14 @@ class _MapDataFeeder:
       alog.exception(ex, exmsg=f'Exception in data loader map data feeder')
       exit_result = _QueueException(ex)
     finally:
-      self._output_queue.put(exit_result)
-      self._output_queue.close()
+      if isinstance(exit_result, _Closing):
+        queue_close(self._output_queue)
+      else:
+        self._output_queue.put(exit_result)
+        self._output_queue.close()
 
   def close(self):
-    self._input_queue.put(None)
+    self._input_queue.put(_Closing())
     self._proc.join()
 
 
@@ -222,7 +236,8 @@ class _DataTransformer:
 
       while True:
         idata = queue_getter.get()
-        if idata is None:
+        if idata is None or isinstance(idata, _Closing):
+          exit_result = idata
           break
 
         index, data = idata
@@ -239,11 +254,14 @@ class _DataTransformer:
       alog.exception(ex, exmsg=f'Exception in data transformer')
       exit_result = _QueueException(ex)
     finally:
-      self._output_queue.put(exit_result)
-      self._output_queue.close()
+      if isinstance(exit_result, _Closing):
+        _queue_close(self._output_queue)
+      else:
+        self._output_queue.put(exit_result)
+        self._output_queue.close()
 
   def close(self):
-    self._input_queue.put(None)
+    self._input_queue.put(_Closing())
     self._proc.join()
 
 
@@ -543,8 +561,13 @@ def _closer(objs):
     obj.close()
 
 
+def _int_handler(sig, frame):
+  return pysig.HANDLED
+
+
 def _init_process():
   torch.set_num_threads(1)
+  pysig.signal(signal.SIGINT, _int_handler)
 
 
 def _loader_size(dataset, batch_size, drop_last):
