@@ -110,7 +110,7 @@ class _IterDataFeeder:
   def __init__(self, mpctx, dataset, input_queue, output_queues):
     self._dataset = dataset
     self._input_queue = input_queue
-    self._output_queues = output_queues
+    self._output_queues = tuple(output_queues)
     self._proc = pymp.create_process(self._run, context=mpctx)
     self._proc.start()
 
@@ -150,9 +150,9 @@ class _IterDataFeeder:
       alog.exception(ex, exmsg=f'Exception in data loader iter data feeder')
       exit_result = _QueueException(ex)
     finally:
-      for outq in self._output_queues:
-        outq.put(exit_result)
-        _queue_close(outq)
+      for output_queue in self._output_queues:
+        output_queue.put(exit_result)
+        output_queue.close()
 
   def close(self):
     self._input_queue.put(None)
@@ -189,7 +189,7 @@ class _MapDataFeeder:
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
-      _queue_close(self._output_queue)
+      self._output_queue.close()
 
   def close(self):
     self._input_queue.put(None)
@@ -205,9 +205,17 @@ class _DataTransformer:
     self._proc = pymp.create_process(self._run, context=mpctx)
     self._proc.start()
 
+  def _process_data(self, index, data):
+    # If the Pipeline returns an iterator, we need to unwrap it since it might
+    # contain generator objects which are not pickle-able.
+    xdata = _Expanded(data) if pycu.is_iterator(data) else data
+
+    self._output_queue.put((index, xdata))
+
   def _run(self):
     _init_process()
 
+    last_index, index_gap = 0, 0
     exit_result = None
     try:
       queue_getter = _QueueGetter(self._input_queue)
@@ -219,20 +227,20 @@ class _DataTransformer:
 
         index, data = idata
 
-        data = self._pipeline(data)
+        self._process_data(index, self._pipeline(data))
 
-        # If the Pipeline returns an iterator, we need to unwrap it since it might
-        # contain generator objects which are not pickle-able.
-        if pycu.is_iterator(data):
-          data = _Expanded(data)
+        index_gap, last_index = max(index_gap, index - last_index), index
 
-        self._output_queue.put((index, data))
+      data = self._pipeline.flush()
+      if data is not None:
+        self._process_data(last_index + index_gap, data)
+
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data transformer')
       exit_result = _QueueException(ex)
     finally:
       self._output_queue.put(exit_result)
-      _queue_close(self._output_queue)
+      self._output_queue.close()
 
   def close(self):
     self._input_queue.put(None)

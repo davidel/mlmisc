@@ -75,10 +75,10 @@ def create(urls_path,
   urls = dsu.expand_urls(urls_path)
 
   if url_shuffle:
-    # Stable shuffling, given same seed. Even though the ImageUrlsDataset (and the
-    # ShufflerDataset) do shuffle urls/samples, because of the way we split
-    # between train/test urls (by slicing), randomization is needed since the
-    # distribution might not be uniform among the dataset urls.
+    # Stable shuffling, given same seed. Even though the ImageUrlsDataset do shuffle
+    # urls/samples, because of the way we split between train/test urls (by slicing),
+    # randomization is needed since the distribution might not be uniform among the
+    # dataset urls.
     urls = dsb.shuffled_data(urls, seed=seed)
 
   ntrain = int(train_pct * len(urls))

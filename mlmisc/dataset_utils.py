@@ -300,10 +300,10 @@ def expand_dataset_urls(dsinfo, shuffle=True, seed=None):
     train = expand_urls(dsinfo)
 
   if shuffle:
-    # Stable shuffling, given same seed. Even though the WebDataset (and the
-    # ShufflerDataset) do shuffle urls/samples, because of the way we split
-    # between train/test urls (by slicing), randomization is needed since the
-    # distribution might not be uniform among the dataset urls.
+    # Stable shuffling, given same seed. Even though some datasets do shuffle
+    # urls/samples, because of the way we split between train/test urls (by slicing),
+    # randomization is needed since the distribution might not be uniform among the
+    # dataset urls.
     if train is not None:
       train = dsb.shuffled_data(train, seed=seed)
     if test is not None:

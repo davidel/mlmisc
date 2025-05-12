@@ -10,6 +10,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
+import py_misc_utils.pipeline as pypl
 import torch
 
 from . import dataset_adapters as dsad
@@ -112,8 +113,12 @@ def create(url,
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
   if shuffle:
-    ds['train'] = dsad.ShufflerDataset(ds['train'], buffer_size=shuffle_buffer_size)
-    ds['test'] = dsad.ShufflerDataset(ds['test'], buffer_size=shuffle_buffer_size)
+    pipeline = pypl.Pipeline(
+      dsad.ShuffleProcessor(buffer_size=shuffle_buffer_size),
+    )
+
+    ds['train'] = dsad.IterableTransformDataset(ds['train'], pipeline)
+    ds['test'] = dsad.IterableTransformDataset(ds['test'], pipeline)
 
   return ds
 

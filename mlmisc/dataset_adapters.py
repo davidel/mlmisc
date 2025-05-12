@@ -1,37 +1,44 @@
 import bisect
+import copy
 import random
 
 import py_misc_utils.alog as alog
+import py_misc_utils.pipeline as pypl
 import torch
 
 from . import dataset_base as dsb
 
 
-class ShufflerDataset(torch.utils.data.IterableDataset, dsb.DatasetBase):
+class ShuffleProcessor(pypl.IterElement):
 
-  def __init__(self, data, buffer_size=1024):
-    torch.utils.data.IterableDataset.__init__(self)
-    dsb.DatasetBase.__init__(self)
-    self._data = data
+  def __init__(self, buffer_size=1024):
+    super().__init__()
     self._buffer_size = buffer_size
-    self.add_sources(data)
+    self._stacked = []
 
-  def generate(self):
-    stacked = []
-    for data in self._data:
-      if self._buffer_size > len(stacked):
-        stacked.append(data)
+  def _process(self, data):
+    for idata in data:
+      if self._buffer_size > len(self._stacked):
+        self._stacked.append(idata)
       else:
-        idx = random.randrange(len(stacked))
-        yield stacked[idx]
-        stacked[idx] = data
+        idx = random.randrange(len(self._stacked))
+        yield self._stacked[idx]
+        self._stacked[idx] = idata
 
-    random.shuffle(stacked)
-    for data in stacked:
-      yield data
+  def flush(self, data):
+    yield from self._process(data)
 
-  def __iter__(self):
-    return self.generate()
+    random.shuffle(self._stacked)
+    for idata in self._stacked:
+      yield idata
+
+    self._stacked = []
+
+  def clone(self):
+    new_self = copy.copy(self)
+    new_self._stacked = []
+
+    return new_self
 
 
 class TransformDataset(dsb.Dataset):
