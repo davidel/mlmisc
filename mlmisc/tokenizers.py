@@ -118,7 +118,23 @@ def create_tokenizer(path, max_vocab_size, proto_path=None, **kwargs):
                        **kwargs)
 
 
-def enum_chunks(path, chunk_size=4 * 1024**2, binary=True):
+def _chunk_end(data, punct):
+  pos = -1
+  for c in punct:
+    if (pos := data.rfind(c)) >= 0:
+      break
+
+  if pos < 0:
+    return len(data)
+
+  pos += 1
+  while len(data) > pos and punct.find(data[pos]) >= 0:
+    pos += 1
+
+  return pos
+
+
+def enum_chunks(path, chunk_size=4 * 1024**2, binary=True, punct=b'.;?!:,\n'):
   with gfs.open(path, mode='rb') as fd:
     rem = b''
     while True:
@@ -126,18 +142,10 @@ def enum_chunks(path, chunk_size=4 * 1024**2, binary=True):
 
       rdata = fd.read(chunk_size)
       data = rem + rdata
-      if (epos := data.rfind(b'.')) < 0:
-        epos = data.rfind(b'\n')
-      if epos >= 0:
-        rem = data[epos + 1:]
-        data = data[: epos + 1]
-      else:
-        # We did not find a dot (or alternatively EOL) within the read buffer.
-        # If the buffer is big enough, this should mean we are at the end of the
-        # data, otherwise we end up feeding a truncated word in.
-        # This should not happen though, given a big enough buffer and data being
-        # actually text!
-        rem = b''
+      epos = _chunk_end(data, punct)
+
+      rem = data[epos + 1:]
+      data = data[: epos + 1]
 
       yield data if binary else data.decode()
 
