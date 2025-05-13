@@ -123,6 +123,10 @@ class _IterDataFeeder:
     data_sources = (self._dataset if isinstance(self._dataset, (list, tuple))
                     else (self._dataset,))
     for source in data_sources:
+      # In case of a dsb.IterableDataset we have fetched a copy of its pipeline,
+      # and we offloaded its processing to _DataTransformer instances, so here
+      # we are bypassing the dsb.IterableDataset pipeline processing by calling
+      # enum_samples() directly.
       if isinstance(source, dsb.IterableDataset):
         yield from source.enum_samples()
       else:
