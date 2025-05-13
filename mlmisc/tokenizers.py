@@ -78,23 +78,14 @@ def from_config(tokenizer_config, **kwargs):
   return FpTokenizerWrapper(tokenizer)
 
 
-def create_tokenizer(path, max_vocab_size,
-                     proto_path=None,
-                     model_type=None,
-                     **kwargs):
-  if (proto_path is not None and os.path.isfile(proto_path) and
-      pyfsu.is_newer_file(proto_path, path)):
-    tokenizer = load_tokenizer(proto_path)
-    if tokenizer.vocab_size() == max_vocab_size:
-      return tokenizer
-
-    alog.warning(f'Existing tokenizer has vocabulary size {tokenizer.vocab_size()} ' \
-                 f'but {max_vocab_size} is required. Rebuilding ...')
-
+def from_iterator(data_iter, max_vocab_size,
+                  proto_path=None,
+                  model_type='bpe',
+                  **kwargs):
   spstg = io.BytesIO()
-  spm.SentencePieceTrainer.train(input=path,
+  spm.SentencePieceTrainer.train(sentence_iterator=data_iter,
                                  model_writer=spstg,
-                                 model_type=model_type or 'bpe',
+                                 model_type=model_type,
                                  vocab_size=max_vocab_size,
                                  **kwargs)
 
@@ -109,7 +100,25 @@ def create_tokenizer(path, max_vocab_size,
   return tokenizer
 
 
-def enum_chunks(path, chunk_size=32 * 1024 * 1024):
+def create_tokenizer(path, max_vocab_size, proto_path=None, **kwargs):
+  if (proto_path is not None and os.path.isfile(proto_path) and
+      pyfsu.is_newer_file(proto_path, path)):
+    tokenizer = load_tokenizer(proto_path)
+    if tokenizer.vocab_size() == max_vocab_size:
+      return tokenizer
+
+    alog.warning(f'Existing tokenizer has vocabulary size {tokenizer.vocab_size()} ' \
+                 f'but {max_vocab_size} is required. Rebuilding ...')
+
+  chunk_size = 4 * 1024**2
+
+  return from_iterator(enum_chunks(path, chunk_size=chunk_size), max_vocab_size,
+                       proto_path=proto_path,
+                       max_sentence_length=chunk_size + 4096,
+                       **kwargs)
+
+
+def enum_chunks(path, chunk_size=4 * 1024**2, binary=True):
   with gfs.open(path, mode='rb') as fd:
     rem = b''
     while True:
@@ -117,20 +126,20 @@ def enum_chunks(path, chunk_size=32 * 1024 * 1024):
 
       rdata = fd.read(chunk_size)
       data = rem + rdata
-      if (epos := data.rfind(b'\n')) < 0:
-        epos = data.rfind(b' ')
+      if (epos := data.rfind(b'.')) < 0:
+        epos = data.rfind(b'\n')
       if epos >= 0:
         rem = data[epos + 1:]
         data = data[: epos + 1]
       else:
-        # We did not find an EOL (or alternatively a space) within the read buffer.
+        # We did not find a dot (or alternatively EOL) within the read buffer.
         # If the buffer is big enough, this should mean we are at the end of the
         # data, otherwise we end up feeding a truncated word in.
         # This should not happen though, given a big enough buffer and data being
         # actually text!
         rem = b''
 
-      yield data
+      yield data if binary else data.decode()
 
       if chunk_size > len(rdata):
         break
