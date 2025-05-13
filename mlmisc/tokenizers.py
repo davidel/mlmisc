@@ -144,8 +144,8 @@ def enum_chunks(path, chunk_size=4 * 1024**2, binary=True, punct=b'.;?!:,\n'):
       data = rem + rdata
       epos = _chunk_end(data, punct)
 
-      rem = data[epos + 1:]
-      data = data[: epos + 1]
+      rem = data[epos:]
+      data = data[: epos]
 
       yield data if binary else data.decode()
 
