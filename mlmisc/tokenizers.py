@@ -153,7 +153,7 @@ def enum_chunks(path, chunk_size=4 * 1024**2, binary=True, punct=b'.;?!:,\n'):
         break
 
 
-def tokenize_data(path, tokenizer, chunk_size=None, dtype=None):
+def tokenize_data(path, tokenizer, chunk_size=4 * 1024**2, dtype=None):
   tokens = array.array('I')
   for chunk in enum_chunks(path, chunk_size=chunk_size):
     enc = tokenizer.encode(chunk)
