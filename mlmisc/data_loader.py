@@ -17,6 +17,9 @@ from . import dataset_base as dsb
 from . import dataset_utils as dsu
 
 
+# We want to transfer exceptions from child processes, to parents, using the
+# multiprocessing Quque objects, which require data to be pickle-able, and some
+# of the generated exceptions contain data which is not.
 class _QueueException(Exception):
 
   def __init__(self, ex):
