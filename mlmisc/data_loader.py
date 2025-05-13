@@ -597,6 +597,10 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
                           collate_fn, prefetch_factor, **kwargs)
 
 
+# Why not using the PyTorch one?
+# I have had many issues with different libraries liking or not liking certain
+# Python multiprocessing start methods, for which the PyTorch DataLoader does not
+# seem to play nice.
 class DataLoader:
 
   def __init__(self, dataset,
