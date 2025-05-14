@@ -46,6 +46,9 @@ class DatasetBase:
   def pipeline(self):
     return self._pipeline.clone()
 
+  def reset(self):
+    self._pipeline = self._pipeline.clone()
+
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
 
