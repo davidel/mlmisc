@@ -72,7 +72,7 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
     DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def generate(self):
-    pipeline = self.pipeline()
+    pipeline = self.pipeline().clone()
 
     try:
       for data in self.enum_samples():
