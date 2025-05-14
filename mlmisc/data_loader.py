@@ -9,6 +9,7 @@ import py_misc_utils.core_utils as pycu
 import py_misc_utils.fin_wrap as pyfw
 import py_misc_utils.multiprocessing as pymp
 import py_misc_utils.num_utils as pynu
+import py_misc_utils.pipeline as pypl
 import py_misc_utils.signal as pysig
 import py_misc_utils.utils as pyu
 import torch
@@ -244,6 +245,8 @@ class _DataTransformer:
       if data is not None:
         self._process_data(last_index + index_gap, data)
 
+    except pypl.HaltedPipeline:
+      pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data transformer')
       exit_result = _QueueException(ex)
