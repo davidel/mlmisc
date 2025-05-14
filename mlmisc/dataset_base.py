@@ -69,9 +69,11 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
     DatasetBase.__init__(self, pipeline=pipeline, **kwargs)
 
   def generate(self):
+    pipeline = self.pipeline()
+
     try:
       for data in self.enum_samples():
-        pdata = self.process_sample(data)
+        pdata = pipeline(data)
         if pycu.is_iterator(pdata):
           yield from pdata
         else:
