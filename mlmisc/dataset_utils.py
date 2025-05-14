@@ -58,7 +58,7 @@ class IterableDataset(dsb.IterableDataset):
   def __len__(self):
     dslen = dataset_size(self._data)
 
-    return dslen if callable(dslen) else dataset_size(super())
+    return dslen if dslen is not None else dataset_size(super())
 
 
 def is_random_access_dataset(dataset):
