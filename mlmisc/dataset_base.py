@@ -81,6 +81,10 @@ class IterableDataset(torch.utils.data.IterableDataset, DatasetBase):
           yield from pdata
         else:
           yield pdata
+
+      pdata = pipeline.flush()
+      if pdata is not None:
+        yield from pdata
     except pypl.HaltedPipeline:
       pass
 
