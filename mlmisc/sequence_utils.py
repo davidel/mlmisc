@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 import py_misc_utils.alog as alog
 
@@ -86,7 +85,7 @@ def generate(evalfn, seq, context_size, steps, pad_mode, pad_value,
       logits /= temperature
     if top_k is not None and top_k > 0:
       logits = mask_top_k_logits(logits, top_k)
-    probs = F.softmax(logits, dim=-1)
+    probs = nn.functional.softmax(logits, dim=-1)
 
     if sample:
       next_token = torch.multinomial(probs, num_samples=1)
