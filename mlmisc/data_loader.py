@@ -287,7 +287,7 @@ class _IterDataLoader:
                                      (self._output_queue,)))
       self._output_feeders += 1
     else:
-      pipeline = dataset.pipeline()
+      pipeline = dataset.pipeline().clone()
       transformers = []
       for i in range(num_workers - 1):
         self._trans_queues.append(mpctx.Queue())
