@@ -138,7 +138,7 @@ class _IterDataFeeder:
 
     exit_result = None
     try:
-      data_iter = iter(self._generate())
+      data_iter = self._generate()
       queue_getter = _QueueGetter(self._input_queue)
 
       index = 0
