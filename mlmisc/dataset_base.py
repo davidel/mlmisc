@@ -12,7 +12,7 @@ import torch
 class DatasetBase:
 
   def __init__(self, pipeline=None, **kwargs):
-    self.pipeline = pyu.value_or(pipeline, pypl.Pipeline())
+    self._pipeline = pyu.value_or(pipeline, pypl.Pipeline())
     self._kwargs = kwargs
     self._sources = []
 
@@ -41,10 +41,13 @@ class DatasetBase:
     return self.extra_arg('size')
 
   def process_sample(self, data):
-    return self.pipeline(data)
+    return self._pipeline(data)
+
+  def pipeline(self):
+    return self._pipeline
 
   def reset(self):
-    self.pipeline = self.pipeline.clone()
+    self._pipeline = self._pipeline.clone()
 
 
 class Dataset(torch.utils.data.Dataset, DatasetBase):
