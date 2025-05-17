@@ -46,6 +46,9 @@ class DatasetBase:
   def pipeline(self):
     return self._pipeline
 
+  def extend_pipeline(self, elems):
+    self._pipeline.extend(elems)
+
   def reset(self):
     self._pipeline = self._pipeline.clone()
 

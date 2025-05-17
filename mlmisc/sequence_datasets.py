@@ -97,7 +97,7 @@ class SequenceProcessor(pypl.IterElement):
     self._tokenizer = tokenizer
     self._tokens = []
 
-  def _process(self, data):
+  def __call__(self, data):
     for idata in data:
       if isinstance(idata, str):
         self._tokens.extend(self._tokenizer.encode(idata))
@@ -127,7 +127,7 @@ class Padder(pypl.IterElement):
     super().__init__()
     self._pad = pad
 
-  def _process(self, data):
+  def __call__(self, data):
     for idata in data:
       x, y = idata
 

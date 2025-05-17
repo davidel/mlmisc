@@ -55,7 +55,7 @@ def create_dataset(args):
   else:
     select_fn = None
 
-  train_trans = test_trans = tgt_train_trans = tgt_test_trans = nn.Identity()
+  train_trans = test_trans = tgt_train_trans = tgt_test_trans = None
   if args.dataset_transform:
     code = pyfsu.readall(args.dataset_transform).decode()
     module = pydm.create_module('mlmisc.dataset.dataset_transform', code)
@@ -64,13 +64,10 @@ def create_dataset(args):
     train_trans, test_trans, tgt_train_trans, tgt_test_trans = (
       getattr(module, name, None) for name in pyu.comma_split(syms))
 
-    tgt_train_trans = tgt_train_trans or nn.Identity()
-    tgt_test_trans = tgt_test_trans or nn.Identity()
-
-    alog.info(f'Train Dataset Transforms:\n{train_trans}')
-    alog.info(f'Train Dataset Target Transforms:\n{tgt_train_trans}')
-    alog.info(f'Test Dataset Transforms:\n{test_trans}')
-    alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans}')
+    alog.info(f'Train Dataset Transforms:\n{train_trans or nn.Identity()}')
+    alog.info(f'Train Dataset Target Transforms:\n{tgt_train_trans or nn.Identity()}')
+    alog.info(f'Test Dataset Transforms:\n{test_trans or nn.Identity()}')
+    alog.info(f'Test Dataset Target Transforms:\n{tgt_test_trans or nn.Identity()}')
 
   dataset_kwargs = pyu.parse_config(args.dataset_kwargs) if args.dataset_kwargs else dict()
   alog.debug0(f'Dataset Args: {dataset_kwargs}')

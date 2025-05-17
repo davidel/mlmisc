@@ -1,5 +1,6 @@
 import functools
 import multiprocessing
+import pickle
 import queue
 import signal
 
@@ -49,6 +50,33 @@ class _Expanded:
 
   def __init__(self, data):
     self.expanded = tuple(data)
+
+
+# PyTorch hooks into the Python multiprocessing Queue implementation, by providing
+# its own pickler, which uses shared memory (/dev/shm on Linux). This might be
+# good when dealing with large dataset samples (ie, images), but on smaller ones
+# (ie, tokens) not only it's slower but it tends to keep open too many files which
+# in turn result in OS errors.
+class _PickledQueue:
+
+  def __init__(self, queue):
+    self._queue = queue
+
+  def put(self, data):
+    qdata = pickle.dumps(data)
+
+    self._queue.put(qdata)
+
+  def get(self, *args, **kwargs):
+    qdata = self._queue.get(*args, **kwargs)
+
+    return pickle.loads(qdata)
+
+  def close(self):
+    self._queue.close()
+
+  def cancel_join_thread(self):
+    self._queue.cancel_join_thread()
 
 
 class _BatchCollater:
@@ -124,14 +152,7 @@ class _IterDataFeeder:
     data_sources = (self._dataset if isinstance(self._dataset, (list, tuple))
                     else (self._dataset,))
     for source in data_sources:
-      # In case of a dsb.IterableDataset we have fetched a copy of its pipeline,
-      # and we offloaded its processing to _DataTransformer instances, so here
-      # we are bypassing the dsb.IterableDataset pipeline processing by calling
-      # enum_samples() directly.
-      if isinstance(source, dsb.IterableDataset):
-        yield from source.enum_samples()
-      else:
-        yield from source
+      yield from source
 
   def _run(self):
     _init_process()
@@ -259,6 +280,18 @@ class _DataTransformer:
     self._proc.join()
 
 
+class _BareDataset(dsb.IterableDataset):
+
+  def __init__(self, dataset):
+    dsb.IterableDataset.__init__(self)
+    self._datasets = pyu.as_sequence(dataset)
+    self.add_sources(*self._datasets)
+
+  def enum_samples(self):
+    for dataset in self._datasets:
+      yield from dataset.enum_samples()
+
+
 class _IterDataLoader:
 
   def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
@@ -271,8 +304,8 @@ class _IterDataLoader:
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
     self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
-    self._input_queue = mpctx.Queue()
-    self._output_queue = mpctx.Queue()
+    self._input_queue = _create_queue(mpctx)
+    self._output_queue = _create_queue(mpctx)
     self._trans_queues = []
     self._output_feeders = 0
 
@@ -281,6 +314,9 @@ class _IterDataLoader:
     # pipeline it makes sense to have the _IterDataFeeder to feed N _DataTransformer
     # (whose task is the run the pipeline), which in turn feed the output queue.
     # Otherwise we have the _IterDataFeeder feed the output queue directly.
+    # The _create_loader() API already trims the number of workers to one, in case
+    # the input dataset is not an instance of dsb.IterableDataset (that is, it has
+    # no pipeline).
     feeders = []
     if num_workers == 1:
       feeders.append(_IterDataFeeder(mpctx, dataset, self._input_queue,
@@ -288,9 +324,10 @@ class _IterDataLoader:
       self._output_feeders += 1
     else:
       pipeline = dataset.pipeline().clone()
+
       transformers = []
       for i in range(num_workers - 1):
-        self._trans_queues.append(mpctx.Queue())
+        self._trans_queues.append(_create_queue(mpctx))
 
         trs = _DataTransformer(mpctx, self._trans_queues[-1], self._output_queue,
                                pipeline)
@@ -301,7 +338,7 @@ class _IterDataLoader:
       pyfw.fin_wrap(self, '_transformers', transformers,
                     finfn=functools.partial(_closer, transformers))
 
-      feeders.append(_IterDataFeeder(mpctx, dataset, self._input_queue,
+      feeders.append(_IterDataFeeder(mpctx, _BareDataset(dataset), self._input_queue,
                                      self._trans_queues))
 
     pyfw.fin_wrap(self, '_feeders', feeders,
@@ -374,11 +411,11 @@ class _MapDataLoader:
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
     self._input_queues = []
-    self._output_queue = mpctx.Queue()
+    self._output_queue = _create_queue(mpctx)
 
     feeders = []
     for i in range(num_workers):
-      self._input_queues.append(mpctx.Queue())
+      self._input_queues.append(_create_queue(mpctx))
 
       feeder = _MapDataFeeder(mpctx, dataset, self._input_queues[-1], self._output_queue)
 
@@ -546,6 +583,10 @@ class _IterIndexGenerator:
       return indices
 
 
+def _create_queue(mpctx):
+  return _PickledQueue(mpctx.Queue())
+
+
 def _queue_flush(q, timeout=1.0):
   try:
     while True:
@@ -597,7 +638,11 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
     return _SimpleDataLoader(dataset, shuffle, batch_size, drop_last,
                              collate_fn, **kwargs)
   elif isinstance(dataset, torch.utils.data.IterableDataset):
-    if num_workers > 1 and not isinstance(dataset, dsb.DatasetBase):
+    # If we have a number of workers greater than one, and the input dataset is
+    # not a dsb.DatasetBase (or its pipeline is empty), force the number of workers
+    # to be one since there is no need for extra.
+    if num_workers > 1 and (not isinstance(dataset, dsb.DatasetBase) or
+                            not dataset.pipeline()):
       num_workers = 1
 
     return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,

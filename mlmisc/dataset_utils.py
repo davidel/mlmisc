@@ -80,15 +80,24 @@ def _get_dataset_base(dataset):
 
 def _build_dataset_dict(train_ds, test_ds, pipelines, dataset_kwargs,
                         train_kwargs, test_kwargs):
-  ds_base = _get_dataset_base(train_ds)
   ds = dict()
-  kwargs = dataset_kwargs.copy()
-  kwargs.update(train_kwargs)
-  ds['train'] = ds_base(train_ds, pipeline=pipelines.train, **kwargs)
+  if isinstance(train_ds, dsb.DatasetBase):
+    train_ds.extend_pipeline(pipelines.train)
+    ds['train'] = train_ds
+  else:
+    ds_base = _get_dataset_base(train_ds)
+    kwargs = dataset_kwargs.copy()
+    kwargs.update(train_kwargs)
+    ds['train'] = ds_base(train_ds, pipeline=pipelines.train, **kwargs)
 
-  kwargs = dataset_kwargs.copy()
-  kwargs.update(test_kwargs)
-  ds['test'] = ds_base(test_ds, pipeline=pipelines.test, **kwargs)
+  if isinstance(test_ds, dsb.DatasetBase):
+    test_ds.extend_pipeline(pipelines.test)
+    ds['test'] = test_ds
+  else:
+    ds_base = _get_dataset_base(test_ds)
+    kwargs = dataset_kwargs.copy()
+    kwargs.update(test_kwargs)
+    ds['test'] = ds_base(test_ds, pipeline=pipelines.test, **kwargs)
 
   return ds
 
@@ -160,8 +169,8 @@ def build_pipelines(select_fn=None,
   train, test = pypl.Pipeline(), pypl.Pipeline()
 
   if select_fn is not None:
-    train.add(select_fn)
-    test.add(select_fn)
+    train.append(select_fn)
+    test.append(select_fn)
 
   train_transform = train_target_transform = None
   test_transform = test_target_transform = None
@@ -180,9 +189,9 @@ def build_pipelines(select_fn=None,
       train_target_transform = test_target_transform = target_transform
 
   if train_transform or train_target_transform:
-    train.add(dsb.transformer(sample=train_transform, target=train_target_transform))
+    train.append(dsb.transformer(sample=train_transform, target=train_target_transform))
   if test_transform or test_target_transform:
-    test.add(dsb.transformer(sample=test_transform, target=test_target_transform))
+    test.append(dsb.transformer(sample=test_transform, target=test_target_transform))
 
   return pyu.make_object(train=train, test=test)
 

@@ -119,14 +119,15 @@ def web_create(url, tokenizer_config, field_selector, context_size, mode,
   tokenizer = tkz.from_config(tokenizer_config)
 
   to_long = dsb.to_transform(dtype=torch.long)
-  pipeline = pypl.Pipeline(
-    pypl.IterProcess(dsb.items_selector_fn, field_selector),
-    seqds.SequenceProcessor(context_size, mode, tokenizer),
-    pypl.IterProcess(dsb.transformer_fn, to_long, to_long),
-  )
 
   webds = dict()
   for kind, dset in dataset.items():
+    pipeline = pypl.Pipeline(
+      dsb.items_selector(field_selector),
+      seqds.SequenceProcessor(context_size, mode, tokenizer),
+      dsb.transformer(sample=to_long, target=to_long),
+    )
+
     webds[kind] = dsad.IterableTransformDataset(dset, pipeline,
                                                 tokenizer=tokenizer)
 

@@ -16,7 +16,7 @@ class ShuffleProcessor(pypl.IterElement):
     self._buffer_size = buffer_size
     self._stacked = []
 
-  def _process(self, data):
+  def __call__(self, data):
     for idata in data:
       if self._buffer_size > len(self._stacked):
         self._stacked.append(idata)
@@ -26,7 +26,7 @@ class ShuffleProcessor(pypl.IterElement):
         self._stacked[idx] = idata
 
   def flush(self, data):
-    yield from self._process(data)
+    yield from self(data)
 
     random.shuffle(self._stacked)
     for idata in self._stacked:

@@ -113,12 +113,15 @@ def create(url,
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
   if shuffle:
-    pipeline = pypl.Pipeline(
+    train_pipeline = pypl.Pipeline(
+      dsad.ShuffleProcessor(buffer_size=shuffle_buffer_size),
+    )
+    test_pipeline = pypl.Pipeline(
       dsad.ShuffleProcessor(buffer_size=shuffle_buffer_size),
     )
 
-    ds['train'] = dsad.IterableTransformDataset(ds['train'], pipeline)
-    ds['test'] = dsad.IterableTransformDataset(ds['test'], pipeline)
+    ds['train'] = dsad.IterableTransformDataset(ds['train'], train_pipeline)
+    ds['test'] = dsad.IterableTransformDataset(ds['test'], test_pipeline)
 
   return ds
 
