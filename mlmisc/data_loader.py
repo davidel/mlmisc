@@ -54,8 +54,8 @@ class _Expanded:
 
 class _PickledQueue:
 
-  def __init__(self, queue):
-    self._queue = queue
+  def __init__(self, mp_queue):
+    self._queue = mp_queue
 
   def put(self, data):
     qdata = pickle.dumps(data)
@@ -587,19 +587,23 @@ class _IterIndexGenerator:
 # The _PickledQueue class is a simple wrapper around a multiprocessing Queue that
 # tricks the PyTorch tensors multiprocessing serialization into emitting into a
 # normal buffer, and exchange that within the Queue connection.
+_USE_TORCH_PICKLER = pyu.getenv('USE_TORCH_PICKLER', dtype=bool, defval=False)
+
 def _create_queue(mpctx):
-  return _PickledQueue(mpctx.Queue())
+  mp_queue = mpctx.Queue()
+
+  return mp_queue if _USE_TORCH_PICKLER else _PickledQueue(mp_queue)
 
 
-def _queue_flush(q, timeout=1.0):
+def _queue_flush(mp_queue, timeout=1.0):
   try:
     while True:
-      q.get(True, timeout)
+      mp_queue.get(True, timeout)
   except queue.Empty:
     pass
 
 
-def _queue_close(q):
+def _queue_close(mp_queue):
   # Within child processes, all the queues used as output will have a new thread
   # created, which is used to flush the output data into the underline connection.
   # When such child process exists, by default it tries to join such thread, but
@@ -611,8 +615,8 @@ def _queue_close(q):
   #
   # By using cancel_join_thread() will prevent the existing child process in trying
   # to join the flushing thread, and hence prevent possible hangs.
-  q.cancel_join_thread()
-  q.close()
+  mp_queue.cancel_join_thread()
+  mp_queue.close()
 
 
 def _closer(objs):
