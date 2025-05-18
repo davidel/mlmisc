@@ -52,11 +52,6 @@ class _Expanded:
     self.expanded = tuple(data)
 
 
-# PyTorch hooks into the Python multiprocessing Queue implementation, by providing
-# its own pickler, which uses shared memory (/dev/shm on Linux). This might be
-# good when dealing with large dataset samples (ie, images), but on smaller ones
-# (ie, tokens) not only it's slower but it tends to keep open too many files which
-# in turn result in OS errors.
 class _PickledQueue:
 
   def __init__(self, queue):
@@ -583,6 +578,15 @@ class _IterIndexGenerator:
       return indices
 
 
+# PyTorch hooks into the Python multiprocessing Queue implementation, by providing
+# its own pickler, which uses shared memory (/dev/shm on Linux). This might be
+# good when dealing with large dataset samples (ie, images), but on smaller ones
+# (ie, tokens) not only it's slower but it tends to keep open too many files (or
+# create too many mmap regions, when using the "file_system" sharing mode) which
+# in turn result in OS errors.
+# The _PickledQueue class is a simple wrapper around a multiprocessing Queue that
+# tricks the PyTorch tensors multiprocessing serialization into emitting into a
+# normal buffer, and exchange that within the Queue connection.
 def _create_queue(mpctx):
   return _PickledQueue(mpctx.Queue())
 
