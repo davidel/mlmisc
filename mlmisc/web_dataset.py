@@ -8,6 +8,7 @@ import msgpack
 import numpy as np
 import py_misc_utils.alog as alog
 import py_misc_utils.archive_streamer as pyas
+import py_misc_utils.core_utils as pycu
 import py_misc_utils.gfs as gfs
 import py_misc_utils.img_utils as pyimg
 import py_misc_utils.pipeline as pypl
@@ -31,11 +32,7 @@ class WebDataset(torch.utils.data.IterableDataset):
     ddata = dict()
     ddata['__key__'] = tid
     for name, value in data.items():
-      dpos = name.rfind('.')
-      if dpos > 0:
-        dname, fmt = name[: dpos], name[dpos + 1:]
-      else:
-        dname = fmt = name
+      dname, fmt = pycu.separate(name, '.', reverse=True, filler=name)
 
       if fmt in {'jpg', 'png', 'jpeg', 'img'}:
         ddata[dname] = pyimg.from_bytes(value)
