@@ -284,7 +284,10 @@ class _BareDataset(dsb.IterableDataset):
 
   def enum_samples(self):
     for dataset in self._datasets:
-      yield from dataset.enum_samples()
+      if hasattr(dataset, 'enum_samples'):
+        yield from dataset.enum_samples()
+      else:
+        yield from dataset
 
 
 class _IterDataLoader:
