@@ -14,6 +14,7 @@ import py_misc_utils.pipeline as pypl
 import py_misc_utils.signal as pysig
 import py_misc_utils.utils as pyu
 import torch
+import torch.multiprocessing
 
 from . import dataset_base as dsb
 from . import dataset_utils as dsu
@@ -676,7 +677,7 @@ class DataLoader:
                drop_last=True,
                collate_fn=torch.utils.data.default_collate,
                prefetch_factor=3,
-               mpctx=multiprocessing,
+               mpctx=torch.multiprocessing,
                **kwargs):
     loader = _create_loader(mpctx, dataset, shuffle, batch_size, num_workers,
                             drop_last, collate_fn, prefetch_factor, **kwargs)
