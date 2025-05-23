@@ -72,7 +72,7 @@ class _PickledQueue:
     self._queue.close()
 
   def cancel_join_thread(self):
-    self._queue.cancel_join_thread()
+    pycu.maybe_call(self._queue, 'cancel_join_thread')
 
 
 class _BatchCollater:
@@ -591,12 +591,12 @@ class _IterIndexGenerator:
 # The _PickledQueue class is a simple wrapper around a multiprocessing Queue that
 # tricks the PyTorch tensors multiprocessing serialization into emitting into a
 # normal buffer, and exchange that within the Queue connection.
-_USE_TORCH_PICKLER = pyu.getenv('USE_TORCH_PICKLER', dtype=bool, defval=False)
-
 def _create_queue(mpctx):
   mp_queue = mpctx.Queue()
 
-  return mp_queue if _USE_TORCH_PICKLER else _PickledQueue(mp_queue)
+  use_torch_pickler = pyu.getenv('USE_TORCH_PICKLER', dtype=bool, defval=False)
+
+  return mp_queue if use_torch_pickler else _PickledQueue(mp_queue)
 
 
 def _queue_flush(mp_queue, timeout=1.0):
@@ -619,7 +619,7 @@ def _queue_close(mp_queue):
   #
   # By using cancel_join_thread() will prevent the existing child process in trying
   # to join the flushing thread, and hence prevent possible hangs.
-  mp_queue.cancel_join_thread()
+  pycu.maybe_call(mp_queue, 'cancel_join_thread')
   mp_queue.close()
 
 
