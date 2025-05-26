@@ -129,6 +129,9 @@ class _BatchCollater:
       self._pending.discard(index)
 
   def get_batch(self):
+    if len(self._cached) > 4 * self._batch_size:
+      alog.warning(f'**** Cached {len(self._cached)} ... pending {sorted(self._pending)}')
+
     return None if self._pending else self._make_batch()
 
   def flush(self):
