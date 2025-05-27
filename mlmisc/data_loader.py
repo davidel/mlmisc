@@ -94,7 +94,7 @@ class _BatchCollater:
         count = min(len(cdata), self._batch_size - len(bdata))
         bdata.extend(cdata[: count])
 
-        rdata = cdata[count: ]
+        rdata = cdata[count:]
         if rdata:
           self._cached[index] = rdata
         else:
@@ -113,8 +113,6 @@ class _BatchCollater:
   def add_indices(self, indices):
     self._indices = np.concatenate((self._indices[self._offset:], np.asarray(indices)))
     self._offset = 0
-
-    return len(self._indices)
 
   def left_indices(self):
     return len(self._indices) - self._offset
@@ -574,7 +572,7 @@ class _IterIndexGenerator:
       csize = self._size - left
       indices = np.arange(self._index, self._index + csize)
       if self._shuffle:
-        for idx in range(0, self._size, self._shuffle_window):
+        for idx in range(0, len(indices), self._shuffle_window):
           np.random.shuffle(indices[idx: idx + self._shuffle_window])
 
       self._index += csize
