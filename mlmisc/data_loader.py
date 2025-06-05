@@ -127,9 +127,11 @@ class _BatchCollater:
       self._pending.discard(index)
 
   def get_batch(self):
+    # Pending: 0	Cached: 872	Batch: NO
     b = None if self._pending else self._make_batch()
 
-    alog.info(f'Pending: {len(self._pending)}\tCached: {len(self._cached)}\tBatch: {"YES" if b else "NO"}')
+    alog.info(f'Pending: {len(self._pending)}\tCached: {len(self._cached)}\tBatch: {"YES" if b else "NO"}' \
+              f'\tOffset: {self._offset}\tNumIndices: {len(self._indices)}')
 
     return b
 
