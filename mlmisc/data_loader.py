@@ -82,33 +82,26 @@ class _BatchCollater:
     self._collate_fn = collate_fn
     self._indices = np.asarray(indices)
     self._offset = 0
-    self._pending = set(self._indices[: batch_size])
+    self._batch = []
     self._cached = dict()
 
-  def _make_batch(self):
-    next_offset, bdata = len(self._indices), []
+  def _make_batch(self, force=False):
+    next_offset = len(self._indices)
     for i in range(self._offset, len(self._indices)):
       index = self._indices[i]
-      cdata = self._cached.get(index)
-      if cdata is not None:
-        count = min(len(cdata), self._batch_size - len(bdata))
-        bdata.extend(cdata[: count])
+      cdata = self._cached.pop(index, None)
+      if cdata is None:
+        next_offset = i
+        break
 
-        rdata = cdata[count:]
-        if rdata:
-          self._cached[index] = rdata
-        else:
-          self._cached.pop(index)
-
-        if len(bdata) == self._batch_size:
-          next_offset = i if rdata else i + 1
-          break
+      self._batch.extend(cdata)
 
     self._offset = next_offset
-    self._pending = (set(self._indices[self._offset: self._offset + self._batch_size]) -
-                     set(self._cached.keys()))
+    if len(self._batch) >= self._batch_size or force:
+      bdata = self._batch[: self._batch_size]
+      self._batch = self._batch[self._batch_size:]
 
-    return (self._collate_fn(bdata), len(bdata)) if bdata else None
+      return self._collate_fn(bdata), len(bdata)
 
   def add_indices(self, indices):
     self._indices = np.concatenate((self._indices[self._offset:], np.asarray(indices)))
@@ -124,13 +117,11 @@ class _BatchCollater:
       else:
         self._cached[index] = (data,)
 
-      self._pending.discard(index)
-
   def get_batch(self):
-    return None if self._pending else self._make_batch()
+    return self._make_batch()
 
   def flush(self):
-    return self._make_batch()
+    return self._make_batch(force=True)
 
 
 class _IterDataFeeder:
