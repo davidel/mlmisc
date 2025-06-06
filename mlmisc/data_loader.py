@@ -97,7 +97,7 @@ class _BatchCollater:
       self._batch.extend(cdata)
 
     self._offset = next_offset
-    if len(self._batch) >= self._batch_size or force:
+    if len(self._batch) >= self._batch_size or (force and self._batch):
       bdata = self._batch[: self._batch_size]
       self._batch = self._batch[self._batch_size:]
 
