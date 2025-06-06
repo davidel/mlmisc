@@ -85,7 +85,7 @@ class _BatchCollater:
     self._batch = []
     self._cached = dict()
 
-  def _make_batch(self, force=False):
+  def get_batch(self, force=False):
     next_offset = len(self._indices)
     for i in range(self._offset, len(self._indices)):
       index = self._indices[i]
@@ -117,11 +117,8 @@ class _BatchCollater:
       else:
         self._cached[index] = (data,)
 
-  def get_batch(self):
-    return self._make_batch()
-
   def flush(self):
-    return self._make_batch(force=True)
+    return self.get_batch(force=True)
 
 
 class _IterDataFeeder:
