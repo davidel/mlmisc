@@ -90,11 +90,11 @@ class _BatchCollater:
     for i in range(self._offset, len(self._indices)):
       index = self._indices[i]
       cdata = self._cached.pop(index, None)
-      if cdata is None:
+      if cdata is not None:
+        self._batch.extend(cdata)
+      elif not force:
         next_offset = i
         break
-
-      self._batch.extend(cdata)
 
     self._offset = next_offset
     if len(self._batch) >= self._batch_size or (force and self._batch):
