@@ -432,7 +432,6 @@ class _MapDataLoader:
       indices = indices[: pynu.round_down(len(indices), self._batch_size)]
 
     queue_getter = _QueueGetter(self._output_queue, len(self._input_queues))
-
     collater = _BatchCollater(self._batch_size, self._collate_fn, indices)
 
     index = self._feed_indices(indices, 0, self._prefetch_factor * self._batch_size)
