@@ -638,8 +638,15 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
     # If we have a number of workers greater than one, and the input dataset is
     # not a dsb.DatasetBase (or its pipeline is empty), force the number of workers
     # to be one since there is no need for extra.
+    # This is because the architecture for a data loader fed with an iterable dataset,
+    # is to have a single _IterDataFeeder (whose purpose is to simply read data and
+    # write that to pipes) feeding multiple _DataTransformer instances, which read
+    # from the pipes written by the _IterDataFeeder and run the pipeline on it.
+    # If there is no pipeline, it makes no sense to pay for the extra _DataTransformer
+    # layer.
     if num_workers > 1 and (not isinstance(dataset, dsb.DatasetBase) or
                             not dataset.pipeline()):
+      alog.debug(f'Reducing the number of workers from {num_workers} to 1')
       num_workers = 1
 
     return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
