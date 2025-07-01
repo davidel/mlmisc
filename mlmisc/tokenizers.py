@@ -25,6 +25,7 @@ def load_tokenizer(proto_path):
   return tokenizer
 
 
+# Make an HuggingFace tokenizer look like a SentencePiece one.
 class FpTokenizerWrapper:
 
   def __init__(self, tokenizer):
@@ -75,7 +76,8 @@ def from_config(tokenizer_config, **kwargs):
   alog.info(f'Creating tokenizer from "{tokenizer_config}" ...')
   tokenizer = conf.create_object('Tokenizer', tokenizer_config, **kwargs)
 
-  return FpTokenizerWrapper(tokenizer)
+  return (tokenizer if isinstance(tokenizer, spm.SentencePieceProcessor)
+          else FpTokenizerWrapper(tokenizer))
 
 
 def from_iterator(data_iter, max_vocab_size,
