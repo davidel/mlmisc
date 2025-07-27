@@ -110,6 +110,8 @@ def create(url,
   ds['train'] = WebDataset(train_urls, shuffle=shuffle, size=train_size, **kwargs)
   ds['test'] = WebDataset(test_urls, shuffle=shuffle, size=test_size, **kwargs)
   if shuffle:
+    # The shuffle passed to the WebDataset constructor shuffles the URLs, while the
+    # ShuffleProcessor shuffles the samples within the URL.
     train_pipeline = pypl.Pipeline(
       dsad.ShuffleProcessor(buffer_size=shuffle_buffer_size),
     )
