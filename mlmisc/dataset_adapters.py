@@ -44,7 +44,7 @@ class ShuffleProcessor(pypl.IterElement):
 class TransformDataset(dsb.Dataset):
 
   def __init__(self, data, pipeline, **kwargs):
-    dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
     self.add_sources(data)
 
@@ -55,7 +55,7 @@ class TransformDataset(dsb.Dataset):
 class IterableTransformDataset(dsb.IterableDataset):
 
   def __init__(self, data, pipeline, **kwargs):
-    dsb.IterableDataset.__init__(self, pipeline=pipeline, **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
     self.add_sources(data)
 
