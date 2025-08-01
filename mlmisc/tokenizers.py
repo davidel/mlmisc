@@ -6,6 +6,7 @@ import py_misc_utils.alog as alog
 import py_misc_utils.file_overwrite as pyfow
 import py_misc_utils.fs_utils as pyfsu
 import py_misc_utils.gfs as gfs
+import py_misc_utils.inspect_utils as pyiu
 import py_misc_utils.module_utils as pymu
 import py_misc_utils.utils as pyu
 import sentencepiece as spm
@@ -54,6 +55,15 @@ class FpTokenizerWrapper:
     return self._tokenizer.decode(data)
 
 
+def _wrap_tokenizer(tokenizer):
+  if isinstance(tokenizer, spm.SentencePieceProcessor):
+    return tokenizer
+  if isinstance(tokenizer, transformers.tokenization_utils_base.PreTrainedTokenizerBase):
+    return FpTokenizerWrapper(tokenizer)
+
+  alog.xraise(ValueError, f'Unknown tokenizer class: {pyiu.qual_name(tokenizer)}')
+
+
 def from_pretrained(module_path, model_name, **kwargs):
   tclass, = pymu.import_module_names(module_path)
   tokenizer = tclass.from_pretrained(
@@ -63,7 +73,7 @@ def from_pretrained(module_path, model_name, **kwargs):
     cache_dir=gfs.cache_dir(),
     **kwargs)
 
-  return FpTokenizerWrapper(tokenizer)
+  return _wrap_tokenizer(tokenizer)
 
 
 def from_model(path):
@@ -76,8 +86,7 @@ def from_config(tokenizer_config, **kwargs):
   alog.info(f'Creating tokenizer from "{tokenizer_config}" ...')
   tokenizer = conf.create_object('Tokenizer', tokenizer_config, **kwargs)
 
-  return (tokenizer if isinstance(tokenizer, spm.SentencePieceProcessor)
-          else FpTokenizerWrapper(tokenizer))
+  return _wrap_tokenizer(tokenizer)
 
 
 def from_iterator(data_iter, max_vocab_size,
