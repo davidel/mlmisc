@@ -58,6 +58,9 @@ class FpTokenizerWrapper:
 def _wrap_tokenizer(tokenizer):
   if isinstance(tokenizer, spm.SentencePieceProcessor):
     return tokenizer
+
+  import transformers
+
   if isinstance(tokenizer, transformers.tokenization_utils_base.PreTrainedTokenizerBase):
     return FpTokenizerWrapper(tokenizer)
 
