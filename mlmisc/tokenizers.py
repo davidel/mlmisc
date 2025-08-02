@@ -59,10 +59,13 @@ def _wrap_tokenizer(tokenizer):
   if isinstance(tokenizer, spm.SentencePieceProcessor):
     return tokenizer
 
-  import transformers
+  try:
+    import transformers
 
-  if isinstance(tokenizer, transformers.tokenization_utils_base.PreTrainedTokenizerBase):
-    return FpTokenizerWrapper(tokenizer)
+    if isinstance(tokenizer, transformers.tokenization_utils_base.PreTrainedTokenizerBase):
+      return FpTokenizerWrapper(tokenizer)
+  except ImportError:
+    pass
 
   alog.xraise(ValueError, f'Unknown tokenizer class: {pyiu.qual_name(tokenizer)}')
 
