@@ -679,11 +679,15 @@ class DataLoader:
     pyfw.fin_wrap(self, '_loader', None, cleanup=True)
 
   def _generate(self):
-    # Avoid using `yield from self._loader` since this will not keep a DataLoader
-    # reference around, so the _loader could be closed while there is a Generator
-    # alive.
-    for data in self._loader:
-      yield data
+    alog.debug(f'DataLoader generator started')
+    try:
+      # Avoid using `yield from self._loader` since this will not keep a DataLoader
+      # reference around, so the _loader could be closed while there is a Generator
+      # alive.
+      for data in self._loader:
+        yield data
+    finally:
+      alog.debug(f'DataLoader generator exit')
 
   def __iter__(self):
     return self._generate()
