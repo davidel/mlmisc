@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 import py_misc_utils.alog as alog
+import py_misc_utils.assert_checks as tas
 
 from . import args_sequential as aseq
 from . import layer_utils as lu
@@ -11,18 +12,32 @@ from . import split_linear as spln
 def build_vocab_head(embed_size, vocab_size,
                      act='gelu',
                      mid_size_factor=2,
-                     final='linear'):
-  mid_size = min(mid_size_factor * embed_size, vocab_size)
-  layers = [
-    lu.create(act),
-    nn.Linear(embed_size, mid_size, bias=False),
-    nn.LayerNorm(mid_size),
-    lu.create(act),
-  ]
-  if final == 'split':
-    layers.append(spln.SplitLinear(mid_size, vocab_size))
+                     final='linear',
+                     embed_weight=None):
+  if final == 'embed_share':
+    tas.check_is_not_none(embed_weight,
+                          msg=f'Embedding weight must be passed for "embed_share" final')
+    layers = [
+      lu.create(act),
+      nn.Linear(embed_size, embed_size, bias=False),
+      nn.LayerNorm(embed_size),
+      lu.create(act),
+      nn.Linear(embed_size, vocab_size, bias=False),
+    ]
+    # Tie final linear layer weight with the embedding one.
+    layers[-1].weight = embed_weight
   else:
-    layers.append(nn.Linear(mid_size, vocab_size, bias=False))
+    mid_size = min(mid_size_factor * embed_size, vocab_size)
+    layers = [
+      lu.create(act),
+      nn.Linear(embed_size, mid_size, bias=False),
+      nn.LayerNorm(mid_size),
+      lu.create(act),
+    ]
+    if final == 'split':
+      layers.append(spln.SplitLinear(mid_size, vocab_size))
+    else:
+      layers.append(nn.Linear(mid_size, vocab_size, bias=False))
 
   return aseq.ArgsSequential(layers)
 

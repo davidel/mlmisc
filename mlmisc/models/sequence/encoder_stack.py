@@ -34,7 +34,8 @@ class EncoderStack(sb.SequenceBase):
 
     net.add(sequ.build_vocab_head(embed_size, vocab_size,
                                   act=act,
-                                  final=vocab_final))
+                                  final=vocab_final,
+                                  embed_weight=self.tok_emb.weight))
 
     self.net = net
     if use_attn_mask:
