@@ -17,6 +17,8 @@ def build_vocab_head(embed_size, vocab_size,
   if final == 'embed_share':
     tas.check_is_not_none(embed_weight,
                           msg=f'Embedding weight must be passed for "embed_share" final')
+    tas.check_eq(embed_weight.shape[-2:], (vocab_size, embed_size),
+                 msg=f'Embedding weight mismatch')
     layers = [
       lu.create(act),
       nn.Linear(embed_size, embed_size, bias=False),
