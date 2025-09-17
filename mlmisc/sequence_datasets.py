@@ -95,30 +95,25 @@ class SequenceProcessor(pypl.IterElement):
     super().__init__()
     self._sampler = _get_sampler(mode, context_size)
     self._tokenizer = tokenizer
-    self._tokens = []
 
   def __call__(self, data):
     for idata in data:
       if isinstance(idata, str):
-        self._tokens.extend(self._tokenizer.encode(idata))
+        tdata = self._tokenizer.encode(idata)
       elif isinstance(idata, bytes):
-        self._tokens.extend(self._tokenizer.encode(idata.decode()))
+        tdata = self._tokenizer.encode(idata.decode())
       else:
-        self._tokens.extend(idata)
+        tdata = list(idata)
 
-      max_index = len(self._tokens) + 1 - self._sampler.context_size
+      tdata.append(self._tokenizer.eos_id())
+      if self._sampler.context_size > len(tdata):
+        tdata.extend([tdata[-1]] * (self._sampler.context_size - len(tdata)))
+
+      max_index = len(tdata) + 1 - self._sampler.context_size
       for i in range(max_index):
-        x, y = self._sampler(self._tokens, i)
+        x, y = self._sampler(tdata, i)
 
         yield x, y
-
-      self._tokens = self._tokens[max_index:]
-
-  def clone(self):
-    new_self = copy.copy(self)
-    new_self._tokens = []
-
-    return new_self
 
 
 class Padder(pypl.IterElement):
