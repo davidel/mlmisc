@@ -44,6 +44,9 @@ class FpTokenizerWrapper:
   def unk_id(self):
     return self._tokenizer.unk_token_id
 
+  def pad_id(self):
+    return self._tokenizer.pad_token_id
+
   def encode(self, data):
     edata = data if isinstance(data, str) else data.decode()
 

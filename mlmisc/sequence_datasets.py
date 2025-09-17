@@ -97,6 +97,9 @@ class SequenceProcessor(pypl.IterElement):
     self._tokenizer = tokenizer
 
   def __call__(self, data):
+    if (pad_id := self._tokenizer.pad_id()) is None:
+      pad_id = self._tokenizer.eos_id()
+
     for idata in data:
       if isinstance(idata, str):
         tdata = self._tokenizer.encode(idata)
@@ -105,9 +108,8 @@ class SequenceProcessor(pypl.IterElement):
       else:
         tdata = list(idata)
 
-      tdata.append(self._tokenizer.eos_id())
       if self._sampler.context_size > len(tdata):
-        tdata.extend([tdata[-1]] * (self._sampler.context_size - len(tdata)))
+        tdata.extend([pad_id] * (self._sampler.context_size - len(tdata)))
 
       max_index = len(tdata) + 1 - self._sampler.context_size
       for i in range(max_index):
