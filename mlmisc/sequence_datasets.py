@@ -10,7 +10,7 @@ from . import dataset_base as dsb
 
 class TokenSampler:
 
-  def __init__(self, window_size):
+  def __init__(self, window_size, **kwargs):
     self.context_size = window_size + 1
     self._window_size = window_size
 
@@ -22,7 +22,7 @@ class TokenSampler:
 
 class SequenceSampler:
 
-  def __init__(self, window_size):
+  def __init__(self, window_size, **kwargs):
     self.context_size = window_size + 1
     self._window_size = window_size
 
@@ -34,7 +34,7 @@ class SequenceSampler:
 
 class CbowSampler:
 
-  def __init__(self, window_size):
+  def __init__(self, window_size, **kwargs):
     self.context_size = 2 * window_size + 1
     self._window_size = window_size
 
@@ -67,11 +67,11 @@ _SAMPLERS = {
   SKIPGRAM: SkipgramSampler,
 }
 
-def _get_sampler(mode, context_size):
+def _get_sampler(mode, window_size, **kwargs):
   tas.check_in(mode, set(_SAMPLERS.keys()),
                msg=f'Invalid mode')
 
-  return _SAMPLERS[mode](context_size)
+  return _SAMPLERS[mode](window_size, **kwargs)
 
 
 class SequenceDataset(dsb.Dataset):
@@ -79,7 +79,7 @@ class SequenceDataset(dsb.Dataset):
   def __init__(self, data, context_size, mode, pipeline=None, **kwargs):
     dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
     self._data = data
-    self._sampler = _get_sampler(mode, context_size)
+    self._sampler = _get_sampler(mode, context_size, **kwargs)
     self.add_sources(data)
 
   def __len__(self):
@@ -91,9 +91,9 @@ class SequenceDataset(dsb.Dataset):
 
 class SequenceProcessor(pypl.IterElement):
 
-  def __init__(self, context_size, mode, tokenizer):
+  def __init__(self, context_size, mode, tokenizer, **kwargs):
     super().__init__()
-    self._sampler = _get_sampler(mode, context_size)
+    self._sampler = _get_sampler(mode, context_size, **kwargs)
     self._tokenizer = tokenizer
 
   def __call__(self, data):
@@ -106,10 +106,10 @@ class SequenceProcessor(pypl.IterElement):
       elif isinstance(idata, bytes):
         tdata = self._tokenizer.encode(idata.decode())
       else:
-        tdata = list(idata)
+        tdata = idata
 
       if self._sampler.context_size > len(tdata):
-        tdata.extend([pad_id] * (self._sampler.context_size - len(tdata)))
+        tdata = list(tdata) + [pad_id] * (self._sampler.context_size - len(tdata))
 
       max_index = len(tdata) + 1 - self._sampler.context_size
       for i in range(max_index):
