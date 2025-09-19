@@ -259,7 +259,7 @@ if __name__ == '__main__':
                       f'(or the path to a YAML/JSON file containing such configuration)')
   parser.add_argument('--amp_dtype',
                       help='The type to be used with the AMP (Automatic Mixed Precision) module')
-  parser.add_argument('--batch_size', type=int, default=32,
+  parser.add_argument('--batch_size', type=int, default=1,
                       help='The batch size to be used')
   parser.add_argument('--num_epochs', type=int, default=1,
                       help='The number of epochs to train for')

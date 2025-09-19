@@ -117,6 +117,14 @@ class SequenceProcessor(pypl.IterElement):
 
         yield x, y
 
+  def flush(self, data):
+    yield from self(data)
+
+  def clone(self):
+    new_self = copy.copy(self)
+
+    return new_self
+
 
 class Padder(pypl.IterElement):
 

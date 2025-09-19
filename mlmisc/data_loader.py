@@ -280,7 +280,7 @@ class _BareDataset(dsb.IterableDataset):
 class _IterDataLoader:
 
   def __init__(self, mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
-               collate_fn, prefetch_factor, shuffle_window=None, **kwargs):
+               collate_fn, prefetch_factor, **kwargs):
     self._mpctx = mpctx
     self._dataset = dataset
     self._shuffle = shuffle
@@ -288,7 +288,6 @@ class _IterDataLoader:
     self._drop_last = drop_last
     self._collate_fn = collate_fn
     self._prefetch_factor = prefetch_factor
-    self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
     self._input_queue = _create_queue(mpctx)
     self._output_queue = _create_queue(mpctx)
     self._trans_queues = []
@@ -337,7 +336,7 @@ class _IterDataLoader:
       _queue_close(q)
 
   def _generate(self):
-    idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
+    idxgen = _IterIndexGenerator(self._batch_size, self._shuffle)
     queue_getter = _QueueGetter(self._output_queue, self._output_feeders)
     collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
@@ -478,14 +477,12 @@ class _MapDataLoader:
 
 class _SimpleDataLoader:
 
-  def __init__(self, dataset, shuffle, batch_size, drop_last, collate_fn,
-               shuffle_window=None, **kwargs):
+  def __init__(self, dataset, shuffle, batch_size, drop_last, collate_fn, **kwargs):
     self._dataset = dataset
     self._shuffle = shuffle
     self._batch_size = batch_size
     self._drop_last = drop_last
     self._collate_fn = collate_fn
-    self._shuffle_window = pyu.value_or(shuffle_window, 16 * batch_size)
 
   def close(self):
     pass
@@ -508,7 +505,7 @@ class _SimpleDataLoader:
       yield self._collate_fn(batch)
 
   def _iter_generate(self):
-    idxgen = _IterIndexGenerator(self._shuffle, self._shuffle_window)
+    idxgen = _IterIndexGenerator(self._batch_size, self._shuffle)
     collater = _BatchCollater(self._batch_size, self._collate_fn, idxgen.generate())
 
     batch = []
@@ -548,17 +545,17 @@ class _IterIndexGenerator:
 
   REFILL_FACTOR = 4
 
-  def __init__(self, shuffle, shuffle_window):
+  def __init__(self, batch_size, shuffle):
     self._shuffle = shuffle
-    self._shuffle_window = shuffle_window
-    self._size = 16 * self.REFILL_FACTOR * shuffle_window
+    self._shuffle_window = batch_size * pyu.getenv('SHUFFLE_FACTOR', dtype=int, defval=16)
+    self._size = 16 * self.REFILL_FACTOR * max(self._shuffle_window, 1)
     self._index = 0
 
   def generate(self, left=0):
     if self._size // self.REFILL_FACTOR >= left:
       csize = self._size - left
       indices = np.arange(self._index, self._index + csize)
-      if self._shuffle:
+      if self._shuffle and self._shuffle_window > 1:
         for idx in range(0, len(indices), self._shuffle_window):
           np.random.shuffle(indices[idx: idx + self._shuffle_window])
 
@@ -629,8 +626,21 @@ def _loader_size(dataset, batch_size, drop_last):
     return (ds_size + rounder) // batch_size
 
 
+def _get_batch_args(collate_fn, batch_size):
+  if collate_fn is None:
+    if batch_size == 0:
+      collate_fn = pycu.ident
+      batch_size = 1
+    else:
+      collate_fn = torch.utils.data.default_collate
+
+  return batch_size, collate_fn
+
+
 def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
                    collate_fn, prefetch_factor, **kwargs):
+  batch_size, collate_fn = _get_batch_args(collate_fn, batch_size)
+
   if num_workers == 0:
     return _SimpleDataLoader(dataset, shuffle, batch_size, drop_last,
                              collate_fn, **kwargs)
@@ -664,10 +674,10 @@ class DataLoader:
 
   def __init__(self, dataset,
                shuffle=False,
-               batch_size=16,
+               batch_size=1,
                num_workers=1,
                drop_last=True,
-               collate_fn=torch.utils.data.default_collate,
+               collate_fn=None,
                prefetch_factor=3,
                mpctx=torch.multiprocessing,
                **kwargs):

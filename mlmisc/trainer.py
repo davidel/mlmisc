@@ -170,12 +170,12 @@ class Trainer:
                 global_step=self.global_step,
                 walltime=self.train_time.seconds)
 
-  def _log_train_loss(self, loss, batch_num, step_time, tctx):
+  def _log_train_loss(self, loss, batch_num, step_time, step_samples, tctx):
     self._metric_log(tctx.tb_writer, 'loss.train', loss)
     alog.info(f'Batch {batch_num + 1} ({self.num_samples:.1e} samples): ' \
               f'Train Loss {loss:.4f}')
     alog.info(f'Times: {self._times()}')
-    alog.info(f'Perf: {tctx.batch_size / step_time:.2e} samples/sec')
+    alog.info(f'Perf: {step_samples / step_time:.2e} samples/sec')
 
   def _run_validation(self, batch_num, tctx):
     vloss = self._val_loss(tctx)
@@ -280,16 +280,18 @@ class Trainer:
     wrapped_scheduler = lrw.wrap(scheduler)
 
     tstep, tval, tsave = [self.train_time.start()] * 3
-    train_losses, val_losses, last_stepno = array.array('f'), array.array('f'), -1
+    train_losses, val_losses, num_samples = (
+      array.array('f'), array.array('f'), self.num_samples)
     for sd in self._step(tctx):
       now = self.train_time.track()
       if now > tstep + loss_logstep:
         train_losses.append(sd.loss.item())
         self._log_train_loss(train_losses[-1],
                              sd.stepno,
-                             (now - tstep) / (sd.stepno - last_stepno),
+                             now - tstep,
+                             self.num_samples - num_samples,
                              tctx)
-        tstep, last_stepno = now, sd.stepno
+        tstep, num_samples = now, self.num_samples
 
       wrapped_scheduler.train_step(sd.loss)
 

@@ -124,7 +124,7 @@ def web_create(url, tokenizer_config, field_selector, context_size, mode,
   for kind, dset in dataset.items():
     pipeline = pypl.Pipeline(
       dsb.items_selector(field_selector),
-      seqds.SequenceProcessor(context_size, mode, tokenizer),
+      seqds.SequenceProcessor(context_size, mode, tokenizer, **kwargs),
       dsb.transformer(sample=to_long, target=to_long),
     )
 
