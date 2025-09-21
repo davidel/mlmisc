@@ -425,7 +425,7 @@ class _MapDataLoader:
 
   def _generate(self):
     indices = np.arange(len(self._dataset))
-    if self._shuffle:
+    if self._shuffle is True:
       np.random.shuffle(indices)
     if self._drop_last:
       indices = indices[: pynu.round_down(len(indices), self._batch_size)]
@@ -489,7 +489,7 @@ class _SimpleDataLoader:
 
   def _map_generate(self):
     indices = np.arange(len(self._dataset))
-    if self._shuffle:
+    if self._shuffle is True:
       np.random.shuffle(indices)
     if self._drop_last:
       indices = indices[: pynu.round_down(len(indices), self._batch_size)]
@@ -555,7 +555,7 @@ class _IterIndexGenerator:
     if self._size // self.REFILL_FACTOR >= left:
       csize = self._size - left
       indices = np.arange(self._index, self._index + csize)
-      if self._shuffle and self._shuffle_window > 1:
+      if self._shuffle is True and self._shuffle_window > 1:
         for idx in range(0, len(indices), self._shuffle_window):
           np.random.shuffle(indices[idx: idx + self._shuffle_window])
 
@@ -626,10 +626,14 @@ def _loader_size(dataset, batch_size, drop_last):
     return (ds_size + rounder) // batch_size
 
 
+def _nobatch_collater(x):
+  return [torch.as_tensor(b) for b in x[0]]
+
+
 def _get_batch_args(collate_fn, batch_size):
   if collate_fn is None:
     if batch_size == 0:
-      collate_fn = pycu.ident
+      collate_fn = _nobatch_collater
       batch_size = 1
     else:
       collate_fn = torch.utils.data.default_collate
@@ -673,7 +677,7 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
 class DataLoader:
 
   def __init__(self, dataset,
-               shuffle=False,
+               shuffle=None,
                batch_size=1,
                num_workers=1,
                drop_last=True,

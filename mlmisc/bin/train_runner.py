@@ -210,6 +210,7 @@ def main(args):
       trainer.train_epoch(model, optimizer, train_dataset, test_dataset, args.batch_size,
                           device=args.device,
                           scheduler=scheduler,
+                          shuffle=args.shuffle,
                           grad_clip=args.grad_clip,
                           val_time=args.val_time,
                           loss_logstep=args.loss_logstep,
@@ -234,6 +235,8 @@ def main(args):
   if tb_writer is not None:
     tb_writer.flush()
     tb_writer.close()
+
+  alog.debug(f'Train Runner completed')
 
 
 if __name__ == '__main__':
@@ -271,6 +274,8 @@ if __name__ == '__main__':
                       help='The maximum number of seconds to be spent in validation')
   parser.add_argument('--checkpoint_step', type=int, default=120,
                       help='The number of seconds between checkpoints')
+  parser.add_argument('--shuffle', action=argparse.BooleanOptionalAction,
+                      help='Whether to shuffle the samples within the DataLoader')
   parser.add_argument('--grad_clip', type=float,
                       help='The gradient clipping value')
   parser.add_argument('--num_workers', type=int, default=max(1, os.cpu_count() // 2),

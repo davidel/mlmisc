@@ -131,10 +131,9 @@ class Trainer:
       f'save={self.save_time.total}'
 
   def _val_loss(self, tctx):
-    shuffle = not isinstance(tctx.val_data, torch.utils.data.IterableDataset)
     loader = dload.DataLoader(tctx.val_data,
                               batch_size=tctx.batch_size,
-                              shuffle=shuffle,
+                              shuffle=tctx.shuffle,
                               num_workers=tctx.num_workers,
                               drop_last=tctx.drop_last)
 
@@ -223,10 +222,9 @@ class Trainer:
     self.save_model(tctx.model, tctx.model_path, **cargs)
 
   def _step(self, tctx):
-    shuffle = not isinstance(tctx.train_data, torch.utils.data.IterableDataset)
     loader = dload.DataLoader(tctx.train_data,
                               batch_size=tctx.batch_size,
-                              shuffle=shuffle,
+                              shuffle=tctx.shuffle,
                               num_workers=tctx.num_workers,
                               drop_last=tctx.drop_last)
 
@@ -261,6 +259,7 @@ class Trainer:
                   device=None,
                   scheduler=None,
                   accum_steps=1,
+                  shuffle=None,
                   grad_clip=None,
                   val_time=None,
                   loss_logstep=60,
