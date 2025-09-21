@@ -139,7 +139,7 @@ class SequenceProcessor(pypl.IterElement):
     return tdata
 
   def _get_bucket_size(self, size):
-    pos = bisect.bisect_right(self._bucket_sizes, size)
+    pos = bisect.bisect_left(self._bucket_sizes, size)
 
     return self._bucket_sizes[pos] if len(self._bucket_sizes) > pos else None
 
