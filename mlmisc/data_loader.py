@@ -3,6 +3,7 @@ import multiprocessing
 import pickle
 import queue
 import signal
+import threading
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -137,7 +138,7 @@ class _IterDataFeeder:
       yield from source
 
   def _run(self):
-    _init_process()
+    _init_process("IterDataFeeder")
 
     exit_result = None
     try:
@@ -182,7 +183,7 @@ class _MapDataFeeder:
     self._proc.start()
 
   def _run(self):
-    _init_process()
+    _init_process("MapDataFeeder")
 
     exit_result = None
     try:
@@ -226,7 +227,7 @@ class _DataTransformer:
     self._output_queue.put((index, xdata))
 
   def _run(self):
-    _init_process()
+    _init_process("DataTransformer")
 
     last_index, index_gap = 0, 0
     exit_result = None
@@ -614,7 +615,8 @@ def _int_handler(sig, frame):
   return pysig.HANDLED
 
 
-def _init_process():
+def _init_process(name):
+  threading.main_thread().name = name
   torch.set_num_threads(1)
   pysig.signal(signal.SIGINT, _int_handler)
 
