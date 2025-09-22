@@ -12,10 +12,12 @@ class SequenceBase(nb.NetBase):
 
   def __init__(self, context_size, embed_size, vocab_size,
                use_positions=True,
-               padding_idx=None):
+               padding_idx=None,
+               init_span=0.1):
     super().__init__()
     self.tok_emb = nn.Embedding(vocab_size, embed_size,
                                 padding_idx=padding_idx)
+    torch.nn.init.uniform_(self.tok_emb.weight, -init_span, init_span)
     self.pos_emb = nn.Parameter(torch.zeros((1, context_size, embed_size))) \
       if use_positions else None
     self.loss = lsw.SeqLoss(nn.CrossEntropyLoss())
