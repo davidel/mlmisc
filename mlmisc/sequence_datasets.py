@@ -1,5 +1,6 @@
 import bisect
 import copy
+import time
 
 import py_misc_utils.alog as alog
 import py_misc_utils.assert_checks as tas
@@ -95,6 +96,38 @@ class SequenceDataset(dsb.Dataset):
     return self._sampler(self._data, i)
 
 
+
+class _Bucket:
+
+  def __init__(self, size, samples=None):
+    self.size = size
+    self._samples = samples or []
+    self._mtime = time.time()
+
+  def __len__(self):
+    return len(self._samples)
+
+  def __iter__(self):
+    return iter(self._samples)
+
+  def add_sample(self, sample):
+    self._samples.append(sample)
+    self._mtime = time.time()
+
+  def get_batches(self, batch_size):
+    batches = []
+    for i in range(0, len(self._samples), batch_size):
+      if len(self._samples) >= i + batch_size:
+        batches.append(self._samples[i: i + batch_size])
+      else:
+        break
+
+    self._samples = self._samples[i:]
+    self._mtime = time.time()
+
+    return batches
+
+
 class SequenceProcessor(pypl.IterElement):
 
   def __init__(self, context_size, mode, tokenizer,
@@ -158,38 +191,29 @@ class SequenceProcessor(pypl.IterElement):
       return
 
     if (bucket := self._context_buckets.get(size)) is None:
-      self._context_buckets[size] = bucket = []
+      self._context_buckets[size] = bucket = _Bucket(size)
 
     max_index = max(1, len(data) + 1 - size)
     for i in range(max_index):
-      bucket.append(self._sampler(data, i))
+      bucket.add_sample(self._sampler(data, i))
 
     alog.debug(f'Sequence context bucket slot {size} has {len(bucket)} samples')
 
-    return bucket, size
+    return bucket
 
   def __call__(self, data):
     for idata in data:
       tdata = self._tokenize(idata)
-      result = self._enqueue(tdata)
+      bucket = self._enqueue(tdata)
 
-      if result is not None:
-        bucket, size = result
+      if bucket is not None:
         if self._batch_size is None:
           for bdata in bucket:
             yield bdata
 
-          self._context_buckets[size] = []
+          self._context_buckets.pop(bucket.size)
         else:
-          batches = []
-          for i in range(0, len(bucket), self._batch_size):
-            if len(bucket) >= i + self._batch_size:
-              batches.append(bucket[i: i + self._batch_size])
-            else:
-              break
-
-          self._context_buckets[size] = bucket[i:]
-
+          batches = bucket.get_batches(self._batch_size)
           for batch in batches:
             x, y = [b[0] for b in batch], [b[1] for b in batch]
             yield x, y
@@ -197,7 +221,7 @@ class SequenceProcessor(pypl.IterElement):
   def flush(self, data):
     yield from self(data)
 
-    for size, bucket in self._context_buckets.items():
+    for bucket in self._context_buckets.values():
       if self._batch_size is None:
         for bdata in bucket:
           yield bdata
