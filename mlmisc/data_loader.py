@@ -76,6 +76,45 @@ class _PickledQueue:
     pycu.maybe_call(self._queue, 'cancel_join_thread')
 
 
+# Background thread that pulls data out of a queue.
+# When we shutdown the DataLoader child processes, those try to cleanly exit
+# by providing the final data and/or exit statuses, by writing the output queue
+# which was provided at their creation.
+# But even though we will later flush the output queue data, if the data written
+# by the child processes exceeds the queue buffer sizes, the output queue background
+# thread within the child process will hang, and so will be the close() API trying
+# to join the child process.
+# By starting the _Flusher before trying to shutdown the DataLoader child processes,
+# we ensure that data is promptly removed from the output queue, avoiding the
+# output queue background thread to hang.
+class _Flusher:
+
+  def __init__(self, mp_queue, timeout=1.0):
+    self._mp_queue = mp_queue
+    self._timeout = timeout
+
+  def __enter__(self):
+    self._stopped = False
+    self._thread = threading.Thread(target=self._run, daemon=True)
+    self._thread.start()
+
+    return self
+
+  def __exit__(self, *exc):
+    self.stop()
+
+    return False
+
+  def _run(self):
+    while not self._stopped:
+      _queue_flush(self._mp_queue, timeout=self._timeout)
+
+  def stop(self):
+    if not self._stopped:
+      self._stopped = True
+      self._thread.join()
+
+
 class _BatchCollater:
 
   def __init__(self, batch_size, collate_fn, indices):
@@ -330,8 +369,9 @@ class _IterDataLoader:
                   finfn=functools.partial(_closer, feeders))
 
   def close(self):
-    pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
-    pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
+    with _Flusher(self._output_queue):
+      pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
+      pyfw.fin_wrap(self, '_transformers', None, cleanup=True)
 
     for q in [self._input_queue, self._output_queue] + self._trans_queues:
       _queue_close(q)
@@ -410,7 +450,8 @@ class _MapDataLoader:
                   finfn=functools.partial(_closer, feeders))
 
   def close(self):
-    pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
+    with _Flusher(self._output_queue):
+      pyfw.fin_wrap(self, '_feeders', None, cleanup=True)
 
     for q in self._input_queues + [self._output_queue]:
       _queue_close(q)
