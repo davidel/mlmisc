@@ -96,7 +96,6 @@ class SequenceDataset(dsb.Dataset):
     return self._sampler(self._data, i)
 
 
-
 class _Bucket:
 
   def __init__(self, size, samples=None):
