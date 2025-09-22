@@ -78,12 +78,12 @@ class _PickledQueue:
 
 # Background thread that pulls data out of a queue.
 # When we shutdown the DataLoader child processes, those try to cleanly exit
-# by providing the final data and/or exit statuses, by writing the output queue
+# providing the final data and/or exit statuses, by writing to the output queue
 # which was provided at their creation.
 # But even though we will later flush the output queue data, if the data written
 # by the child processes exceeds the queue buffer sizes, the output queue background
 # thread within the child process will hang, and so will be the close() API trying
-# to join the child process.
+# to join the child processes.
 # By starting the _Flusher before trying to shutdown the DataLoader child processes,
 # we ensure that data is promptly removed from the output queue, avoiding the
 # output queue background thread to hang.
