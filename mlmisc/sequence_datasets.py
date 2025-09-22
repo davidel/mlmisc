@@ -123,7 +123,7 @@ class SequenceProcessor(pypl.IterElement):
       self._bucket_sizes = list(range(self._min_context_size, self._sampler.context_size, step))
 
       margin = self._sampler.context_size - self._bucket_sizes[-1]
-      if margin > step // 2:
+      if margin > step // 4:
         self._bucket_sizes.append(self._sampler.context_size)
       else:
         self._bucket_sizes[-1] = self._sampler.context_size
