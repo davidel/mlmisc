@@ -131,7 +131,7 @@ class SequenceProcessor(pypl.IterElement):
 
   def __init__(self, context_size, mode, tokenizer,
                batch_size=None,
-               min_context_size=4,
+               min_context_size=0,
                num_context_buckets=None,
                **kwargs):
     super().__init__()
