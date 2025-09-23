@@ -101,7 +101,7 @@ class _Bucket:
   def __init__(self, size, samples=None):
     self.size = size
     self._samples = samples or []
-    self._mtime = time.time()
+    self.mtime = time.time()
 
   def __len__(self):
     return len(self._samples)
@@ -111,18 +111,26 @@ class _Bucket:
 
   def add_sample(self, sample):
     self._samples.append(sample)
-    self._mtime = time.time()
+    self.mtime = time.time()
 
-  def get_batches(self, batch_size):
+  def clear(self):
+    self._samples = []
+    self.mtime = time.time()
+
+  def get_batches(self, batch_size, force=False):
     batches = []
-    for i in range(0, len(self._samples), batch_size):
-      if len(self._samples) >= i + batch_size:
-        batches.append(self._samples[i: i + batch_size])
+    for pos in range(0, len(self._samples), batch_size):
+      if len(self._samples) >= pos + batch_size:
+        batches.append(self._samples[pos: pos + batch_size])
       else:
         break
 
-    self._samples = self._samples[i:]
-    self._mtime = time.time()
+    self._samples = self._samples[pos:]
+    if force and self._samples:
+      batches.append(self._samples)
+      self._samples = []
+
+    self.mtime = time.time()
 
     return batches
 
@@ -133,6 +141,7 @@ class SequenceProcessor(pypl.IterElement):
                batch_size=None,
                min_context_size=0,
                num_context_buckets=None,
+               flush_interval=None,
                **kwargs):
     super().__init__()
     self._sampler = _get_sampler(mode, context_size, **kwargs)
@@ -140,6 +149,7 @@ class SequenceProcessor(pypl.IterElement):
     self._batch_size = batch_size
     self._min_context_size = min_context_size
     self._num_context_buckets = num_context_buckets
+    self._flush_interval = flush_interval
     self._pad_id = tokenizer.pad_id()
     if self._pad_id is None:
       self._pad_id = tokenizer.eos_id()
@@ -208,6 +218,9 @@ class SequenceProcessor(pypl.IterElement):
 
     return bucket
 
+  def _collate(self, batch):
+    return [b[0] for b in batch], [b[1] for b in batch]
+
   def __call__(self, data):
     for idata in data:
       tdata = self._tokenize(idata)
@@ -218,12 +231,24 @@ class SequenceProcessor(pypl.IterElement):
           for bdata in bucket:
             yield bdata
 
-          self._context_buckets.pop(bucket.size)
+          bucket.clear()
         else:
           batches = bucket.get_batches(self._batch_size)
           for batch in batches:
-            x, y = [b[0] for b in batch], [b[1] for b in batch]
-            yield x, y
+            yield self._collate(batch)
+
+    yield from self._flush_buckets()
+
+  def _flush_buckets(self):
+    if self._batch_size is not None and self._flush_interval is not None:
+      now = time.time()
+
+      for size, bucket in self._context_buckets.items():
+        if now - bucket.mtime >= self._flush_interval:
+          batches = bucket.get_batches(self._batch_size, force=True)
+          for batch in batches:
+            alog.debug(f'Flushing bucket with size {size} having {len(batch)} samples')
+            yield self._collate(batch)
 
   def flush(self, data):
     yield from self(data)
@@ -233,8 +258,7 @@ class SequenceProcessor(pypl.IterElement):
         for bdata in bucket:
           yield bdata
       elif bucket:
-        x, y = [b[0] for b in bucket], [b[1] for b in bucket]
-        yield x, y
+        yield self._collate(bucket)
 
     self._reset()
 
