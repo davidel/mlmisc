@@ -143,22 +143,30 @@ class SequenceProcessor(pypl.IterElement):
     self._pad_id = tokenizer.pad_id()
     if self._pad_id is None:
       self._pad_id = tokenizer.eos_id()
+    self._bucket_sizes = self._create_buckets(self._num_context_buckets,
+                                              self._sampler.context_size,
+                                              self._min_context_size)
+
     self._reset()
+
+  @staticmethod
+  def _create_buckets(count, context_size, min_context_size):
+    bucket_sizes = []
+    if count is not None:
+      step = ((context_size - min_context_size) // count)
+
+      bucket_sizes = list(range(min_context_size, context_size, step))
+
+      margin = context_size - bucket_sizes[-1]
+      if margin > step // 4:
+        bucket_sizes.append(context_size)
+      else:
+        bucket_sizes[-1] = context_size
+
+    return bucket_sizes
 
   def _reset(self):
     self._context_buckets = dict()
-    self._bucket_sizes = []
-    if self._num_context_buckets is not None:
-      step = ((self._sampler.context_size - self._min_context_size) //
-               self._num_context_buckets)
-
-      self._bucket_sizes = list(range(self._min_context_size, self._sampler.context_size, step))
-
-      margin = self._sampler.context_size - self._bucket_sizes[-1]
-      if margin > step // 4:
-        self._bucket_sizes.append(self._sampler.context_size)
-      else:
-        self._bucket_sizes[-1] = self._sampler.context_size
 
   def _tokenize(self, data):
     if isinstance(data, str):
