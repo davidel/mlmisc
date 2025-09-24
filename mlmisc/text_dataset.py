@@ -26,7 +26,7 @@ def build_dataset(tokenizer, tokens, train_pct, context_size, mode):
   # We used torch.int in tkz.tokenize_data() to reduce the memory footprint, but
   # some PyTorch APIs require torch.long (!?!) so we convert them on the fly.
   to_long = dsb.to_transform(dtype=torch.long)
-  pipeline = pypl.Pipeline(dsb.transformer(sample=to_long, target=to_long))
+  pipeline = pypl.Pipeline(dsb.transformer(to_long, to_long))
 
   ds_args = dict(
     pipeline=pipeline,
@@ -125,7 +125,7 @@ def web_create(url, tokenizer_config, field_selector, context_size, mode,
     pipeline = pypl.Pipeline(
       dsb.items_selector(field_selector),
       seqds.SequenceProcessor(context_size, mode, tokenizer, **kwargs),
-      dsb.transformer(sample=to_long, target=to_long),
+      dsb.transformer(to_long, to_long),
     )
 
     webds[kind] = dsad.IterableTransformDataset(dset, pipeline,

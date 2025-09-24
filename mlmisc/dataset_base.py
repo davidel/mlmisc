@@ -122,14 +122,16 @@ def to_transform(**kwargs):
   return functools.partial(to_transform_fn, **kwargs)
 
 
-def transformer_fn(sample, target, x):
-  s, t = x
+def transformer_fn(fns, data):
+  tx = []
+  for i, x in enumerate(data):
+    tx.append(fns[i](x) if i < len(fns) else x)
 
-  return sample(s), target(t)
+  return tx
 
 
-def transformer(sample=pycu.ident, target=pycu.ident):
-  return functools.partial(transformer_fn, sample, target)
+def transformer(*fns):
+  return functools.partial(transformer_fn, fns)
 
 
 def items_selector_fn(items, x):
