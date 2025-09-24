@@ -4,6 +4,7 @@ import os
 
 import mlmisc.core_utils as mlcu
 import mlmisc.debug_utils as mldu
+import py_misc_utils.alog as alog
 import py_misc_utils.gfs as gfs
 import torch
 
@@ -41,3 +42,4 @@ def setup(args):
   else:
     args.device = torch.device(args.device)
 
+  alog.info(f'Using device: {args.device}')
