@@ -46,7 +46,7 @@ def create_stepfn(tprof):
 
 
 def create_config(dataset):
-  x, y = pycu.seqfirst(dataset)
+  x, y, *_ = pycu.seqfirst(dataset)
   x_shape = tuple(getattr(x, 'shape', ()))
   y_shape = tuple(getattr(y, 'shape', ()))
   alog.info(f'Dataset: xshape={x_shape} yshape={y_shape}')

@@ -219,7 +219,15 @@ class SequenceProcessor(pypl.IterElement):
     return bucket
 
   def _collate(self, batch):
-    return [b[0] for b in batch], [b[1] for b in batch]
+    cdata = []
+    for bdata in batch:
+      if len(bdata) > len(cdata):
+        cdata = cdata + [[] for _ in range(len(bdata) - len(cdata))]
+
+      for j, data in enumerate(bdata):
+        cdata[j].append(data)
+
+    return cdata
 
   def __call__(self, data):
     for idata in data:
