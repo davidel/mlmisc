@@ -265,10 +265,13 @@ class SequenceProcessor(pypl.IterElement):
       if self._batch_size is None:
         for bdata in bucket:
           yield bdata
-      elif bucket:
-        yield self._collate(bucket)
 
-    self._reset()
+        bucket.clear()
+      else:
+        batches = bucket.get_batches(self._batch_size, force=True)
+        for batch in batches:
+          alog.debug(f'Flushing bucket with size {size} having {len(batch)} samples')
+          yield self._collate(batch)
 
   def clone(self):
     new_self = copy.copy(self)
