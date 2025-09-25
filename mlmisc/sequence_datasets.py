@@ -214,7 +214,7 @@ class SequenceProcessor(pypl.IterElement):
     for i in range(max_index):
       bucket.add_sample(self._sampler(data, i))
 
-    alog.debug(f'Sequence context bucket slot {size} has {len(bucket)} samples')
+    alog.verbose(f'Sequence context bucket slot {size} has {len(bucket)} samples')
 
     return bucket
 
