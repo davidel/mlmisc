@@ -204,7 +204,7 @@ class SequenceProcessor(pypl.IterElement):
 
       data = list(data) + [self._pad_id] * (size - len(data))
     else:
-      alog.debug(f'Discarded sequence of length {len(data)}')
+      alog.debug3(f'Discarded sequence of length {len(data)}')
       return
 
     if (bucket := self._context_buckets.get(size)) is None:
@@ -241,11 +241,14 @@ class SequenceProcessor(pypl.IterElement):
 
           bucket.clear()
         else:
-          batches = bucket.get_batches(self._batch_size)
-          for batch in batches:
-            yield self._collate(batch)
+          yield from self._flush_bucket(bucket)
 
     yield from self._flush_buckets()
+
+  def _flush_bucket(self, bucket, force=False):
+    batches = bucket.get_batches(self._batch_size, force=force)
+    for batch in batches:
+      yield self._collate(batch)
 
   def _flush_buckets(self):
     if self._batch_size is not None and self._flush_interval is not None:
@@ -253,10 +256,7 @@ class SequenceProcessor(pypl.IterElement):
 
       for size, bucket in self._context_buckets.items():
         if now - bucket.mtime >= self._flush_interval:
-          batches = bucket.get_batches(self._batch_size, force=True)
-          for batch in batches:
-            alog.debug(f'Flushing bucket with size {size} having {len(batch)} samples')
-            yield self._collate(batch)
+          yield from self._flush_bucket(bucket, force=True)
 
   def flush(self, data):
     yield from self(data)
@@ -268,10 +268,7 @@ class SequenceProcessor(pypl.IterElement):
 
         bucket.clear()
       else:
-        batches = bucket.get_batches(self._batch_size, force=True)
-        for batch in batches:
-          alog.debug(f'Flushing bucket with size {size} having {len(batch)} samples')
-          yield self._collate(batch)
+        yield from self._flush_bucket(bucket, force=True)
 
   def clone(self):
     new_self = copy.copy(self)
