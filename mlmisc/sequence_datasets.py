@@ -84,7 +84,7 @@ def _get_sampler(mode, window_size, **kwargs):
 class SequenceDataset(dsb.Dataset):
 
   def __init__(self, data, context_size, mode, pipeline=None, **kwargs):
-    dsb.Dataset.__init__(self, pipeline=pipeline, **kwargs)
+    super().__init__(pipeline=pipeline, **kwargs)
     self._data = data
     self._sampler = _get_sampler(mode, context_size, **kwargs)
     self.add_sources(data)
