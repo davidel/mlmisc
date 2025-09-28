@@ -305,7 +305,7 @@ class _DataTransformer:
 class _BareDataset(dsb.IterableDataset):
 
   def __init__(self, dataset):
-    dsb.IterableDataset.__init__(self)
+    super().__init__()
     self._datasets = pyu.as_sequence(dataset)
     self.add_sources(*self._datasets)
 
