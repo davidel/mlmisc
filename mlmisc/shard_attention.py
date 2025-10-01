@@ -13,25 +13,20 @@ from . import layer_utils as lu
 
 class ShardAttention(nn.Module):
 
-  def __init__(self, embed_size, num_heads):
-    tas.check_eq(embed_size % num_heads, 0,
-                 f'Number of heads ({num_heads}) should divide the ' \
-                 f'embedding size ({embed_size})')
-
+  def __init__(self, embed_size):
     super().__init__()
-    self.num_heads = num_heads
-    self.weight = cu.kuni_parameter(num_heads * embed_size, embed_size)
+    self.weight = cu.kuni_parameter(embed_size, embed_size)
 
   def forward(self, x, mask=None):
-    q = k = einops.rearrange(x, 'b t (nh hs) -> b nh t hs', nh=self.num_heads)
-    v = einops.repeat(x, 'b t c -> b nh t c', nh=self.num_heads)
-    y = atn.raw_attention(q, k, v, mask=mask)
-    y = einops.rearrange(y, 'b nh t c -> b t (nh c)')
-    y = y @ self.weight
+    att = x @ torch.transpose(x, -1, -2)
+    if mask is not None:
+      att = att.masked_fill(mask, float('-inf'))
+    att = nn.functional.softmax(att / math.sqrt(x.shape[-1]), dim=-1)
 
-    return y
+    values = x @ self.weight
+
+    return att @ values
 
   def extra_repr(self):
-    return cu.extra_repr(num_heads=self.num_heads,
-                         embed_size=self.weight.shape[-1])
+    return cu.extra_repr(embed_size=self.weight.shape[-1])
 
