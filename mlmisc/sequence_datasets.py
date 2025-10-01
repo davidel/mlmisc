@@ -119,18 +119,19 @@ class _Bucket:
 
   def get_batches(self, batch_size, force=False):
     batches = []
-    for pos in range(0, len(self._samples), batch_size):
-      if len(self._samples) >= pos + batch_size:
-        batches.append(self._samples[pos: pos + batch_size])
-      else:
-        break
+    if self._samples:
+      for pos in range(0, len(self._samples), batch_size):
+        if len(self._samples) >= pos + batch_size:
+          batches.append(self._samples[pos: pos + batch_size])
+        else:
+          break
 
-    self._samples = self._samples[pos:]
-    if force and self._samples:
-      batches.append(self._samples)
-      self._samples = []
+      self._samples = self._samples[pos:]
+      if force and self._samples:
+        batches.append(self._samples)
+        self._samples = []
 
-    self.mtime = time.time()
+      self.mtime = time.time()
 
     return batches
 
