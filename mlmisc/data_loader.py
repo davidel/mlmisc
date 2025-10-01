@@ -4,6 +4,7 @@ import pickle
 import queue
 import signal
 import threading
+import traceback
 
 import numpy as np
 import py_misc_utils.alog as alog
@@ -27,7 +28,7 @@ from . import dataset_utils as dsu
 class _QueueException(Exception):
 
   def __init__(self, ex):
-    super().__init__(repr(ex))
+    super().__init__(traceback.format_exc(ex))
 
 
 class _QueueGetter:
