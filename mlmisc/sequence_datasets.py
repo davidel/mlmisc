@@ -96,6 +96,25 @@ class SequenceDataset(dsb.Dataset):
     return self._sampler(self._data, i)
 
 
+class TokenizerProcessor:
+
+  def __init__(self, tokenizer, **kwargs):
+    self._tokenizer = tokenizer
+
+  def _tokenize(self, data):
+    if isinstance(data, str):
+      tdata = self._tokenizer.encode(data)
+    elif isinstance(data, bytes):
+      tdata = self._tokenizer.encode(data.decode())
+    else:
+      tdata = data
+
+    return tdata
+
+  def __call__(self, data):
+    return self._tokenize(data)
+
+
 class _Bucket:
 
   def __init__(self, size, samples=None):
@@ -138,22 +157,20 @@ class _Bucket:
 
 class SequenceProcessor(pypl.IterElement):
 
-  def __init__(self, context_size, mode, tokenizer,
+  def __init__(self, context_size, mode,
                batch_size=None,
+               pad_id=None,
                min_context_size=0,
                num_context_buckets=None,
                flush_interval=None,
                **kwargs):
     super().__init__()
     self._sampler = _get_sampler(mode, context_size, **kwargs)
-    self._tokenizer = tokenizer
     self._batch_size = batch_size
     self._min_context_size = min_context_size
     self._num_context_buckets = num_context_buckets
     self._flush_interval = flush_interval
-    self._pad_id = tokenizer.pad_id()
-    if self._pad_id is None:
-      self._pad_id = tokenizer.eos_id()
+    self._pad_id = pad_id
     self._bucket_sizes = self._create_buckets(self._num_context_buckets,
                                               self._sampler.context_size,
                                               self._min_context_size)
@@ -178,16 +195,6 @@ class SequenceProcessor(pypl.IterElement):
 
   def _reset(self):
     self._context_buckets = dict()
-
-  def _tokenize(self, data):
-    if isinstance(data, str):
-      tdata = self._tokenizer.encode(data)
-    elif isinstance(data, bytes):
-      tdata = self._tokenizer.encode(data.decode())
-    else:
-      tdata = data
-
-    return tdata
 
   def _get_bucket_size(self, size):
     pos = bisect.bisect_left(self._bucket_sizes, size)
@@ -232,8 +239,7 @@ class SequenceProcessor(pypl.IterElement):
 
   def __call__(self, data):
     for idata in data:
-      tdata = self._tokenize(idata)
-      bucket = self._enqueue(tdata)
+      bucket = self._enqueue(idata)
 
       if bucket is not None:
         if self._batch_size is None:

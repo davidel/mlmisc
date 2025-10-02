@@ -120,11 +120,16 @@ def web_create(url, tokenizer_config, field_selector, context_size, mode,
 
   to_long = dsb.to_transform(dtype=torch.long)
 
+  pad_id = tokenizer.pad_id()
+  if pad_id is None:
+    pad_id = tokenizer.eos_id()
+
   webds = dict()
   for kind, dset in dataset.items():
     pipeline = pypl.Pipeline(
       dsb.items_selector(field_selector),
-      seqds.SequenceProcessor(context_size, mode, tokenizer, **kwargs),
+      seqds.TokenizerProcessor(tokenizer, **kwargs),
+      seqds.SequenceProcessor(context_size, mode, pad_id=pad_id, **kwargs),
       dsb.transformer(to_long, to_long),
     )
 
