@@ -18,14 +18,9 @@ class ShardAttention(nn.Module):
     self.weight = cu.kuni_parameter(embed_size, embed_size)
 
   def forward(self, x, mask=None):
-    att = x @ torch.transpose(x, -1, -2)
-    if mask is not None:
-      att = att.masked_fill(mask, float('-inf'))
-    att = nn.functional.softmax(att / math.sqrt(x.shape[-1]), dim=-1)
-
     values = x @ self.weight
 
-    return att @ values
+    return atn.raw_attention(x, x, values, mask=mask)
 
   def extra_repr(self):
     return cu.extra_repr(embed_size=self.weight.shape[-1])
