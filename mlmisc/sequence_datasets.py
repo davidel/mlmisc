@@ -1,5 +1,6 @@
 import bisect
 import copy
+import random
 import time
 
 import py_misc_utils.alog as alog
@@ -114,16 +115,21 @@ class TokenizerProcessor:
 
 class _Bucket:
 
-  def __init__(self, size, samples=None):
+  def __init__(self, size,
+               shuffle_size=None):
     self.size = size
-    self._samples = samples or []
+    self._shuffle_size = shuffle_size
+    self._samples = []
     self.mtime = time.time()
 
   def __len__(self):
     return len(self._samples)
 
   def __iter__(self):
-    return iter(self._samples)
+    if self._shuffle_size is not None:
+      return iter(random.sample(self._samples, len(self._samples)))
+    else:
+      return iter(self._samples)
 
   def add_sample(self, sample):
     self._samples.append(sample)
@@ -133,9 +139,23 @@ class _Bucket:
     self._samples = []
     self.mtime = time.time()
 
+  def get_samples(self):
+    samples, self._samples = self._samples, []
+    self.mtime = time.time()
+
+    if self._shuffle_size is not None:
+      random.shuffle(samples)
+
+    return samples
+
   def get_batches(self, batch_size, force=False):
     batches = []
-    if self._samples:
+    if (self._samples and
+        (force or self._shuffle_size is None or
+         len(self._samples) >= self._shuffle_size)):
+      if self._shuffle_size is not None:
+        random.shuffle(self._samples)
+
       for pos in range(0, len(self._samples), batch_size):
         if len(self._samples) >= pos + batch_size:
           batches.append(self._samples[pos: pos + batch_size])
@@ -160,6 +180,7 @@ class SequenceProcessor(pypl.IterElement):
                min_context_size=0,
                num_context_buckets=None,
                flush_interval=None,
+               shuffle_size=None,
                **kwargs):
     super().__init__()
     self._sampler = _get_sampler(mode, context_size, **kwargs)
@@ -167,6 +188,7 @@ class SequenceProcessor(pypl.IterElement):
     self._min_context_size = min_context_size
     self._num_context_buckets = num_context_buckets
     self._flush_interval = flush_interval
+    self._shuffle_size = shuffle_size
     self._pad_id = pad_id
     self._bucket_sizes = self._create_buckets(self._num_context_buckets,
                                               self._sampler.context_size,
@@ -213,7 +235,8 @@ class SequenceProcessor(pypl.IterElement):
       return
 
     if (bucket := self._context_buckets.get(size)) is None:
-      self._context_buckets[size] = bucket = _Bucket(size)
+      bucket = _Bucket(size, shuffle_size=self._shuffle_size)
+      self._context_buckets[size] = bucket
 
     max_index = max(1, len(data) + 1 - size)
     for i in range(max_index):
@@ -240,10 +263,8 @@ class SequenceProcessor(pypl.IterElement):
 
       if bucket is not None:
         if self._batch_size is None:
-          for bdata in bucket:
+          for bdata in bucket.get_samples():
             yield bdata
-
-          bucket.clear()
         else:
           yield from self._flush_bucket(bucket)
 
@@ -267,10 +288,8 @@ class SequenceProcessor(pypl.IterElement):
 
     for bucket in self._context_buckets.values():
       if self._batch_size is None:
-        for bdata in bucket:
+        for bdata in bucket.get_samples():
           yield bdata
-
-        bucket.clear()
       else:
         yield from self._flush_bucket(bucket, force=True)
 
