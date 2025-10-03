@@ -125,12 +125,6 @@ class _Bucket:
   def __len__(self):
     return len(self._samples)
 
-  def __iter__(self):
-    if self._shuffle_size is not None:
-      return iter(random.sample(self._samples, len(self._samples)))
-    else:
-      return iter(self._samples)
-
   def add_sample(self, sample):
     self._samples.append(sample)
     self.mtime = time.time()
