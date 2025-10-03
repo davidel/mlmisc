@@ -101,7 +101,7 @@ class TokenizerProcessor:
   def __init__(self, tokenizer, **kwargs):
     self._tokenizer = tokenizer
 
-  def _tokenize(self, data):
+  def __call__(self, data):
     if isinstance(data, str):
       tdata = self._tokenizer.encode(data)
     elif isinstance(data, bytes):
@@ -110,9 +110,6 @@ class TokenizerProcessor:
       tdata = data
 
     return tdata
-
-  def __call__(self, data):
-    return self._tokenize(data)
 
 
 class _Bucket:
