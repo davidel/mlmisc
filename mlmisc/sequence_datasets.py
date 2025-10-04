@@ -132,8 +132,9 @@ class _Bucket:
     self._samples = []
     self.mtime = time.time()
 
-  def get_samples(self):
-    if self._shuffle_size is None or len(self._samples) >= self._shuffle_size:
+  def get_samples(self, force=False):
+    if (force or self._shuffle_size is None or
+        len(self._samples) >= self._shuffle_size):
       samples, self._samples = self._samples, []
       self.mtime = time.time()
 
@@ -284,7 +285,7 @@ class SequenceProcessor(pypl.IterElement):
 
     for bucket in self._context_buckets.values():
       if self._batch_size is None:
-        for bdata in bucket.get_samples():
+        for bdata in bucket.get_samples(force=True):
           yield bdata
       else:
         yield from self._flush_bucket(bucket, force=True)
