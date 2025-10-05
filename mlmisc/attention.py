@@ -242,7 +242,7 @@ def create(embed_size, num_heads,
 
 
 def naive_attention(queries, keys, values, mask=None):
-  att = torch.einsum('ij,kj->ik', queries, keys)
+  att = torch.einsum('...ij,...kj->...ik', queries, keys)
   if mask is not None:
     att = att.masked_fill(mask, float('-inf'))
   att = nn.functional.softmax(att / math.sqrt(queries.shape[-1]), dim=-1)
