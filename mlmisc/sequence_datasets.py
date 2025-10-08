@@ -197,7 +197,7 @@ class SequenceProcessor(pypl.IterElement):
   def _create_buckets(count, context_size, min_context_size):
     bucket_sizes = []
     if count is not None:
-      step = ((context_size - min_context_size) // count)
+      step = max(1, (context_size - min_context_size) // count)
 
       bucket_sizes = list(range(min_context_size, context_size, step))
 
