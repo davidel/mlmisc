@@ -174,7 +174,7 @@ class SequenceProcessor(pypl.IterElement):
   def __init__(self, context_size, mode,
                batch_size=None,
                pad_id=None,
-               min_context_size=0,
+               min_context_size=1,
                num_context_buckets=None,
                flush_interval=None,
                shuffle_size=None,
@@ -202,7 +202,7 @@ class SequenceProcessor(pypl.IterElement):
       bucket_sizes = list(range(min_context_size, context_size, step))
 
       margin = context_size - bucket_sizes[-1]
-      if margin > step // 4:
+      if margin > step * 0.5:
         bucket_sizes.append(context_size)
       else:
         bucket_sizes[-1] = context_size
