@@ -704,7 +704,7 @@ def _create_loader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
     # layer.
     if num_workers > 1 and (not isinstance(dataset, dsb.DatasetBase) or
                             not dataset.pipeline()):
-      alog.debug(f'Reducing the number of workers from {num_workers} to 1')
+      alog.info(f'Reducing the number of workers from {num_workers} to 1')
       num_workers = 1
 
     return _IterDataLoader(mpctx, dataset, shuffle, batch_size, num_workers, drop_last,
