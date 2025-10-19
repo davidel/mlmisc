@@ -115,28 +115,30 @@ class TokenizerProcessor:
 
 class _Bucket:
 
-  def __init__(self, size, shuffle_size):
-    self.size = size
+  def __init__(self, shuffle_size):
     self._shuffle_size = shuffle_size
     self._samples = []
-    self.mtime = time.time()
+    self._mtime = time.time()
 
   def __len__(self):
     return len(self._samples)
 
+  def age(self):
+    return time.time() - self._mtime
+
   def add_sample(self, sample):
     self._samples.append(sample)
-    self.mtime = time.time()
+    self._mtime = time.time()
 
   def clear(self):
     self._samples = []
-    self.mtime = time.time()
+    self._mtime = time.time()
 
   def get_samples(self, force=False):
     if (force or self._shuffle_size is None or
         len(self._samples) >= self._shuffle_size):
       samples, self._samples = self._samples, []
-      self.mtime = time.time()
+      self._mtime = time.time()
 
       if self._shuffle_size is not None:
         random.shuffle(samples)
@@ -164,7 +166,7 @@ class _Bucket:
         batches.append(self._samples)
         self._samples = []
 
-      self.mtime = time.time()
+      self._mtime = time.time()
 
     return batches
 
@@ -232,7 +234,7 @@ class SequenceProcessor(pypl.IterElement):
       return
 
     if (bucket := self._context_buckets.get(size)) is None:
-      bucket = _Bucket(size, self._shuffle_size)
+      bucket = _Bucket(self._shuffle_size)
       self._context_buckets[size] = bucket
 
     max_index = max(1, len(data) + 1 - size)
@@ -274,10 +276,8 @@ class SequenceProcessor(pypl.IterElement):
 
   def _flush_buckets(self):
     if self._batch_size is not None and self._flush_interval is not None:
-      now = time.time()
-
       for size, bucket in self._context_buckets.items():
-        if now - bucket.mtime >= self._flush_interval:
+        if bucket.age() >= self._flush_interval:
           yield from self._flush_bucket(bucket, force=True)
 
   def flush(self, data):
