@@ -28,7 +28,7 @@ from . import dataset_utils as dsu
 class _ExceptionWrapper:
 
   def __init__(self, ex):
-    self.error_message = traceback.format_exception(ex)
+    self.error_message = ''.join(traceback.format_exception(ex))
 
 
 class QueueException(Exception):
