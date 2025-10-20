@@ -25,10 +25,14 @@ from . import dataset_utils as dsu
 # We want to transfer exceptions from child processes, to parents, using the
 # multiprocessing Quque objects, which require data to be pickle-able, and some
 # of the generated exceptions contain data which is not.
-class _QueueException(Exception):
+class _ExceptionWrapper:
 
   def __init__(self, ex):
-    super().__init__(traceback.format_exception(ex))
+    self.error_message = traceback.format_exception(ex)
+
+
+class QueueException(Exception):
+  pass
 
 
 class _QueueGetter:
@@ -41,8 +45,8 @@ class _QueueGetter:
   def get(self):
     while self._max_nones > self._nones:
       data = self._input_queue.get()
-      if isinstance(data, Exception):
-        raise data
+      if isinstance(data, _ExceptionWrapper):
+        raise QueueException(data.error_message)
       if data is not None:
         return data
 
@@ -202,7 +206,7 @@ class _IterDataFeeder:
       pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader iter data feeder')
-      exit_result = _QueueException(ex)
+      exit_result = _ExceptionWrapper(ex)
     finally:
       for output_queue in self._output_queues:
         output_queue.put(exit_result)
@@ -240,7 +244,7 @@ class _MapDataFeeder:
           self._output_queue.put((index, data))
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data loader map data feeder')
-      exit_result = _QueueException(ex)
+      exit_result = _ExceptionWrapper(ex)
     finally:
       self._output_queue.put(exit_result)
       self._output_queue.close()
@@ -293,7 +297,7 @@ class _DataTransformer:
       pass
     except Exception as ex:
       alog.exception(ex, exmsg=f'Exception in data transformer')
-      exit_result = _QueueException(ex)
+      exit_result = _ExceptionWrapper(ex)
     finally:
       self._output_queue.put(exit_result)
       self._output_queue.close()
