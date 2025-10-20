@@ -28,7 +28,7 @@ from . import dataset_utils as dsu
 class _QueueException(Exception):
 
   def __init__(self, ex):
-    super().__init__(traceback.format_exc(ex))
+    super().__init__(traceback.format_exception(ex))
 
 
 class _QueueGetter:
