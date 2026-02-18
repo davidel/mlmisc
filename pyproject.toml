@@ -1,5 +1,27 @@
-# pyproject.toml
+[project]
+name = "mlmisc"
+dynamic = [
+  "authors",
+  "description",
+  "version",
+  "dependencies",
+  "optional-dependencies",
+]
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+]
+license-files = ["LICEN[CS]E*"]
+license = "Apache-2.0"
+
+[project.urls]
+Homepage = "https://github.com/davidel/mlmisc"
+Issues = "https://github.com/davidel/mlmisc/issues"
+Repository = "https://github.com/davidel/mlmisc.git"
+
 [build-system]
-# XXX: If your project needs other packages to build properly, add them to this list.
 requires = ["setuptools >= 42.0.0"]
 build-backend = "setuptools.build_meta"

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 
 setup(name='mlmisc',
-      version='0.38',
+      version='0.39',
       description='Miscellaneous ML Utilities',
       author='Davide Libenzi',
       packages=find_packages(),
@@ -14,7 +14,7 @@ setup(name='mlmisc',
           'msgpack',
           'numpy',
           'Pillow',
-          'py_misc_utils @ git+https://github.com/davidel/py_misc_utils',
+          'python_misc_utils @ git+https://github.com/davidel/py_misc_utils',
           'torch',
           'torchvision',
       ],
